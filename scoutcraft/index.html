@@ -161,6 +161,13 @@
   #btnKeepPlaying{margin-top:28px;background:none;border:1px solid rgba(255,255,255,0.4);color:#f2e9d8;
     padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;}
   #btnKeepPlaying:hover{background:rgba(255,255,255,0.1);}
+  #shareSection{margin-top:22px;}
+  #shareRow{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px;max-width:420px;}
+  .shareBtn{display:inline-block;background:rgba(255,255,255,0.12);color:#f2e9d8;text-decoration:none;
+    font-weight:600;padding:9px 16px;border-radius:8px;font-size:13px;border:1px solid rgba(255,255,255,0.28);
+    cursor:pointer;font-family:inherit;}
+  .shareBtn:hover{background:rgba(255,255,255,0.24);}
+  #shareCopiedNote{font-size:12px;opacity:0.85;margin-top:8px;color:#c8e0a8;}
   #sashModal{position:fixed;inset:0;z-index:31;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;}
   #sashPanel{background:#2b2320;color:#f2e9d8;width:min(620px,92vw);max-height:82vh;overflow:auto;border-radius:10px;
     border:2px solid #5a4632;box-shadow:0 10px 40px rgba(0,0,0,0.5);}
@@ -234,6 +241,18 @@
   anytime — your camp will be exactly how you left it.</p>
   <p>If you'd like to support Andre's troop, his popcorn sale is open right now:</p>
   <a id="popcornLink" href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">🍿 Support Andre's Popcorn Sale</a>
+  <div id="shareSection">
+    <p>Show off your camp and your merit badges:</p>
+    <div id="shareRow">
+      <button id="shareNative" class="shareBtn" hidden>📤 Share&hellip;</button>
+      <a id="shareFacebook" class="shareBtn" target="_blank" rel="noopener noreferrer">📘 Facebook</a>
+      <a id="shareX" class="shareBtn" target="_blank" rel="noopener noreferrer">✖️ X</a>
+      <button id="shareInstagram" class="shareBtn">📸 Instagram</button>
+      <a id="shareMessage" class="shareBtn">💬 Message</a>
+      <a id="shareEmail" class="shareBtn">✉️ Email</a>
+    </div>
+    <p id="shareCopiedNote" hidden>Copied! Paste it into Instagram.</p>
+  </div>
   <button id="btnKeepPlaying">Keep playing instead</button>
 </div>
 <div id="itemsModal" hidden>

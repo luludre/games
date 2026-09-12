@@ -6844,9 +6844,57 @@ if(sashModalEl){
 // progress is already saved continuously during play, so there's nothing extra to do on the way out;
 // "Keep playing instead" just puts the overlay away again.
 const thankYouScreen = document.getElementById('thankYouScreen');
+// ---- Sharing: the game's own URL plus a one-line brag about badges earned so far ----
+// location.origin+pathname (not the full href) so a stray query string or #hash from however the
+// page was opened never rides along into a shared link.
+function shareGameUrl(){ return location.origin + location.pathname; }
+function shareBadgeSummary(){
+  const count = earnedBadges.size, total = BADGES.length;
+  if(count===0) return "🏕️ I'm playing ScoutCraft, a scouting-themed voxel building game!";
+  const emojis = BADGES.filter(b=>earnedBadges.has(b.id)).map(b=>b.emoji).join('');
+  return `🏕️ I'm a ${rankFor(count)} in ScoutCraft with ${count}/${total} merit badges: ${emojis}`;
+}
+const shareNativeBtn = document.getElementById('shareNative');
+const shareFacebookLink = document.getElementById('shareFacebook');
+const shareXLink = document.getElementById('shareX');
+const shareInstagramBtn = document.getElementById('shareInstagram');
+const shareMessageLink = document.getElementById('shareMessage');
+const shareEmailLink = document.getElementById('shareEmail');
+const shareCopiedNote = document.getElementById('shareCopiedNote');
+// Refreshed every time the quit screen opens, not just once at load, so the badge count in every
+// link is always whatever's actually been earned by the moment the player quits.
+function refreshShareLinks(){
+  const text = shareBadgeSummary(), url = shareGameUrl();
+  shareFacebookLink.href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+  shareXLink.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  shareMessageLink.href = `sms:?&body=${encodeURIComponent(text+' '+url)}`;
+  shareEmailLink.href = `mailto:?subject=${encodeURIComponent('Check out ScoutCraft!')}&body=${encodeURIComponent(text+'\n\n'+url)}`;
+  // Web Share API isn't available on every browser (mainly a mobile/HTTPS thing) — the button only
+  // shows up where it'll actually work, since the explicit per-platform links above always work.
+  shareNativeBtn.hidden = !navigator.share;
+}
+shareNativeBtn.addEventListener('click', ()=>{
+  navigator.share({ title:'ScoutCraft', text:shareBadgeSummary(), url:shareGameUrl() }).catch(()=>{});
+});
+// Instagram has no web "share to Instagram" link the way Facebook/X do — on a phone with Instagram
+// installed, the native share sheet (which lists Instagram as one of its targets) is the real way in,
+// so this defers to that when it's available; otherwise it copies the text so it can be pasted into a
+// post or story by hand.
+shareInstagramBtn.addEventListener('click', async ()=>{
+  const text = shareBadgeSummary(), url = shareGameUrl();
+  if(navigator.share){ navigator.share({ title:'ScoutCraft', text, url }).catch(()=>{}); return; }
+  try{
+    await navigator.clipboard.writeText(text+' '+url);
+    shareCopiedNote.hidden = false;
+    setTimeout(()=> shareCopiedNote.hidden = true, 4000);
+  }catch(e){
+    try{ window.prompt('Copy this to share on Instagram:', text+' '+url); }catch(e2){}
+  }
+});
 function quitGame(){
   if(document.pointerLockElement) document.exitPointerLock();
   locked = false;
+  refreshShareLinks();
   thankYouScreen.hidden = false;
 }
 function keepPlaying(){
