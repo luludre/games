@@ -60,6 +60,7 @@ Then visit `http://localhost:8000`.
 - `K` — sleep through the night, if you're near your tent and it's after dark
 - `V` — toggle third-person camera (see your own blocky character)
 - The **🚪 Quit** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
+- That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you quit so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
 
 On a phone or tablet (iPad included), the game automatically switches to touch controls — no setup needed, just open the page in Safari and tap to play:
 
