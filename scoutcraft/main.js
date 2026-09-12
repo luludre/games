@@ -25,6 +25,10 @@ const FLINT=18, FIRE=19, TORCH=20, FIREWORK=21, LADDER=22, MEAT=23;
 // blocks that go in the world; CAMPFIRE and LANTERN also give off light (see updateTorchLight). TENT
 // isn't a single cube like the rest — placing one builds a small walk-in shelter (see placeTent).
 const ROPE=24, TENT=25, CAMPFIRE=26, LANTERN=27, FLAG=28, COMPASS=29, COOKED_MEAT=30, BACKPACK=31;
+// DUTCH_OVEN/POT/PAN/GRIDDLE/BEAR_BOX are pre-placed camp-cooking fixtures (see buildCookingArea) —
+// not craftable, not in any hotbar/inventory, and permanently protected from breaking (see
+// PROTECTED_CELLS) rather than ordinary placeable blocks like the rest of this section.
+const DUTCH_OVEN=32, POT=33, PAN=34, GRIDDLE=35, BEAR_BOX=36;
 
 const BLOCK_COLOR = {
   [GRASS]:  0x5b8a3a,
@@ -58,6 +62,11 @@ const BLOCK_COLOR = {
   [COMPASS]: 0xd8d2c0,
   [COOKED_MEAT]: 0x8f4a2c,
   [BACKPACK]: 0x6b4a2f,
+  [DUTCH_OVEN]: 0x1c1c1c,
+  [POT]: 0x8a8f94,
+  [PAN]: 0x2c2420,
+  [GRIDDLE]: 0x3a3a3a,
+  [BEAR_BOX]: 0x3a5f3a,
 };
 const BLOCK_NAME = {
   [GRASS]:'Grass', [DIRT]:'Dirt', [STONE]:'Stone', [SAND]:'Sand', [WOOD]:'Wood',
@@ -68,6 +77,7 @@ const BLOCK_NAME = {
   [LADDER]:'Ladder', [MEAT]:'Raw Meat',
   [ROPE]:'Rope', [TENT]:'Tent', [CAMPFIRE]:'Campfire', [LANTERN]:'Lantern',
   [FLAG]:'Troop Flag', [COMPASS]:'Compass', [COOKED_MEAT]:'Cooked Meal', [BACKPACK]:'Backpack',
+  [DUTCH_OVEN]:'Dutch Oven', [POT]:'Cooking Pot', [PAN]:'Frying Pan', [GRIDDLE]:'Griddle', [BEAR_BOX]:'Bear Box',
 };
 // Every item the player can ever select. The hotbar only shows HOTBAR_SIZE of these at a time —
 // the rest are reachable through the Items panel (the palette button, or the "I" key), which lets
@@ -331,7 +341,7 @@ let scoutLastX = null, scoutLastZ = null;
 let scoutWasLow = false;
 let scoutSpeciesScanTimer = 0;
 let scoutSaveTimer = 0;
-let dipperGazeTimer = 0;
+let dipperGazeTimer = 0, dipperGraceTimer = 0;
 // Night, for badge purposes, is the part of the cycle with no sun at all (see DAY_KEYFRAMES:
 // sunI is 0 from 0.80 through sunrise at 0.25).
 function isScoutNight(){
@@ -343,7 +353,7 @@ const SPOT_RANGE = 9;
 function updateScout(dt){
   pumpBadgeToast(dt);
   // Nothing counts while you're sitting on the start screen or a panel — badges are for playing.
-  if(!locked || isDead){ scoutLastX = null; scoutLastZ = null; dipperGazeTimer = 0; return; }
+  if(!locked || isDead){ scoutLastX = null; scoutLastZ = null; dipperGazeTimer = 0; dipperGraceTimer = 0; return; }
 
   // Distance travelled, split between hiking and swimming.
   if(scoutLastX != null){
@@ -361,13 +371,17 @@ function updateScout(dt){
 
   if(isScoutNight()) scoutStats.nightSeconds += dt;
 
-  // Astronomy: keep the Big Dipper roughly centered in view, at night, for a continuous 10 seconds.
-  // Resets the moment you look away or day breaks — it has to be one unbroken stretch of looking up.
+  // Astronomy: keep the Big Dipper roughly in view, at night, for 10 seconds of attention. A brief
+  // glance away (mouse drift, checking your footing) doesn't wipe the streak — only DIPPER_GAZE_GRACE_S
+  // of genuinely looking elsewhere does, so this rewards "mostly watching it" rather than a pixel-
+  // perfect, unblinking hold.
   if(isScoutNight() && getLookDir(player.yaw, player.pitch).dot(BIG_DIPPER_DIR) > DIPPER_GAZE_COS){
     dipperGazeTimer += dt;
+    dipperGraceTimer = DIPPER_GAZE_GRACE_S;
     if(dipperGazeTimer >= DIPPER_GAZE_SECONDS) Scout.foundDipper();
   } else {
-    dipperGazeTimer = 0;
+    dipperGraceTimer -= dt;
+    if(dipperGraceTimer <= 0) dipperGazeTimer = 0;
   }
 
   // First aid: drop below 3 hearts, then get all the way back to full.
@@ -576,15 +590,22 @@ function nearestTent(maxDist){
   return false;
 }
 
+// Cells breakBlock refuses to touch, regardless of what block sits there — populated once by
+// buildCookingArea for its pre-placed campfires/cookware/bear box. Position-based rather than
+// type-based because CAMPFIRE itself must stay perfectly ordinary and breakable everywhere else the
+// player places one; only these specific cells are permanent.
+const PROTECTED_CELLS = new Set();
+
 // ---------- Texture atlas (procedurally drawn pixel-art, no external image assets) ----------
 // TILE=32 (was 16) gives 4x the pixel budget per block face — enough room for real structure
 // (cracks, grain, brick-by-brick variation, ripples) rather than flat color + noise.
-const TILE = 32, ATLAS_COLS = 4, ATLAS_ROWS = 8;
+const TILE = 32, ATLAS_COLS = 4, ATLAS_ROWS = 9;
 const T_GRASS_TOP=0, T_GRASS_SIDE=1, T_DIRT=2, T_STONE=3, T_SAND=4, T_LOG_SIDE=5, T_LOG_TOP=6,
       T_LEAVES=7, T_PLANKS=8, T_BEDROCK=9, T_CRAFT_TOP=10, T_CRAFT_SIDE=11, T_BRICKS=12, T_WATER=13,
       T_WINDOW=14, T_WINDOW_OPEN=15, T_DOOR=16, T_DOOR_OPEN=17, T_SAPLING=18, T_FLINT=19, T_FIRE=20,
       T_TORCH=21, T_LADDER=22, T_LEAVES_SPARSE=23, T_LEAVES_DENSE=24,
-      T_TENT=25, T_CAMPFIRE=26, T_LANTERN=27, T_FLAG=28, T_BACKPACK=29;
+      T_TENT=25, T_CAMPFIRE=26, T_LANTERN=27, T_FLAG=28, T_BACKPACK=29,
+      T_DUTCH_OVEN=30, T_POT=31, T_PAN=32, T_GRIDDLE=33, T_BEAR_BOX=34;
 
 function hexRGB(hex){ return [(hex>>16)&255, (hex>>8)&255, hex&255]; }
 function rgbStr(r,g,b){ return `rgb(${r|0},${g|0},${b|0})`; }
@@ -948,17 +969,17 @@ function drawLadder(ctx,x0,y0){
   }
 }
 function drawTent(ctx,x0,y0){
-  // A canvas A-frame seen side-on: green canvas sloping down from a ridge, a dark door flap in the
+  // A canvas A-frame seen side-on: orange canvas sloping down from a ridge, a dark door flap in the
   // middle, and guy lines pegged out at the corners.
-  fillTile(ctx,x0,y0,0x2d5138);
-  speckle(ctx,x0,y0,0x2d5138,Math.round(TILE*TILE*0.16),10);
+  fillTile(ctx,x0,y0,0x8a3a0a);
+  speckle(ctx,x0,y0,0x8a3a0a,Math.round(TILE*TILE*0.16),10);
   // canvas panels — brighter on the left slope, shaded on the right, so the ridge reads as a fold
   for(let py=0;py<TILE;py++){
     const spread = (py/TILE)*0.5; // how far the tent has opened out at this height
     const left = Math.round(TILE*(0.5-spread)), right = Math.round(TILE*(0.5+spread));
     for(let px=left;px<right;px++){
       const lit = px < TILE*0.5 ? 1.12 : 0.86;
-      ctx.fillStyle = shadeStr(0x4a8256, lit, 8);
+      ctx.fillStyle = shadeStr(0xd9701a, lit, 8);
       ctx.fillRect(x0+px,y0+py,1,1);
     }
   }
@@ -966,7 +987,7 @@ function drawTent(ctx,x0,y0){
   ctx.fillStyle = shadeStr(0x6b4a2b,1,6);
   ctx.fillRect(x0+TILE*0.44,y0,TILE*0.12,TILE*0.16);
   // door flap
-  ctx.fillStyle = shadeStr(0x16281c,1,8);
+  ctx.fillStyle = shadeStr(0x2a1608,1,8);
   for(let py=Math.round(TILE*0.45);py<TILE;py++){
     const w = Math.round(TILE*0.07*((py-TILE*0.45)/(TILE*0.55))+1);
     ctx.fillRect(x0+TILE*0.5-w,y0+py,w*2,1);
@@ -1064,6 +1085,98 @@ function drawBackpack(ctx,x0,y0){
   ctx.fillRect(x0+TILE*0.2,y0,TILE*0.1,TILE*0.22);
   ctx.fillRect(x0+TILE*0.7,y0,TILE*0.1,TILE*0.22);
 }
+function drawDutchOven(ctx,x0,y0){
+  // near-black base + transparency: a squat cast-iron pot with legs and a bail handle, not a cube.
+  fillTile(ctx,x0,y0,0x0a0a0a);
+  const cx = TILE*0.5;
+  ctx.fillStyle = shadeStr(0x1c1c1c,1,6);
+  ctx.fillRect(x0+TILE*0.22, y0+TILE*0.42, TILE*0.56, TILE*0.34);
+  for(let py=0;py<TILE*0.16;py++){
+    const t = py/(TILE*0.16);
+    const half = TILE*0.3*Math.sqrt(Math.max(0,1-Math.pow(1-t,2)));
+    ctx.fillStyle = shadeStr(0x2a2a2a, 1.1-t*0.15, 6);
+    ctx.fillRect(x0+cx-half, y0+TILE*0.34-py, half*2, 1);
+  }
+  ctx.fillStyle = shadeStr(0x1c1c1c,1,4);
+  ctx.fillRect(x0+cx-2, y0+TILE*0.30, 4, 5);
+  ctx.fillRect(x0+TILE*0.24, y0+TILE*0.76, TILE*0.06, TILE*0.12);
+  ctx.fillRect(x0+cx-TILE*0.03, y0+TILE*0.76, TILE*0.06, TILE*0.12);
+  ctx.fillRect(x0+TILE*0.70, y0+TILE*0.76, TILE*0.06, TILE*0.12);
+  ctx.strokeStyle = shadeStr(0x3a3a3a,1,4);
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x0+TILE*0.26, y0+TILE*0.42);
+  ctx.quadraticCurveTo(x0+cx, y0+TILE*0.12, x0+TILE*0.74, y0+TILE*0.42);
+  ctx.stroke();
+}
+function drawPot(ctx,x0,y0){
+  // near-black base + transparency: a tall metal pot with side handles and a lid, not a cube.
+  fillTile(ctx,x0,y0,0x0a0a0a);
+  const cx = TILE*0.5;
+  ctx.fillStyle = shadeStr(0x9aa0a6,1,6);
+  ctx.fillRect(x0+TILE*0.28, y0+TILE*0.30, TILE*0.44, TILE*0.5);
+  ctx.fillStyle = shadeStr(0xc4c9ce,1,4);
+  ctx.fillRect(x0+TILE*0.26, y0+TILE*0.28, TILE*0.48, TILE*0.05);
+  ctx.fillStyle = shadeStr(0x7a8085,1,4);
+  ctx.fillRect(x0+TILE*0.16, y0+TILE*0.36, TILE*0.1, TILE*0.06);
+  ctx.fillRect(x0+TILE*0.74, y0+TILE*0.36, TILE*0.1, TILE*0.06);
+  ctx.fillStyle = shadeStr(0xb0b6bb,1,4);
+  ctx.fillRect(x0+TILE*0.30, y0+TILE*0.22, TILE*0.4, TILE*0.06);
+  ctx.fillStyle = shadeStr(0x7a8085,1,4);
+  ctx.fillRect(x0+cx-2, y0+TILE*0.16, 4, 6);
+}
+function drawPan(ctx,x0,y0){
+  // near-black base + transparency: a round pan seen from above with a long handle, not a cube.
+  fillTile(ctx,x0,y0,0x0a0a0a);
+  const cx = TILE*0.42, cy = TILE*0.56, r = TILE*0.28;
+  for(let py=-r;py<=r;py++){
+    const half = Math.sqrt(Math.max(0,r*r-py*py));
+    ctx.fillStyle = shadeStr(0x2c2420, 1.0+py/(r*3), 6);
+    ctx.fillRect(x0+cx-half, y0+cy+py, half*2, 1);
+  }
+  const r2 = r*0.72;
+  for(let py=-r2;py<=r2;py++){
+    const half = Math.sqrt(Math.max(0,r2*r2-py*py));
+    ctx.fillStyle = shadeStr(0x3a3028, 1.0, 8);
+    ctx.fillRect(x0+cx-half, y0+cy+py, half*2, 1);
+  }
+  ctx.fillStyle = shadeStr(0x1c1c1c,1,4);
+  ctx.fillRect(x0+cx+r*0.6, y0+cy-TILE*0.045, TILE*0.34, TILE*0.09);
+}
+function drawGriddle(ctx,x0,y0){
+  // near-black base + transparency: a flat plate with grill marks, not a cube.
+  fillTile(ctx,x0,y0,0x0a0a0a);
+  ctx.fillStyle = shadeStr(0x3a3a3a,1,6);
+  ctx.fillRect(x0+TILE*0.1, y0+TILE*0.32, TILE*0.8, TILE*0.5);
+  ctx.fillStyle = shadeStr(0x555555,1,4);
+  ctx.fillRect(x0+TILE*0.08, y0+TILE*0.30, TILE*0.84, TILE*0.05);
+  ctx.fillRect(x0+TILE*0.08, y0+TILE*0.79, TILE*0.84, TILE*0.03);
+  ctx.fillStyle = 'rgba(15,15,15,0.55)';
+  for(let i=0;i<4;i++) ctx.fillRect(x0+TILE*0.16, y0+TILE*0.38+i*TILE*0.1, TILE*0.68, 2);
+  ctx.fillStyle = shadeStr(0x1c1c1c,1,4);
+  ctx.fillRect(x0+TILE*0.02, y0+TILE*0.5, TILE*0.08, TILE*0.1);
+  ctx.fillRect(x0+TILE*0.9, y0+TILE*0.5, TILE*0.08, TILE*0.1);
+}
+function drawBearBox(ctx,x0,y0){
+  // A solid, heavy-looking metal storage trunk: banded, hinged, padlocked shut.
+  fillTile(ctx,x0,y0,0x3a5f3a);
+  speckle(ctx,x0,y0,0x3a5f3a,Math.round(TILE*TILE*0.08),8);
+  ctx.fillStyle = shadeStr(0x1c2a1c,1,6);
+  ctx.fillRect(x0, y0, TILE, TILE*0.12);
+  ctx.fillRect(x0, y0+TILE*0.44, TILE, TILE*0.12);
+  ctx.fillRect(x0, y0+TILE*0.88, TILE, TILE*0.12);
+  ctx.fillStyle = shadeStr(0x2a2a2a,1,6);
+  ctx.fillRect(x0+TILE*0.04, y0+TILE*0.2, TILE*0.1, TILE*0.14);
+  ctx.fillRect(x0+TILE*0.86, y0+TILE*0.2, TILE*0.1, TILE*0.14);
+  const cx = TILE*0.5, cy = TILE*0.66;
+  ctx.strokeStyle = shadeStr(0xd8d2c0,1,4);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(x0+cx, y0+cy-TILE*0.08, TILE*0.07, Math.PI, 0);
+  ctx.stroke();
+  ctx.fillStyle = shadeStr(0xc9a020,1,6);
+  ctx.fillRect(x0+cx-TILE*0.08, y0+cy-TILE*0.04, TILE*0.16, TILE*0.14);
+}
 function buildAtlas(){
   const canvas = document.createElement('canvas');
   canvas.width = TILE*ATLAS_COLS;
@@ -1073,7 +1186,8 @@ function buildAtlas(){
                 drawLeaves, drawPlanks, drawBedrock, drawCraftTop, drawCraftSide, drawBricks, drawWater,
                 drawWindow, drawWindowOpen, drawDoor, drawDoorOpen, drawSapling, drawFlint, drawFire, drawTorch,
                 drawLadder, drawLeavesSparse, drawLeavesDense,
-                drawTent, drawCampfire, drawLantern, drawFlag, drawBackpack];
+                drawTent, drawCampfire, drawLantern, drawFlag, drawBackpack,
+                drawDutchOven, drawPot, drawPan, drawGriddle, drawBearBox];
   draw.forEach((fn, i)=> fn(ctx, (i%ATLAS_COLS)*TILE, Math.floor(i/ATLAS_COLS)*TILE));
   const tex = new THREE.CanvasTexture(canvas);
   tex.magFilter = THREE.NearestFilter;
@@ -1116,6 +1230,11 @@ const BLOCK_TILES = {
   [LANTERN]: {top:T_LANTERN, side:T_LANTERN, bottom:T_LANTERN},
   [FLAG]: {top:T_FLAG, side:T_FLAG, bottom:T_FLAG},
   [BACKPACK]: {top:T_BACKPACK, side:T_BACKPACK, bottom:T_PLANKS},
+  [DUTCH_OVEN]: {top:T_DUTCH_OVEN, side:T_DUTCH_OVEN, bottom:T_DUTCH_OVEN},
+  [POT]: {top:T_POT, side:T_POT, bottom:T_POT},
+  [PAN]: {top:T_PAN, side:T_PAN, bottom:T_PAN},
+  [GRIDDLE]: {top:T_GRIDDLE, side:T_GRIDDLE, bottom:T_GRIDDLE},
+  [BEAR_BOX]: {top:T_BEAR_BOX, side:T_BEAR_BOX, bottom:T_STONE},
 };
 // per-face-direction UV winding (0/1 flags select u0/u1 and vBottom/vTop), aligned to FACES order below
 const UV_PATTERNS = [
@@ -1217,6 +1336,45 @@ function generateWorld(){
       }
     }
   }
+  buildCookingArea();
+}
+// ---------- Cooking area: a flat, permanent 20x20 camp-cooking clearing ----------
+// A fixed, indestructible set of camp cooking stations near world center: four campfires each with
+// a specific piece of cookware sitting on top, one bare campfire, and a bear box for food storage,
+// spread evenly across a leveled clearing. Built once during world-gen, not player-placed — the
+// fixtures are permanently protected from breaking (see PROTECTED_CELLS).
+const COOKING_AREA_SIZE = 20;
+const COOKING_AREA_ORIGIN = { x: 54, z: 54 }; // centers the clearing on the map (WORLD_SIZE/2 = 64)
+const COOKING_AREA_Y = SEA_LEVEL + 3; // fixed height — flat and dry regardless of underlying terrain
+function buildCookingArea(){
+  const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
+  for(let dx=0; dx<COOKING_AREA_SIZE; dx++){
+    for(let dz=0; dz<COOKING_AREA_SIZE; dz++){
+      const x=x0+dx, z=z0+dz;
+      for(let y=1; y<COOKING_AREA_Y-1; y++) setBlock(x,y,z,STONE);
+      setBlock(x,COOKING_AREA_Y-1,z,DIRT);
+      setBlock(x,COOKING_AREA_Y,z,DIRT); // a bare, fire-safe clearing, not grass
+      for(let y=COOKING_AREA_Y+1; y<WORLD_HEIGHT; y++) setBlock(x,y,z,AIR);
+    }
+  }
+  const fy = COOKING_AREA_Y+1;
+  const protect = (x,y,z,block) => { setBlock(x,y,z,block); PROTECTED_CELLS.add(x+','+y+','+z); };
+  // A raw setBlock (like the rest of world-gen) never goes through applyWorldEdit, so it wouldn't
+  // otherwise get the point light updateTorchLight normally attaches on placement — these campfires
+  // need it called explicitly or they'd sit here glowless.
+  const protectFire = (x,y,z) => { protect(x,y,z,CAMPFIRE); updateTorchLight(x,y,z,CAMPFIRE); };
+  const stations = [
+    { x:x0+5,  z:z0+6,  ware:DUTCH_OVEN },
+    { x:x0+10, z:z0+6,  ware:POT },
+    { x:x0+15, z:z0+6,  ware:PAN },
+    { x:x0+5,  z:z0+14, ware:GRIDDLE },
+  ];
+  for(const s of stations){
+    protectFire(s.x, fy, s.z);
+    protect(s.x, fy+1, s.z, s.ware);
+  }
+  protectFire(x0+10, fy, z0+14); // a fifth, plain campfire
+  protect(x0+15, fy, z0+14, BEAR_BOX);
 }
 // writeFn(bx,by,bz,block,unconditional) decides how each cell actually gets written — plantTree/
 // plantBush use a raw setBlock (fast, unsynced — fine for deterministic world-gen), the *Synced
@@ -1401,7 +1559,7 @@ const glassMaterial = new THREE.MeshLambertMaterial({ vertexColors: true, side: 
 // Any block that isn't fully opaque. A face between two blocks of the SAME transparent type is
 // skipped (no point rendering the seam between two adjacent water, window, or leaf blocks); a face
 // against a *different* transparent type, or against AIR, still draws.
-const TRANSPARENT_BLOCKS = new Set([WATER, WINDOW, WINDOW_OPEN, DOOR_OPEN, SAPLING, FIRE, TORCH, LADDER, LEAVES, LANTERN, FLAG]);
+const TRANSPARENT_BLOCKS = new Set([WATER, WINDOW, WINDOW_OPEN, DOOR_OPEN, SAPLING, FIRE, TORCH, LADDER, LEAVES, LANTERN, FLAG, DUTCH_OVEN, POT, PAN, GRIDDLE]);
 // The subset of the above that a "is this column covered by a roof" check treats as passing sky/
 // light straight through. Leaves are deliberately left out — a tree's canopy still counts as real
 // shelter/shade (indoor darkening, temperature danger) even though it now renders sparse and
@@ -2629,11 +2787,12 @@ function flashHurt(){
 }
 function damagePlayer(dmg, sourceType){
   if(dmg<=0) return;
-  myHP = Math.max(0, myHP - dmg);
+  // Floors at 1, not 0: badly hurt (half a heart, flashing red) is as bad as it gets — death and
+  // respawn never trigger. die()/isDead/the respawn flow below stay in place, just permanently unused.
+  myHP = Math.max(1, myHP - dmg);
   updateHeartsUI();
   flashHurt();
   SFX.hurt();
-  if(myHP<=0) die();
 }
 function die(){
   if(isDead) return;
@@ -2660,7 +2819,7 @@ function respawnAfterDeath(){
 // plus that jump to morning.
 let sleeping = false;
 function trySleep(){
-  if(sleeping || craftingOpen || itemsOpen || sashOpen) return;
+  if(sleeping || craftingOpen || itemsOpen || sashOpen || bearBoxOpen) return;
   if(!nearestTent(4)){ addChatMessage('Camp', '⛺ You need to be near your tent to sleep.'); return; }
   if(!isScoutNight()){ addChatMessage('Camp', "☀️ You're not sleepy yet — try again after dark."); return; }
   sleeping = true;
@@ -3111,8 +3270,9 @@ const STAR_DOME_RADIUS = 300;
 // Fixed direction the Dipper sits in: due north (matches bearingName's -Z-is-north convention) and
 // well up in the sky, so "look north and up" is a real, learnable instruction.
 const BIG_DIPPER_DIR = new THREE.Vector3(0, Math.sin(55*Math.PI/180), -Math.cos(55*Math.PI/180)).normalize();
-const DIPPER_GAZE_COS = Math.cos(9 * Math.PI/180); // ~9° cone — generous, but you do have to aim at it
+const DIPPER_GAZE_COS = Math.cos(18 * Math.PI/180); // ~18° cone — roughly the whole drawn shape, forgiving of ordinary mouse drift
 const DIPPER_GAZE_SECONDS = 10;
+const DIPPER_GAZE_GRACE_S = 1.5; // briefly glancing away doesn't wipe out the whole streak, only stopping this long does
 // The real ladle asterism in local (right, up) offsets around BIG_DIPPER_DIR — handle tip to bowl:
 // Alkaid, Mizar, Alioth, Megrez, then the bowl itself Megrez-Phecda-Merak-Dubhe back to Megrez.
 const DIPPER_STARS = [
@@ -5593,6 +5753,7 @@ function breakBlock(){
   if(!hit) return;
   const b = getBlock(hit.x,hit.y,hit.z);
   if(b===BEDROCK) return;
+  if(PROTECTED_CELLS.has(hit.x+','+hit.y+','+hit.z)) return;
   if(b===DOOR || b===DOOR_OPEN){
     const cells = findDoorCells(hit.x,hit.y,hit.z) || [{x:hit.x,y:hit.y,z:hit.z}];
     for(const c of cells) applyWorldEdit(c.x, c.y, c.z, AIR);
@@ -5805,11 +5966,12 @@ window.addEventListener('keydown', e=>{
   if(e.code==='Escape'){
     if(craftingOpen){ closeCrafting(false); return; }
     if(itemsOpen){ closeItems(false); return; }
+    if(bearBoxOpen){ closeBearBox(false); return; }
     if(sashOpen){ closeSash(false); return; }
   }
   if(e.code==='KeyM'){
     if(sashOpen){ closeSash(true); return; }
-    if(craftingOpen || itemsOpen) return;
+    if(craftingOpen || itemsOpen || bearBoxOpen) return;
     if(locked && !isDead) openSash();
     return;
   }
@@ -5868,6 +6030,7 @@ function doInteract(){
   if(hitBlock===CRAFTING_TABLE) openCrafting();
   // A placed Backpack is just a quick way back into your own pack — same panel the I key opens.
   else if(hitBlock===BACKPACK) openItems();
+  else if(hitBlock===BEAR_BOX) openBearBox();
   else if(hitBlock in TOGGLE_MAP) toggleOpenable(hit.x, hit.y, hit.z, hitBlock);
   else placeBlock();
 }
@@ -5919,7 +6082,7 @@ overlay.addEventListener('click', ()=>{
 document.addEventListener('pointerlockchange', ()=>{
   if(isTouchDevice) return;
   locked = document.pointerLockElement === document.body;
-  overlay.hidden = locked || craftingOpen || itemsOpen;
+  overlay.hidden = locked || craftingOpen || itemsOpen || bearBoxOpen;
 });
 document.addEventListener('mousemove', e=>{
   if(!locked || isTouchDevice) return;
@@ -6279,6 +6442,111 @@ function renderItemsGrid(){
   }
 }
 
+// ---------- Bear box (fixed camp food storage, up to 100 items total) ----------
+// A single shared stash, independent of your own pack, sitting at the cooking area — click an item
+// on either side to move one across. Capacity is a combined total across every item type, not
+// per-type, same as "100 items" reads literally.
+const BEAR_BOX_CAPACITY = 100;
+const BEAR_BOX_KEY = 'scoutcraft_bearbox_v1';
+const bearBoxStorage = {}; // id -> qty
+let bearBoxOpen = false;
+function bearBoxTotal(){ return Object.values(bearBoxStorage).reduce((a,b)=>a+b,0); }
+function saveBearBox(){
+  try{ localStorage.setItem(BEAR_BOX_KEY, JSON.stringify(bearBoxStorage)); }catch(e){}
+}
+function loadBearBox(){
+  try{
+    const obj = JSON.parse(localStorage.getItem(BEAR_BOX_KEY) || '{}');
+    for(const k in obj) bearBoxStorage[k] = obj[k];
+  }catch(e){}
+}
+function depositToBearBox(id){
+  if(invCount(id)<=0 || bearBoxTotal()>=BEAR_BOX_CAPACITY) return;
+  invSub(id,1);
+  bearBoxStorage[id] = (bearBoxStorage[id]||0)+1;
+  saveInventory();
+  saveBearBox();
+  updateHotbarUI();
+  renderBearBox();
+}
+function withdrawFromBearBox(id){
+  if(!bearBoxStorage[id]) return;
+  bearBoxStorage[id]--;
+  if(bearBoxStorage[id]<=0) delete bearBoxStorage[id];
+  invAdd(id,1);
+  saveInventory();
+  saveBearBox();
+  updateHotbarUI();
+  renderBearBox();
+}
+function makeBearBoxTile(id, count, onClick){
+  const tile = document.createElement('div');
+  tile.className = 'itemTile';
+  const sw = document.createElement('div');
+  sw.className = 'swatch';
+  sw.style.background = swatchColor(id);
+  tile.appendChild(sw);
+  if(HOTBAR_ICON[id]){
+    const icon = document.createElement('div');
+    icon.className = 'icon';
+    icon.textContent = HOTBAR_ICON[id];
+    tile.appendChild(icon);
+  }
+  const countEl = document.createElement('div');
+  countEl.className = 'itemCount';
+  countEl.textContent = count;
+  tile.appendChild(countEl);
+  const label = document.createElement('div');
+  label.className = 'itemLabel';
+  label.textContent = BLOCK_NAME[id];
+  tile.appendChild(label);
+  tile.title = `${BLOCK_NAME[id]} — ${count}`;
+  tile.addEventListener('click', onClick);
+  return tile;
+}
+function renderBearBox(){
+  document.getElementById('bearBoxCount').textContent = bearBoxTotal();
+  const yourGrid = document.getElementById('bearBoxYourGrid');
+  const boxGrid = document.getElementById('bearBoxStorageGrid');
+  yourGrid.innerHTML = '';
+  boxGrid.innerHTML = '';
+  // Firework is unlimited/never-consumed — storing it away would just eat the box's real capacity
+  // for nothing, so it's left out of the deposit side entirely.
+  const held = ALL_ITEMS.filter(id => id!==FIREWORK && invCount(id)>0);
+  if(held.length===0){
+    const note = document.createElement('div'); note.className = 'bearBoxEmptyNote'; note.textContent = "You aren't carrying anything.";
+    yourGrid.appendChild(note);
+  } else {
+    held.forEach(id => yourGrid.appendChild(makeBearBoxTile(id, invCount(id), ()=> depositToBearBox(id))));
+  }
+  const stored = Object.keys(bearBoxStorage).map(Number).filter(id => bearBoxStorage[id]>0);
+  if(stored.length===0){
+    const note = document.createElement('div'); note.className = 'bearBoxEmptyNote'; note.textContent = 'Nothing stored yet.';
+    boxGrid.appendChild(note);
+  } else {
+    stored.forEach(id => boxGrid.appendChild(makeBearBoxTile(id, bearBoxStorage[id], ()=> withdrawFromBearBox(id))));
+  }
+}
+const bearBoxModal = document.getElementById('bearBoxModal');
+document.getElementById('bearBoxClose').addEventListener('click', ()=> closeBearBox(true));
+bearBoxModal.addEventListener('click', e=>{ if(e.target===bearBoxModal) closeBearBox(true); });
+function openBearBox(){
+  bearBoxOpen = true;
+  bearBoxModal.hidden = false;
+  if(document.pointerLockElement) document.exitPointerLock();
+  if(isTouchDevice) locked = false;
+  overlay.hidden = true;
+  renderBearBox();
+}
+function closeBearBox(relock){
+  bearBoxOpen = false;
+  bearBoxModal.hidden = true;
+  if(relock){
+    if(isTouchDevice) locked = true;
+    else document.body.requestPointerLock();
+  } else if(!isTouchDevice) overlay.hidden = false;
+}
+
 // ---------- Camp log ----------
 // A small on-screen message log for local feedback (cooking hints, sleep, badge-adjacent tips) —
 // there's no chat to send here, single-player has no one else to send it to.
@@ -6368,6 +6636,7 @@ function init(){
   loadFires();
   loadWorms();
   loadButterflies();
+  loadBearBox();
 
   window.addEventListener('resize', ()=>{
     camera.aspect = window.innerWidth/window.innerHeight;
