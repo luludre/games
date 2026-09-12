@@ -4988,6 +4988,125 @@ function updateTurtles(dt){
   }
 }
 
+// ---------- Hercules beetles: purely decorative, fixed population clinging to tree trunks ----------
+// Unlike birds/fish/turtles they never roam and are never recycled toward the player — each one
+// picks one real trunk in the world at spawn time and stays there for the session. Like the rest of
+// this ambient wildlife, they're not saved to localStorage; a reload just re-rolls 10 fresh spots.
+const HERCULES_BEETLE_COUNT = 10;
+const beetles = [];
+let beetleShellMat, beetleLegMat;
+function beetleMaterials(){
+  if(!beetleShellMat){
+    beetleShellMat = new THREE.MeshLambertMaterial({ color: 0x0b0b0d }); // near-black shell
+    beetleLegMat = new THREE.MeshLambertMaterial({ color: 0x1c1c1e });
+  }
+  return { shell: beetleShellMat, leg: beetleLegMat };
+}
+// A low-poly beetle built the same "compose primitives" way as the birds/animals above: three body
+// segments stacked along +Y (it clings to bark vertically, so "up the body" is "up the trunk"), a
+// pair of curved horns meeting like forceps — the signature a male Hercules beetle fights with — and
+// three pairs of splayed legs gripping the sides.
+function buildBeetleMesh(){
+  const { shell, leg } = beetleMaterials();
+  const g = new THREE.Group();
+
+  const abdomen = animalBox(0.20, 0.16, 0.14, shell);
+  abdomen.position.set(0, 0.10, 0);
+  g.add(abdomen);
+
+  const thorax = animalBox(0.16, 0.10, 0.12, shell);
+  thorax.position.set(0, 0.22, 0);
+  g.add(thorax);
+
+  const head = animalBox(0.11, 0.08, 0.10, shell);
+  head.position.set(0, 0.30, 0);
+  g.add(head);
+
+  const headHorn = animalBox(0.035, 0.22, 0.035, shell);
+  headHorn.geometry.translate(0, 0.11, 0); // pivot at its base so rotation curves the tip, not the root
+  headHorn.position.set(0, 0.34, 0);
+  headHorn.rotation.x = -0.6;
+  g.add(headHorn);
+
+  const thoraxHorn = animalBox(0.04, 0.15, 0.04, shell);
+  thoraxHorn.geometry.translate(0, 0.075, 0);
+  thoraxHorn.position.set(0, 0.27, -0.02);
+  thoraxHorn.rotation.x = 0.9; // curves down to meet the head horn's tip
+  g.add(thoraxHorn);
+
+  const legPositions = [
+    [ 0.10, 0.24, -0.03], [-0.10, 0.24, -0.03], // front
+    [ 0.10, 0.17,  0.00], [-0.10, 0.17,  0.00], // middle
+    [ 0.09, 0.10,  0.03], [-0.09, 0.10,  0.03], // back
+  ];
+  const legs = legPositions.map(([px,py,pz])=>{
+    const side = px>0 ? 1 : -1;
+    const l = animalBox(0.13, 0.025, 0.025, leg);
+    l.geometry.translate(side*0.065, 0, 0); // pivot at the body end
+    l.position.set(px, py, pz);
+    l.rotation.z = side * -0.5;
+    g.add(l);
+    return l;
+  });
+  g.userData.legs = legs;
+  g.traverse(o => { if(o.isMesh) o.castShadow = true; });
+  return g;
+}
+// Picks a random exposed face of the trunk at (x,y,z) — one whose neighboring cell is open air, so
+// the beetle sits visibly on the bark surface rather than embedded in solid ground or foliage.
+function pickBeetleFace(x,y,z){
+  const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+  for(let i=dirs.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [dirs[i],dirs[j]]=[dirs[j],dirs[i]]; }
+  for(const [dx,dz] of dirs) if(getBlock(x+dx,y,z+dz)===AIR) return {dx,dz};
+  return null;
+}
+// Finds up to `count` distinct trees (one beetle per tree) and a real trunk block + exposed face on
+// each. Trees are sparse enough across a 128x128 world that random column sampling (the approach
+// findInitialWormSpot uses when it only ever needs one hit) unreliably comes up short of 10 — so
+// this does one exhaustive pass over every column instead, collects every tree found, then shuffles
+// and takes the first `count`. Same one-time cost class as generateWorld's own per-column pass.
+function findBeetleSpots(count){
+  const candidates = [];
+  for(let x=4; x<WORLD_SIZE-4; x++){
+    for(let z=4; z<WORLD_SIZE-4; z++){
+      const h = heightAt(x,z);
+      if(h<=SEA_LEVEL+1) continue;
+      for(let y=h; y<h+5 && y<WORLD_HEIGHT; y++){
+        if(getBlock(x,y,z)===WOOD){ candidates.push({x, y, z}); break; }
+      }
+    }
+  }
+  for(let i=candidates.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [candidates[i],candidates[j]]=[candidates[j],candidates[i]]; }
+  const spots = [];
+  for(const c of candidates){
+    if(spots.length>=count) break;
+    const face = pickBeetleFace(c.x, c.y, c.z);
+    if(!face) continue;
+    spots.push({x:c.x, y:c.y, z:c.z, dx:face.dx, dz:face.dz});
+  }
+  return spots;
+}
+function ensureBeetles(){
+  if(beetles.length) return;
+  for(const s of findBeetleSpots(HERCULES_BEETLE_COUNT)){
+    const mesh = buildBeetleMesh();
+    mesh.rotation.y = Math.random()*Math.PI*2;
+    mesh.position.set(s.x+0.5+s.dx*0.46, s.y+0.15, s.z+0.5+s.dz*0.46);
+    scene.add(mesh);
+    beetles.push({ mesh, phase: Math.random()*Math.PI*2 });
+  }
+}
+function updateBeetles(dt){
+  ensureBeetles();
+  const t = performance.now()/1000;
+  for(const be of beetles){
+    // A small idle leg twitch so they read as alive rather than a static prop, without ever leaving
+    // the trunk they spawned on.
+    const twitch = Math.sin(t*2 + be.phase)*0.06;
+    for(const l of be.mesh.userData.legs) l.rotation.x = twitch;
+  }
+}
+
 // ---------- Saplings: little trees that randomly appear on grass and slowly grow into full trees ----------
 const SAPLING_MAX_STAGE = 3;          // height in blocks while still growing, before it becomes a real tree
 const SAPLING_STAGE_MS = 400000;      // real time between each extra block of height (10x slower)
@@ -6922,6 +7041,7 @@ function animate(now){
   updateBirds(dt);
   updateFish(dt);
   updateTurtles(dt);
+  updateBeetles(dt);
   updateBigEagles(dt);
   updateGophers(dt);
   heldTorchLight.visible = HOTBAR[selectedSlot]===TORCH;
