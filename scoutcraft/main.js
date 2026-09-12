@@ -37,10 +37,15 @@ const FLAG_POLE=37;
 // play already packed in the Backpack (see SCOUT_ESSENTIALS/loadBackpackStorage).
 const POCKETKNIFE=38, FIRST_AID_KIT=39, EXTRA_CLOTHING=40, RAIN_GEAR=41, WATER_BOTTLE=42,
       FLASHLIGHT=43, TRAIL_FOOD=44, SUN_PROTECTION=45, SCOUTBOOK=46;
+// FISHING_POLE is a carried tool like Compass — right-clicking it does something special (see
+// tryFish) rather than either placing a block or being a no-op, so it's deliberately left out of
+// CARRY_ONLY_ITEMS below. FISH is what it catches: a plain carried item like the essentials, no
+// special interaction of its own.
+const FISHING_POLE=47, FISH=48;
 // Items with no block form at all (see doInteract) — right-clicking one does nothing, or whatever
 // its own special case above already handles (Flint ignites, Compass takes a bearing).
 const CARRY_ONLY_ITEMS = new Set([ROPE, POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR,
-  WATER_BOTTLE, FLASHLIGHT, TRAIL_FOOD, SUN_PROTECTION, SCOUTBOOK]);
+  WATER_BOTTLE, FLASHLIGHT, TRAIL_FOOD, SUN_PROTECTION, SCOUTBOOK, FISH]);
 
 const BLOCK_COLOR = {
   [GRASS]:  0x5b8a3a,
@@ -88,6 +93,8 @@ const BLOCK_COLOR = {
   [TRAIL_FOOD]: 0x9a7a4a,
   [SUN_PROTECTION]: 0xf0d080,
   [SCOUTBOOK]: 0x2a5f8a,
+  [FISHING_POLE]: 0x8a6a3a,
+  [FISH]: 0x7ab0c9,
 };
 const BLOCK_NAME = {
   [GRASS]:'Grass', [DIRT]:'Dirt', [STONE]:'Stone', [SAND]:'Sand', [WOOD]:'Wood',
@@ -103,13 +110,15 @@ const BLOCK_NAME = {
   [POCKETKNIFE]:'Pocketknife', [FIRST_AID_KIT]:'First Aid Kit', [EXTRA_CLOTHING]:'Extra Clothing',
   [RAIN_GEAR]:'Rain Gear', [WATER_BOTTLE]:'Water Bottle', [FLASHLIGHT]:'Flashlight',
   [TRAIL_FOOD]:'Trail Food', [SUN_PROTECTION]:'Sun Protection', [SCOUTBOOK]:'Scoutbook',
+  [FISHING_POLE]:'Fishing Pole', [FISH]:'Fish',
 };
 // Every item the player can ever select. The hotbar only shows HOTBAR_SIZE of these at a time —
 // the rest are reachable through the Items panel (the palette button, or the "I" key), which lets
 // the player swap any hotbar slot for anything in this list.
 const ALL_ITEMS = [GRASS, DIRT, STONE, SAND, WOOD, LEAVES, PLANKS, WATER, CRAFTING_TABLE, BRICKS, STICK, WINDOW, DOOR, FLINT, TORCH, FIREWORK, LADDER, MEAT,
   ROPE, TENT, CAMPFIRE, LANTERN, FLAG, COMPASS, COOKED_MEAT, BACKPACK,
-  POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR, WATER_BOTTLE, FLASHLIGHT, TRAIL_FOOD, SUN_PROTECTION, SCOUTBOOK];
+  POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR, WATER_BOTTLE, FLASHLIGHT, TRAIL_FOOD, SUN_PROTECTION, SCOUTBOOK,
+  FISHING_POLE, FISH];
 const HOTBAR_SIZE = 9;
 // A scout's starting kit: building materials first, then the camp gear you earn badges with.
 const DEFAULT_HOTBAR = [WOOD, PLANKS, STONE, CRAFTING_TABLE, CAMPFIRE, TENT, FLAG, FLINT, COMPASS];
@@ -130,7 +139,8 @@ function loadHotbar(){
 const HOTBAR_ICON = { [CRAFTING_TABLE]: '🛠️', [WINDOW]: '🪟', [DOOR]: '🚪', [FLINT]: '🪨', [TORCH]: '🕯️', [FIREWORK]: '🎆', [LADDER]: '🪜', [MEAT]: '🍗',
   [ROPE]: '🪢', [TENT]: '⛺', [CAMPFIRE]: '🔥', [LANTERN]: '🏮', [FLAG]: '🚩', [COMPASS]: '🧭', [COOKED_MEAT]: '🍖', [BACKPACK]: '🎒',
   [POCKETKNIFE]: '🔪', [FIRST_AID_KIT]: '🩹', [EXTRA_CLOTHING]: '🧥', [RAIN_GEAR]: '☂️', [WATER_BOTTLE]: '🥤',
-  [FLASHLIGHT]: '🔦', [TRAIL_FOOD]: '🥜', [SUN_PROTECTION]: '🧴', [SCOUTBOOK]: '📘' };
+  [FLASHLIGHT]: '🔦', [TRAIL_FOOD]: '🥜', [SUN_PROTECTION]: '🧴', [SCOUTBOOK]: '📘',
+  [FISHING_POLE]: '🎣', [FISH]: '🐟' };
 // Blocks with an open/closed state: right-clicking one toggles it to the other id in this map.
 const TOGGLE_MAP = { [WINDOW]:WINDOW_OPEN, [WINDOW_OPEN]:WINDOW, [DOOR]:DOOR_OPEN, [DOOR_OPEN]:DOOR };
 // Breaking the open form of a toggleable block gives you back its closed (placeable) form.
@@ -231,6 +241,7 @@ const BADGES = [
   { id:'firstaid',   emoji:'⛑️',          name:'First Aid',    hint:'Heal back to full health after nearly dying.', test:()=> scoutStats.recoveries >= 1 },
   { id:'troopflag',  emoji:'🚩', name:'Troop Flag',   hint:'Raise your troop flag at camp.',               test:()=> scoutStats.flags >= 1 },
   { id:'astronomy',  emoji:'⭐', name:'Astronomy',    hint:'Find the Big Dipper and stare at it for 10 seconds.', test:()=> scoutStats.dipperFound },
+  { id:'fishing',    emoji:'🎣', name:'Fishing',      hint:'Catch 5 fish.',                                test:()=> scoutStats.fishCaught >= 5 },
 ];
 // Ranks are purely derived from how many badges you hold — no separate progression to track.
 // Eagle Scout always means "every badge earned," so it's tied to BADGES.length rather than a number
@@ -256,7 +267,7 @@ const earnedBadges = new Set();
 const scoutStats = {
   wood:0, rope:0, campfires:0, tents:0, flags:0, meals:0, compassUses:0,
   hiked:0, swam:0, highest:0, nightSeconds:0, recoveries:0, species:[],
-  campX:null, campZ:null, dipperFound:false,
+  campX:null, campZ:null, dipperFound:false, fishCaught:0,
 };
 function saveScoutProgress(){
   try{
@@ -488,6 +499,79 @@ function tryCookAtCampfire(){
   saveScoutProgress();
 }
 
+// ---- Fishing: cast into water that has a fish nearby, then hold still for FISHING_HOLD_SECONDS ----
+const FISHING_HOLD_SECONDS = 20;
+const FISHING_FISH_RADIUS = 6;   // how close a live fish needs to be to the cast spot to bite at all
+const FISHING_MAX_DRIFT = 1.5;   // wander further than this from where you cast and you lose the line
+let fishingSpot = null; // {startX, startZ} of the player when the line went in, or null when not fishing
+let fishingTimer = 0;
+// A dedicated raycast rather than the shared raycastBlock(), which deliberately treats WATER as
+// see-through (same as AIR) for break/place purposes — so it always reports whatever's under or past
+// the water, never the water itself. This one stops at the first WATER voxel instead, and gives up if
+// it hits solid ground first without ever passing through any.
+function raycastWater(maxDist=8, step=0.05){
+  const dir = getLookDir(player.yaw, player.pitch);
+  const origin = camera.position;
+  for(let t=0; t<maxDist; t+=step){
+    const bx = Math.floor(origin.x+dir.x*t), by = Math.floor(origin.y+dir.y*t), bz = Math.floor(origin.z+dir.z*t);
+    const b = getBlock(bx,by,bz);
+    if(b===WATER) return {x:bx, y:by, z:bz};
+    if(b!==AIR) return null;
+  }
+  return null;
+}
+function nearbyFish(x,y,z,radius){
+  const r2 = radius*radius;
+  for(const f of fish){
+    if(!f.hasHome || !f.mesh.visible) continue;
+    const dx=f.mesh.position.x-x, dy=f.mesh.position.y-y, dz=f.mesh.position.z-z;
+    if(dx*dx+dy*dy+dz*dz <= r2) return true;
+  }
+  return false;
+}
+function tryFish(){
+  if(fishingSpot){
+    addChatMessage('Camp', '🎣 You reel your line back in.');
+    fishingSpot = null; fishingTimer = 0;
+    return;
+  }
+  const spot = raycastWater();
+  if(!spot){
+    addChatMessage('Camp', '🎣 Aim at some water to cast your line.');
+    return;
+  }
+  if(!nearbyFish(spot.x+0.5, spot.y+0.5, spot.z+0.5, FISHING_FISH_RADIUS)){
+    addChatMessage('Camp', "🎣 No fish are biting here — try a different spot.");
+    return;
+  }
+  fishingSpot = { startX: player.pos.x, startZ: player.pos.z };
+  fishingTimer = 0;
+  SFX.placeBlock();
+  addChatMessage('Camp', '🎣 You cast your line. Hold steady...');
+}
+function updateFishing(dt){
+  if(!fishingSpot) return;
+  if(!locked || isDead){ fishingSpot = null; fishingTimer = 0; return; }
+  if(HOTBAR[selectedSlot] !== FISHING_POLE){ fishingSpot = null; fishingTimer = 0; return; }
+  const moved = Math.hypot(player.pos.x-fishingSpot.startX, player.pos.z-fishingSpot.startZ);
+  if(moved > FISHING_MAX_DRIFT){
+    addChatMessage('Camp', '🎣 You wandered off and lost your line.');
+    fishingSpot = null; fishingTimer = 0;
+    return;
+  }
+  fishingTimer += dt;
+  if(fishingTimer >= FISHING_HOLD_SECONDS){
+    invAdd(FISH, 1);
+    saveInventory();
+    updateHotbarUI();
+    Scout.bump('fishCaught');
+    saveScoutProgress();
+    SFX.craft();
+    addChatMessage('Camp', '🐟 You caught a fish!');
+    fishingSpot = null; fishingTimer = 0;
+  }
+}
+
 // ---- The sash: every badge, earned and still to earn ----
 let sashOpen = false;
 function openSash(){
@@ -579,6 +663,7 @@ const RECIPES = [
   { name:'Compass',        out:{id:COMPASS, qty:1},         in:[{id:FLINT, qty:1}, {id:STONE, qty:2}] },
   { name:'Troop Flag',     out:{id:FLAG, qty:1},            in:[{id:PLANKS, qty:2}, {id:STICK, qty:2}, {id:ROPE, qty:1}] },
   { name:'Backpack',       out:{id:BACKPACK, qty:1},        in:[{id:PLANKS, qty:2}, {id:ROPE, qty:2}] },
+  { name:'Fishing Pole',   out:{id:FISHING_POLE, qty:1},    in:[{id:STICK, qty:2}, {id:ROPE, qty:1}] },
 ];
 const inventory = {};
 // Fireworks are unlimited — no recipe, never consumed, always available regardless of what's saved.
@@ -6270,6 +6355,7 @@ function doInteract(){
   if(held===MEAT){ tryEatMeat(); return; }
   if(held===COOKED_MEAT){ tryEatFood(COOKED_MEAT); return; }
   if(held===COMPASS){ useCompass(); return; }
+  if(held===FISHING_POLE){ tryFish(); return; }
   // Carried items with no block form at all — without this they'd place as an untextured cube,
   // since none of them has a BLOCK_TILES entry.
   if(CARRY_ONLY_ITEMS.has(held)) return;
@@ -6545,6 +6631,7 @@ function updateHotbarUI(){
 let craftingOpen = false;
 const craftingModal = document.getElementById('craftingModal');
 const craftHint = document.getElementById('craftHint');
+const fishingHint = document.getElementById('fishingHint');
 document.getElementById('craftingClose').addEventListener('click', ()=> closeCrafting(true));
 craftingModal.addEventListener('click', e=>{ if(e.target===craftingModal) closeCrafting(true); });
 
@@ -7022,6 +7109,7 @@ function animate(now){
   if(locked && !isDead) updatePlayer(dt);
   updateDeathState(dt);
   updateScout(dt);
+  updateFishing(dt);
 
   const moving = locked && !isDead && (keys['KeyW']||keys['KeyA']||keys['KeyS']||keys['KeyD']);
   const sprinting = !!(keys['ShiftLeft']||keys['ShiftRight']);
@@ -7075,6 +7163,12 @@ function animate(now){
   }
 
   craftHint.classList.toggle('show', locked && !craftingOpen && nearestCraftingTable(4));
+  if(fishingSpot){
+    fishingHint.textContent = `🎣 Fishing... ${Math.max(0, Math.ceil(FISHING_HOLD_SECONDS - fishingTimer))}s`;
+    fishingHint.classList.add('show');
+  } else {
+    fishingHint.classList.remove('show');
+  }
 
   const coordsEl = document.getElementById('coordsLabel');
   if(coordsEl) coordsEl.textContent = `${player.pos.x.toFixed(1)}, ${player.pos.y.toFixed(1)}, ${player.pos.z.toFixed(1)}`;

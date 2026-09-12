@@ -76,6 +76,8 @@
   .chatLine b{color:#8fd0ee;}
   #craftHint{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:600;text-shadow:0 0 4px #000;z-index:11;opacity:0;transition:opacity 0.15s;pointer-events:none;background:rgba(0,0,0,0.4);padding:6px 12px;border-radius:6px;}
   #craftHint.show{opacity:1;}
+  #fishingHint{position:fixed;bottom:110px;left:50%;transform:translateX(-50%);color:#bfe4f0;font-size:13px;font-weight:600;text-shadow:0 0 4px #000;z-index:11;opacity:0;transition:opacity 0.15s;pointer-events:none;background:rgba(0,0,0,0.4);padding:6px 12px;border-radius:6px;}
+  #fishingHint.show{opacity:1;}
   #craftingModal{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;}
   #craftingPanel{background:#2b2320;color:#f2e9d8;width:min(560px,92vw);max-height:82vh;overflow:auto;border-radius:10px;border:2px solid #5a4632;box-shadow:0 10px 40px rgba(0,0,0,0.5);}
   #craftingHeader{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #5a4632;position:sticky;top:0;background:#2b2320;}
@@ -199,8 +201,9 @@
 <div id="badgeToast" hidden></div>
 <div id="crosshair"></div>
 <div id="hotbar"></div>
-<div id="hint">Left click: break / attack &nbsp;·&nbsp; Right click: place (or cook raw meat on a campfire / take a bearing with the compass / open a table or backpack / toggle a window or door) &nbsp;·&nbsp; Q R F T G C X Z B: select item &nbsp;·&nbsp; I: pack &nbsp;·&nbsp; M: badge sash &nbsp;·&nbsp; E: craft &nbsp;·&nbsp; K: sleep in tent &nbsp;·&nbsp; V: 3rd person &nbsp;·&nbsp; Ctrl: hold to crawl &nbsp;·&nbsp; L: toggle crawl &nbsp;·&nbsp; N: cycle day/night &nbsp;·&nbsp; Esc: release mouse</div>
+<div id="hint">Left click: break / attack &nbsp;·&nbsp; Right click: place (or cook raw meat on a campfire / take a bearing with the compass / open a table or backpack / toggle a window or door / cast a fishing pole into water) &nbsp;·&nbsp; Q R F T G C X Z B: select item &nbsp;·&nbsp; I: pack &nbsp;·&nbsp; M: badge sash &nbsp;·&nbsp; E: craft &nbsp;·&nbsp; K: sleep in tent &nbsp;·&nbsp; V: 3rd person &nbsp;·&nbsp; Ctrl: hold to crawl &nbsp;·&nbsp; L: toggle crawl &nbsp;·&nbsp; N: cycle day/night &nbsp;·&nbsp; Esc: release mouse</div>
 <div id="craftHint">Right-click the table (or press E) to craft</div>
+<div id="fishingHint"></div>
 <div id="chatLog"></div>
 <div id="touchControls" hidden>
   <div id="touchLookZone"></div>
