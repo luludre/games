@@ -13,9 +13,9 @@ ScoutCraft began as a fork of [Blockcraft](../blockcraft) and keeps its whole en
 terrain generation, chunked meshing, day/night cycle, seasons and weather, animals, birds, fish and
 wildlife. What's new is everything in [Merit badges](#merit-badges) and [Camp gear](#camp-gear).
 
-Made by Andre Wu, with help from his dad and an AI coding agent, to help introduce more people to
-scouting. If you enjoyed it, consider supporting scouting, Andre's own scouting adventures, and our
-troop's heroes: [🍿 Andre's Popcorn Sale](https://trails-end.com/store/scout/HQ9SW6MR).
+Built by Andre Wu, his dad, and an AI to help others discover scouting! Andre scouts with Troop 904
+out of Dublin, CA. If you had fun, please consider supporting his scouting adventures and our
+heroes: [🍿 Andre's Popcorn Sale](https://trails-end.com/store/scout/HQ9SW6MR).
 
 ## Play locally
 
@@ -53,12 +53,14 @@ Then visit `http://localhost:8000`.
 - Mouse — look (click the page first to lock the pointer)
 - Left click — break block, or attack whatever animal/player you're looking at within range
 - Right click — place block. Or, depending on what you're holding and what you're aiming at: cook Raw Meat on a Campfire, take a bearing with the Compass, eat a meal, open the Camp Workbench or a placed Backpack, toggle a window/door open or closed, or light a fire with Flint aimed at wood or leaves
-- `Q` `R` `F` `T` `G` `C` `X` `Z` `B` — select a hotbar slot directly (no number keys, no scroll-wheel cycling)
-- `I` (or click the currently-selected hotbar slot again, or the **🎒 Inventory** button) — open your inventory and choose what that slot holds
+- `Q` `R` `F` `T` `G` `C` `X` `Z` `H` — select a hotbar slot directly (no number keys, no scroll-wheel cycling)
+- `I` (or click the currently-selected hotbar slot again, or the **📦 Inventory (I)** button) — open your inventory and choose what that slot holds
+- `B` (or the **🎒 Backpack (B)** button) — open your Backpack's own storage directly, without needing to find or place one first
 - `E` — open/close crafting when standing near a Camp Workbench
-- `M` (or the **🎖️ Badges** button) — open your merit badge sash
+- `M` (or the **🎖️ Badges (M)** button) — open your merit badge sash
 - `K` — sleep through the night, if you're near your tent and it's after dark
 - `V` — toggle third-person camera (see your own blocky character)
+- The **❓ How to play** button on the start screen reveals the full tutorial paragraph (chopping trees, crafting, badges) — collapsed by default so the front page stays short; click it again (now **✕ Hide help**) to put it away.
 - The **🚪 Quit** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
 - That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you quit so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
 
@@ -67,13 +69,13 @@ On a phone or tablet (iPad included), the game automatically switches to touch c
 - Left thumb: on-screen joystick to move (push all the way to the edge to sprint)
 - Right side of the screen: drag to look around
 - ⛏ — break / attack, ▦ — place / interact (open a table, toggle a window or door, light a fire), **JUMP**, **3rd** — third-person camera
-- Tap a hotbar slot to select it, tap it again (or the **🎒 Inventory** button) to change what it holds
+- Tap a hotbar slot to select it, tap it again (or the **📦 Inventory (I)** button) to change what it holds
 
 ## Inventory & hotbar
 
-Your inventory — everything you're currently holding, with live counts — is saved to this browser. Open it with `I`, the **🎒 Inventory** button, or by clicking a hotbar slot that's already selected. It's split into what you actually have ("Your items", with a count on each) and everything else you could still obtain or craft ("Not yet obtained", grayed out) — tap any tile, held or not, to put it in the currently-selected hotbar slot.
+Your inventory — everything you're currently holding, with live counts — is saved to this browser. Open it with `I`, the **📦 Inventory (I)** button, or by clicking a hotbar slot that's already selected. It's split into what you actually have ("Your items", with a count on each) and everything else you could still obtain or craft ("Not yet obtained", grayed out) — tap any tile, held or not, to put it in the currently-selected hotbar slot.
 
-The hotbar itself only shows 9 slots (keys `Q` `R` `F` `T` `G` `C` `X` `Z` `B`, one per slot, left to right) at a time, but any slot can hold any item in the game — materials, structures, tools, all reachable from the same inventory screen. Your hotbar layout is saved per-browser, so it's exactly how you left it next time.
+The hotbar itself only shows 9 slots (keys `Q` `R` `F` `T` `G` `C` `X` `Z` `H`, one per slot, left to right) at a time, but any slot can hold any item in the game — materials, structures, tools, all reachable from the same inventory screen. Your hotbar layout is saved per-browser, so it's exactly how you left it next time.
 
 ## Crafting
 
@@ -111,7 +113,7 @@ The Craft button lights up once you have enough materials. Your inventory (like 
 
 The scouting layer on top of the sandbox. Instead of only building for its own sake, you earn
 badges for doing real scout things, and badges promote you through the ranks. Press `M` (or the
-**🎖️ Badges** button) to open your sash: earned badges are lit in gold, the rest show what they
+**🎖️ Badges (M)** button) to open your sash: earned badges are lit in gold, the rest show what they
 want and how far along you are ("14 / 25 wood").
 
 | Badge | Name | How to earn it |
@@ -174,9 +176,11 @@ one per block.
 - **Compass** — right-click it anywhere in the world and it tells you how far camp is and which
   way, as a real bearing: *"🧭 Camp: 34 blocks NNE."* Before you've lit a campfire it points to the
   middle of the map instead.
-- **Backpack** — its own personal storage, separate from your regular inventory: right-click a
-  placed one to open a two-column panel (Your Pack / Backpack, same layout as the Bear Box) and
-  click an item on either side to move it across. It holds 20 slots — one per *distinct* item type,
+- **Backpack** — its own personal storage, separate from your regular inventory: press `B` (or the
+  **🎒 Backpack (B)** button) anytime, or right-click a placed one, to open a two-column panel (Your
+  Pack / Backpack, same layout as the Bear Box) and click an item on either side to move it across.
+  The storage itself is shared and always available — placing an actual Backpack block is optional,
+  just a physical way to open the same panel while you're near it. It holds 20 slots — one per *distinct* item type,
   each unlimited in quantity, the same way your own inventory never runs out of room for more of
   something you're already carrying. It starts pre-packed, not empty: the real [Scout's 10
   Essentials](https://scoutingmagazine.org/2013/02/the-10-essentials/) — pocketknife, first aid kit, extra
@@ -296,7 +300,7 @@ Killing an animal always drops Meat — bigger animals drop more:
 | Bear     | 3            |
 | Moose    | 5            |
 
-Select Meat in your hotbar and right-click (or the place/interact button on touch) to eat a piece — each one refills 2 drumsticks, up to the max. Meat is eat-only; it can't be placed as a block. You don't need to free up a hotbar slot for it, either — open your inventory (`I`, or the Inventory button on touch) and click Meat directly to eat a piece on the spot.
+Select Meat in your hotbar and right-click (or the place/interact button on touch) to eat a piece — each one refills 2 drumsticks, up to the max. Meat is eat-only; it can't be placed as a block. You don't need to free up a hotbar slot for it, either — open your inventory (`I`, or the Inventory (I) button on touch) and click Meat directly to eat a piece on the spot.
 
 Every animal is modeled at real-world scale — world units are ~1 unit = 1 meter throughout, the same scale the 1.8-unit-tall player uses. That means a moose, at a good 2.1 blocks at the shoulder before you even count its antlers, towers well over you. Bigger animals also get a proportionally longer attack reach so their size isn't just cosmetic — a moose's kick reaches out a full block.
 
