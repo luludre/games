@@ -29,6 +29,9 @@ const ROPE=24, TENT=25, CAMPFIRE=26, LANTERN=27, FLAG=28, COMPASS=29, COOKED_MEA
 // not craftable, not in any hotbar/inventory, and permanently protected from breaking (see
 // PROTECTED_CELLS) rather than ordinary placeable blocks like the rest of this section.
 const DUTCH_OVEN=32, POT=33, PAN=34, GRIDDLE=35, BEAR_BOX=36;
+// FLAG_POLE is the bare-pole block placeFlag uses for the bottom two segments of a 3-tall Troop
+// Flag — never craftable or held on its own, same non-inventory status as the cooking fixtures above.
+const FLAG_POLE=37;
 
 const BLOCK_COLOR = {
   [GRASS]:  0x5b8a3a,
@@ -78,6 +81,7 @@ const BLOCK_NAME = {
   [ROPE]:'Rope', [TENT]:'Tent', [CAMPFIRE]:'Campfire', [LANTERN]:'Lantern',
   [FLAG]:'Troop Flag', [COMPASS]:'Compass', [COOKED_MEAT]:'Cooked Meal', [BACKPACK]:'Backpack',
   [DUTCH_OVEN]:'Dutch Oven', [POT]:'Cooking Pot', [PAN]:'Frying Pan', [GRIDDLE]:'Griddle', [BEAR_BOX]:'Bear Box',
+  [FLAG_POLE]:'Flagpole',
 };
 // Every item the player can ever select. The hotbar only shows HOTBAR_SIZE of these at a time —
 // the rest are reachable through the Items panel (the palette button, or the "I" key), which lets
@@ -107,10 +111,11 @@ const HOTBAR_ICON = { [CRAFTING_TABLE]: '🛠️', [WINDOW]: '🪟', [DOOR]: '�
 const TOGGLE_MAP = { [WINDOW]:WINDOW_OPEN, [WINDOW_OPEN]:WINDOW, [DOOR]:DOOR_OPEN, [DOOR_OPEN]:DOOR };
 // Breaking the open form of a toggleable block gives you back its closed (placeable) form.
 const COLLECT_AS = { [WINDOW_OPEN]:WINDOW, [DOOR_OPEN]:DOOR };
-// TENT isn't here — it's a whole multi-block shelter now, not one cube, so breaking it back into a
-// single carriable item needs the flood-fill in findTentCells rather than this simple 1-for-1 map.
+// TENT and FLAG aren't here — they're multi-block structures now, not one cube, so breaking either
+// back into a single carriable item needs the flood-fills in findTentCells/findFlagCells rather than
+// this simple 1-for-1 map.
 const COLLECTIBLE = new Set([GRASS, DIRT, STONE, SAND, WOOD, LEAVES, PLANKS, CRAFTING_TABLE, BRICKS, WINDOW, WINDOW_OPEN, DOOR, DOOR_OPEN, TORCH, LADDER,
-  CAMPFIRE, LANTERN, FLAG, BACKPACK]);
+  CAMPFIRE, LANTERN, BACKPACK]);
 
 // ---------- Health / combat ----------
 const HP_PER_HEART = 2;
@@ -605,7 +610,7 @@ const T_GRASS_TOP=0, T_GRASS_SIDE=1, T_DIRT=2, T_STONE=3, T_SAND=4, T_LOG_SIDE=5
       T_WINDOW=14, T_WINDOW_OPEN=15, T_DOOR=16, T_DOOR_OPEN=17, T_SAPLING=18, T_FLINT=19, T_FIRE=20,
       T_TORCH=21, T_LADDER=22, T_LEAVES_SPARSE=23, T_LEAVES_DENSE=24,
       T_TENT=25, T_CAMPFIRE=26, T_LANTERN=27, T_FLAG=28, T_BACKPACK=29,
-      T_DUTCH_OVEN=30, T_POT=31, T_PAN=32, T_GRIDDLE=33, T_BEAR_BOX=34;
+      T_DUTCH_OVEN=30, T_POT=31, T_PAN=32, T_GRIDDLE=33, T_BEAR_BOX=34, T_FLAG_POLE=35;
 
 function hexRGB(hex){ return [(hex>>16)&255, (hex>>8)&255, hex&255]; }
 function rgbStr(r,g,b){ return `rgb(${r|0},${g|0},${b|0})`; }
@@ -1049,25 +1054,40 @@ function drawLantern(ctx,x0,y0){
   // the flame itself
   blob(ctx, x0+TILE*0.5, y0+TILE*0.54, TILE*0.07, 0xfff0b0, 10);
 }
-function drawFlag(ctx,x0,y0){
-  // near-black base + transparency: a pole with a pennant, not a cube.
+// The pole's own position/width is shared by drawFlagPole below so the two segments line up exactly
+// when three of these blocks are stacked into one tall flagpole (see placeFlag).
+const FLAG_POLE_X = 0.2, FLAG_POLE_W = 0.09;
+function drawFlagPole(ctx,x0,y0){
+  // near-black base + transparency: just the bare pole, no pennant — the bottom two of the three
+  // blocks a Troop Flag places (see placeFlag/drawFlag).
   fillTile(ctx,x0,y0,0x0a0a0a);
-  // pole
   ctx.fillStyle = shadeStr(0x8a6a3a,1,8);
-  ctx.fillRect(x0+TILE*0.2,y0,TILE*0.09,TILE);
-  // triangular pennant flying to the right
-  for(let py=Math.round(TILE*0.1);py<TILE*0.55;py++){
-    const t = (py-TILE*0.1)/(TILE*0.45);
+  ctx.fillRect(x0+TILE*FLAG_POLE_X,y0,TILE*FLAG_POLE_W,TILE);
+}
+function drawFlag(ctx,x0,y0){
+  // near-black base + transparency: the top of the pole, capped with a finial, flying a pennant —
+  // the third (topmost) block of a Troop Flag, stacked above two plain drawFlagPole segments.
+  fillTile(ctx,x0,y0,0x0a0a0a);
+  ctx.fillStyle = shadeStr(0x8a6a3a,1,8);
+  ctx.fillRect(x0+TILE*FLAG_POLE_X,y0+TILE*0.08,TILE*FLAG_POLE_W,TILE*0.92);
+  // gold finial ball capping the very top of the pole
+  ctx.fillStyle = shadeStr(0xd9b23a,1,6);
+  ctx.beginPath();
+  ctx.arc(x0+TILE*(FLAG_POLE_X+FLAG_POLE_W/2), y0+TILE*0.05, TILE*0.06, 0, Math.PI*2);
+  ctx.fill();
+  // triangular pennant flying to the right, right at the top where a real flag actually flies
+  for(let py=Math.round(TILE*0.08);py<TILE*0.42;py++){
+    const t = (py-TILE*0.08)/(TILE*0.34);
     const len = TILE*0.62*(1-Math.abs(t-0.5)*1.1);
     for(let px=0;px<len;px++){
       ctx.fillStyle = shadeStr(0x9c1f12, 1.15-px/TILE*0.45, 8);
-      ctx.fillRect(x0+TILE*0.29+px,y0+py,1,1);
+      ctx.fillRect(x0+TILE*(FLAG_POLE_X+FLAG_POLE_W)+px,y0+py,1,1);
     }
   }
   // fleur-de-lis suggestion: a pale blaze in the middle of the pennant
   ctx.fillStyle = shadeStr(0xf0e4c0,1,8);
-  ctx.fillRect(x0+TILE*0.45,y0+TILE*0.22,2,TILE*0.16);
-  ctx.fillRect(x0+TILE*0.4,y0+TILE*0.3,TILE*0.16,2);
+  ctx.fillRect(x0+TILE*0.45,y0+TILE*0.16,2,TILE*0.14);
+  ctx.fillRect(x0+TILE*0.4,y0+TILE*0.23,TILE*0.16,2);
 }
 function drawBackpack(ctx,x0,y0){
   // A canvas rucksack seen from the front: rounded body, a flap, a front pocket, and two straps.
@@ -1187,7 +1207,7 @@ function buildAtlas(){
                 drawWindow, drawWindowOpen, drawDoor, drawDoorOpen, drawSapling, drawFlint, drawFire, drawTorch,
                 drawLadder, drawLeavesSparse, drawLeavesDense,
                 drawTent, drawCampfire, drawLantern, drawFlag, drawBackpack,
-                drawDutchOven, drawPot, drawPan, drawGriddle, drawBearBox];
+                drawDutchOven, drawPot, drawPan, drawGriddle, drawBearBox, drawFlagPole];
   draw.forEach((fn, i)=> fn(ctx, (i%ATLAS_COLS)*TILE, Math.floor(i/ATLAS_COLS)*TILE));
   const tex = new THREE.CanvasTexture(canvas);
   tex.magFilter = THREE.NearestFilter;
@@ -1229,6 +1249,7 @@ const BLOCK_TILES = {
   [CAMPFIRE]: {top:T_CAMPFIRE, side:T_CAMPFIRE, bottom:T_DIRT},
   [LANTERN]: {top:T_LANTERN, side:T_LANTERN, bottom:T_LANTERN},
   [FLAG]: {top:T_FLAG, side:T_FLAG, bottom:T_FLAG},
+  [FLAG_POLE]: {top:T_FLAG_POLE, side:T_FLAG_POLE, bottom:T_FLAG_POLE},
   [BACKPACK]: {top:T_BACKPACK, side:T_BACKPACK, bottom:T_PLANKS},
   [DUTCH_OVEN]: {top:T_DUTCH_OVEN, side:T_DUTCH_OVEN, bottom:T_DUTCH_OVEN},
   [POT]: {top:T_POT, side:T_POT, bottom:T_POT},
@@ -1559,12 +1580,12 @@ const glassMaterial = new THREE.MeshLambertMaterial({ vertexColors: true, side: 
 // Any block that isn't fully opaque. A face between two blocks of the SAME transparent type is
 // skipped (no point rendering the seam between two adjacent water, window, or leaf blocks); a face
 // against a *different* transparent type, or against AIR, still draws.
-const TRANSPARENT_BLOCKS = new Set([WATER, WINDOW, WINDOW_OPEN, DOOR_OPEN, SAPLING, FIRE, TORCH, LADDER, LEAVES, LANTERN, FLAG, DUTCH_OVEN, POT, PAN, GRIDDLE]);
+const TRANSPARENT_BLOCKS = new Set([WATER, WINDOW, WINDOW_OPEN, DOOR_OPEN, SAPLING, FIRE, TORCH, LADDER, LEAVES, LANTERN, FLAG, FLAG_POLE, DUTCH_OVEN, POT, PAN, GRIDDLE]);
 // The subset of the above that a "is this column covered by a roof" check treats as passing sky/
 // light straight through. Leaves are deliberately left out — a tree's canopy still counts as real
 // shelter/shade (indoor darkening, temperature danger) even though it now renders sparse and
 // translucent rather than as a solid cube.
-const SKY_PASS_BLOCKS = new Set([WATER, WINDOW, WINDOW_OPEN, DOOR_OPEN, SAPLING, FIRE, TORCH, LADDER, LANTERN, FLAG]);
+const SKY_PASS_BLOCKS = new Set([WATER, WINDOW, WINDOW_OPEN, DOOR_OPEN, SAPLING, FIRE, TORCH, LADDER, LANTERN, FLAG, FLAG_POLE]);
 // A block that gives off light shouldn't be *shaded* by light: with MeshLambertMaterial a campfire
 // sat as a black cube in the middle of its own pool of light, because its point light is inside the
 // block and so contributes nothing to the outward-facing normals. MeshBasicMaterial ignores lighting
@@ -1623,6 +1644,12 @@ const TREE_SPECIES = [
 // Dry, dead-brown canopy for the minority of dead trees that keep any leaves at all (see
 // deadTreeHasLeaves) — sparse, so a bare-looking dead tree still reads as thinning rather than lush.
 const DEAD_LEAF_TINT = { leafMul:[0.62,0.42,0.22], leafTile:T_LEAVES_SPARSE };
+// Weathered grey for a dead tree's bark — applied on top of the ordinary wood texture, same trick as
+// every species tint, so a dead trunk reads as grey even when (being bare) it has no canopy at all
+// to give it away otherwise. Uneven per-channel multipliers, not a flat darken: the base wood texture
+// is a warm brown (0x6b4a2b, R>G>B), so evening out R/G against B is what actually desaturates it
+// toward neutral grey instead of just producing a darker brown.
+const DEAD_WOOD_TINT = [0.42, 0.61, 1.0];
 function speciesIndexForRoot(x,z){ return Math.floor(hash2(x+41,z+67)*TREE_SPECIES.length) % TREE_SPECIES.length; }
 // Bounded look for canopy near a wood run's top — gates tinting to things that actually look like a
 // tree (a trunk with leaves overhead) so ordinary player-built wood walls/floors stay untinted.
@@ -1632,19 +1659,30 @@ function hasCanopyNear(x,y,z){
   }
   return false;
 }
+// Reconstructs, purely from (x,z), whether generateWorld's original growth pass would have rooted a
+// tree (not a bush, and not on beach sand) right here — the exact same checks it used, just
+// evaluated on demand rather than stored anywhere. Lets a bare dead trunk still get tinted grey even
+// though — being leafless — hasCanopyNear alone would never find it.
+function isTreeRoot(x,z){
+  const h = heightAt(x,z);
+  if(h<=SEA_LEVEL+1) return false; // beach sand at spawn time, never a tree
+  if(hash2(x,z) >= 0.012) return false;
+  return hash2(x+3,z+5) >= BUSH_CHANCE; // and it grew into a tree, not a bush
+}
 // One pass per column (same cost class as computeSkyExposure, called right alongside it): walks
-// every contiguous WOOD run top-to-bottom and, if that run has canopy near its top, tags the whole
-// run with a species index (1-based; 0 = not tree wood) — so a tall/giant trunk is tinted
-// consistently end to end, not just near the top.
+// every contiguous WOOD run top-to-bottom and, if that run has canopy near its top (or this column
+// is the tree's own root, canopy or not), tags the whole run with a species index (1-based; 0 = not
+// tree wood) — so a tall/giant trunk is tinted consistently end to end, not just near the top.
 function computeColumnTreeSpecies(x,z){
   const species = new Uint8Array(WORLD_HEIGHT);
+  const rootHere = isTreeRoot(x,z);
   let runStart = -1;
   for(let y=0;y<=WORLD_HEIGHT;y++){
     const b = y<WORLD_HEIGHT ? getBlock(x,y,z) : AIR;
     if(b===WOOD){
       if(runStart<0) runStart = y;
     } else if(runStart>=0){
-      if(hasCanopyNear(x,y-1,z)){
+      if(rootHere || hasCanopyNear(x,y-1,z)){
         const sIdx = speciesIndexForRoot(x,z)+1;
         for(let ry=runStart; ry<y; ry++) species[ry] = sIdx;
       }
@@ -1671,7 +1709,9 @@ function findTrunkColumnNear(x,y,z){
 function treeTintAt(b,x,y,z,columnSpecies){
   if(b===WOOD){
     const sIdx = columnSpecies[y];
-    return sIdx>0 ? { mul: TREE_SPECIES[sIdx-1].woodMul, leafTile:null } : null;
+    if(sIdx<=0) return null;
+    if(isDeadTree(x,z)) return { mul: DEAD_WOOD_TINT, leafTile:null };
+    return { mul: TREE_SPECIES[sIdx-1].woodMul, leafTile:null };
   }
   const trunk = findTrunkColumnNear(x,y,z);
   if(!trunk) return null;
@@ -2245,7 +2285,7 @@ function animateQuadrupedWalk(group, state, dt, moving, speedMul){
 const animals = [];
 // Ground for animals excludes tree material (WOOD/LEAVES) so they never end up standing in a
 // tree's trunk or canopy — only natural terrain and player-built blocks count as "ground".
-function isAnimalGround(b){ return b!==AIR && b!==WATER && b!==WOOD && b!==LEAVES && b!==WINDOW_OPEN && b!==DOOR_OPEN && b!==SAPLING && b!==FIRE && b!==TORCH && b!==LANTERN && b!==FLAG; }
+function isAnimalGround(b){ return b!==AIR && b!==WATER && b!==WOOD && b!==LEAVES && b!==WINDOW_OPEN && b!==DOOR_OPEN && b!==SAPLING && b!==FIRE && b!==TORCH && b!==LANTERN && b!==FLAG && b!==FLAG_POLE; }
 function groundHeightAt(x,z){
   const bx=Math.floor(x), bz=Math.floor(z);
   for(let y=WORLD_HEIGHT-1;y>=0;y--){
@@ -5792,6 +5832,18 @@ function breakBlock(){
     SFX.breakBlock();
     return;
   }
+  if(b===FLAG || b===FLAG_POLE){
+    // Same reasoning as a tent: breaking any part of the 3-tall pole takes the whole thing down and
+    // hands back exactly one Troop Flag, not one per segment.
+    const cells = findFlagCells(hit.x,hit.y,hit.z);
+    for(const c of cells) applyWorldEdit(c.x, c.y, c.z, AIR);
+    invAdd(FLAG, 1);
+    saveInventory();
+    updateHotbarUI();
+    triggerSwing();
+    SFX.breakBlock();
+    return;
+  }
   applyWorldEdit(hit.x, hit.y, hit.z, AIR);
   if(COLLECTIBLE.has(b)){ invAdd(COLLECT_AS[b] || b, 1); saveInventory(); }
   if(b===WOOD){
@@ -5925,6 +5977,44 @@ function placeTent(hit){
   triggerSwing();
   SFX.placeBlock();
 }
+// A Troop Flag is a real 3-tall flagpole now, not one squashed cube: two bare FLAG_POLE segments
+// with the pennant-topped FLAG block itself on top, so the banner actually flies above head height
+// instead of sitting at your feet. Flood-filled back into one item on breaking, same as a tent.
+function findFlagCells(x,y,z){
+  const isFlagPart = b => b===FLAG || b===FLAG_POLE;
+  const cells = [], seen = new Set(), stack = [{x,y,z}];
+  while(stack.length && cells.length<10){
+    const c = stack.pop();
+    const k = c.x+','+c.y+','+c.z;
+    if(seen.has(k)) continue;
+    seen.add(k);
+    if(!isFlagPart(getBlock(c.x,c.y,c.z))) continue;
+    cells.push(c);
+    stack.push({x:c.x+1,y:c.y,z:c.z},{x:c.x-1,y:c.y,z:c.z},{x:c.x,y:c.y+1,z:c.z},
+               {x:c.x,y:c.y-1,z:c.z},{x:c.x,y:c.y,z:c.z+1},{x:c.x,y:c.y,z:c.z-1});
+  }
+  return cells;
+}
+function placeFlag(hit){
+  const {x,y,z} = hit.prev;
+  if(invCount(FLAG)<=0) return;
+  const cells = [
+    {x, y,   z, block:FLAG_POLE},
+    {x, y:y+1, z, block:FLAG_POLE},
+    {x, y:y+2, z, block:FLAG},
+  ];
+  for(const c of cells){
+    if(getBlock(c.x,c.y,c.z)!==AIR) return;
+    if(playerOverlapsCell(c.x,c.y,c.z)) return;
+  }
+  for(const c of cells) applyWorldEdit(c.x, c.y, c.z, c.block);
+  Scout.placed(FLAG, x, z);
+  invSub(FLAG,1);
+  saveInventory();
+  updateHotbarUI();
+  triggerSwing();
+  SFX.placeBlock();
+}
 function placeBlock(){
   const hit = raycastBlock();
   if(!hit || !hit.prev) return;
@@ -5932,6 +6022,7 @@ function placeBlock(){
   if(block===DOOR){ placeDoor(hit); return; }
   if(block===LADDER){ placeLadder(hit); return; }
   if(block===TENT){ placeTent(hit); return; }
+  if(block===FLAG){ placeFlag(hit); return; }
   const {x,y,z} = hit.prev;
   if(getBlock(x,y,z)!==AIR) return;
   if(invCount(block)<=0) return;
