@@ -46,10 +46,13 @@ const FISHING_POLE=47, FISH=48;
 // scattered across the map once at world-gen (see placeScoutLawBoxes) and removed for good the moment
 // each one is collected.
 const SCOUT_LAW_BOX=49;
+// Two more carried camp-gear items, pre-packed alongside the essentials (see STARTER_CAMP_GEAR) —
+// no block form, no recipe, same as the essentials above.
+const SLEEPING_BAG=50, SLEEPING_PAD=51;
 // Items with no block form at all (see doInteract) — right-clicking one does nothing, or whatever
 // its own special case above already handles (Flint ignites, Compass takes a bearing).
 const CARRY_ONLY_ITEMS = new Set([ROPE, POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR,
-  WATER_BOTTLE, FLASHLIGHT, TRAIL_FOOD, SUN_PROTECTION, SCOUTBOOK, FISH]);
+  WATER_BOTTLE, FLASHLIGHT, TRAIL_FOOD, SUN_PROTECTION, SCOUTBOOK, FISH, SLEEPING_BAG, SLEEPING_PAD]);
 
 const BLOCK_COLOR = {
   [GRASS]:  0x5b8a3a,
@@ -100,6 +103,8 @@ const BLOCK_COLOR = {
   [FISHING_POLE]: 0x8a6a3a,
   [FISH]: 0x7ab0c9,
   [SCOUT_LAW_BOX]: 0xd4af37,
+  [SLEEPING_BAG]: 0x2c3e6b,
+  [SLEEPING_PAD]: 0x8a9a7a,
 };
 const BLOCK_NAME = {
   [GRASS]:'Grass', [DIRT]:'Dirt', [STONE]:'Stone', [SAND]:'Sand', [WOOD]:'Wood',
@@ -117,14 +122,17 @@ const BLOCK_NAME = {
   [TRAIL_FOOD]:'Trail Food', [SUN_PROTECTION]:'Sun Protection', [SCOUTBOOK]:'Scoutbook',
   [FISHING_POLE]:'Fishing Pole', [FISH]:'Fish',
   [SCOUT_LAW_BOX]:'Scout Law Box',
+  [SLEEPING_BAG]:'Sleeping Bag', [SLEEPING_PAD]:'Sleeping Pad',
 };
 // Every item the player can ever select. The hotbar only shows HOTBAR_SIZE of these at a time —
 // the rest are reachable through the Items panel (the palette button, or the "I" key), which lets
 // the player swap any hotbar slot for anything in this list.
-const ALL_ITEMS = [GRASS, DIRT, STONE, SAND, WOOD, LEAVES, PLANKS, WATER, CRAFTING_TABLE, BRICKS, STICK, WINDOW, DOOR, FLINT, TORCH, FIREWORK, LADDER, MEAT,
+// MEAT is deliberately left out — disabled from the inventory/hotbar entirely, so it can't be
+// selected even though animals still yield it when killed (see killAnimal-style meat drops).
+const ALL_ITEMS = [GRASS, DIRT, STONE, SAND, WOOD, LEAVES, PLANKS, WATER, CRAFTING_TABLE, BRICKS, STICK, WINDOW, DOOR, FLINT, TORCH, FIREWORK, LADDER,
   ROPE, TENT, CAMPFIRE, LANTERN, FLAG, COMPASS, COOKED_MEAT, BACKPACK,
   POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR, WATER_BOTTLE, FLASHLIGHT, TRAIL_FOOD, SUN_PROTECTION, SCOUTBOOK,
-  FISHING_POLE, FISH];
+  FISHING_POLE, FISH, SLEEPING_BAG, SLEEPING_PAD];
 const HOTBAR_SIZE = 9;
 // A scout's starting kit: building materials first, then the camp gear you earn badges with.
 const DEFAULT_HOTBAR = [WOOD, PLANKS, STONE, CRAFTING_TABLE, CAMPFIRE, TENT, FLAG, FLINT, COMPASS];
@@ -146,7 +154,7 @@ const HOTBAR_ICON = { [CRAFTING_TABLE]: '🛠️', [WINDOW]: '🪟', [DOOR]: '�
   [ROPE]: '🪢', [TENT]: '⛺', [CAMPFIRE]: '🔥', [LANTERN]: '🏮', [FLAG]: '🚩', [COMPASS]: '🧭', [COOKED_MEAT]: '🍖', [BACKPACK]: '🎒',
   [POCKETKNIFE]: '🔪', [FIRST_AID_KIT]: '🩹', [EXTRA_CLOTHING]: '🧥', [RAIN_GEAR]: '☂️', [WATER_BOTTLE]: '🥤',
   [FLASHLIGHT]: '🔦', [TRAIL_FOOD]: '🥜', [SUN_PROTECTION]: '🧴', [SCOUTBOOK]: '📘',
-  [FISHING_POLE]: '🎣', [FISH]: '🐟' };
+  [FISHING_POLE]: '🎣', [FISH]: '🐟', [SLEEPING_BAG]: '🛌', [SLEEPING_PAD]: '🛏️' };
 // Blocks with an open/closed state: right-clicking one toggles it to the other id in this map.
 const TOGGLE_MAP = { [WINDOW]:WINDOW_OPEN, [WINDOW_OPEN]:WINDOW, [DOOR]:DOOR_OPEN, [DOOR_OPEN]:DOOR };
 // Breaking the open form of a toggleable block gives you back its closed (placeable) form.
@@ -238,7 +246,7 @@ const BADGES = [
   { id:'firecraft',  emoji:'🔥', name:'Firecraft',    hint:'Light your first campfire.',                   test:()=> scoutStats.campfires >= 1 },
   { id:'camping',    emoji:'⛺',          name:'Camping',      hint:'Pitch a tent.',                                test:()=> scoutStats.tents >= 1 },
   { id:'cooking',    emoji:'🍳', name:'Cooking',      hint:'Cook a meal on a campfire.',                   test:()=> scoutStats.meals >= 1 },
-  { id:'navigation', emoji:'🧭', name:'Navigation',   hint:'Craft a compass and take a bearing.',          test:()=> scoutStats.compassUses >= 1 },
+  { id:'navigation', emoji:'🧭', name:'Navigation',   hint:'Take a bearing with your compass.',            test:()=> scoutStats.compassUses >= 1 },
   { id:'hiking',     emoji:'🥾', name:'Hiking',       hint:'Hike 1,000 blocks on foot.',                   test:()=> scoutStats.hiked >= 1000 },
   { id:'swimming',   emoji:'🏊', name:'Swimming',     hint:'Swim 60 blocks.',                              test:()=> scoutStats.swam >= 60 },
   { id:'climbing',   emoji:'🧗', name:'Climbing',     hint:'Get 18 blocks above sea level.',               test:()=> scoutStats.highest >= 18 },
@@ -652,25 +660,22 @@ function renderSash(){
 }
 
 // ---------- Crafting ----------
+// Bricks, Window, Door, Flint, Ladder, Tent, Compass and Backpack are deliberately not craftable —
+// Flint, Tent, Compass and Rope now come pre-packed in the Backpack instead (see SCOUT_ESSENTIALS/
+// STARTER_CAMP_GEAR), Backpack storage itself is always open via the B key with no block required,
+// and the rest (generic Minecraft-y building blocks with no scouting tie-in) are just gone. Lantern
+// drops the Window it used to need as a result — Stick + Flint only now, same as a Torch.
 const RECIPES = [
   { name:'Planks',         out:{id:PLANKS, qty:4},         in:[{id:WOOD, qty:1}] },
   { name:'Sticks',         out:{id:STICK, qty:4},          in:[{id:PLANKS, qty:2}] },
   { name:'Crafting Table', out:{id:CRAFTING_TABLE, qty:1}, in:[{id:PLANKS, qty:4}] },
-  { name:'Bricks',         out:{id:BRICKS, qty:4},         in:[{id:STONE, qty:4}] },
-  { name:'Window',         out:{id:WINDOW, qty:1},         in:[{id:SAND, qty:2}] },
-  { name:'Door',           out:{id:DOOR, qty:1},            in:[{id:PLANKS, qty:3}] },
-  { name:'Flint',          out:{id:FLINT, qty:1},           in:[{id:STONE, qty:2}] },
   { name:'Torch',          out:{id:TORCH, qty:2},           in:[{id:STICK, qty:1}, {id:FLINT, qty:1}] },
-  { name:'Ladder',         out:{id:LADDER, qty:4},          in:[{id:WOOD, qty:1}] },
-  // Camp gear. Rope is the gateway item — you twist it out of leaves, and the tent and the troop
-  // flag both need it, so a scout's first job is always finding a tree.
+  // Camp gear. Rope is the gateway item — you twist it out of leaves, and the troop flag and
+  // fishing pole both need it.
   { name:'Rope',           out:{id:ROPE, qty:2},            in:[{id:LEAVES, qty:4}] },
-  { name:'Tent',           out:{id:TENT, qty:1},            in:[{id:PLANKS, qty:4}, {id:ROPE, qty:2}] },
   { name:'Campfire',       out:{id:CAMPFIRE, qty:1},        in:[{id:WOOD, qty:3}, {id:FLINT, qty:1}] },
-  { name:'Lantern',        out:{id:LANTERN, qty:1},         in:[{id:STICK, qty:1}, {id:FLINT, qty:1}, {id:WINDOW, qty:1}] },
-  { name:'Compass',        out:{id:COMPASS, qty:1},         in:[{id:FLINT, qty:1}, {id:STONE, qty:2}] },
+  { name:'Lantern',        out:{id:LANTERN, qty:1},         in:[{id:STICK, qty:1}, {id:FLINT, qty:1}] },
   { name:'Troop Flag',     out:{id:FLAG, qty:1},            in:[{id:PLANKS, qty:2}, {id:STICK, qty:2}, {id:ROPE, qty:1}] },
-  { name:'Backpack',       out:{id:BACKPACK, qty:1},        in:[{id:PLANKS, qty:2}, {id:ROPE, qty:2}] },
   { name:'Fishing Pole',   out:{id:FISHING_POLE, qty:1},    in:[{id:STICK, qty:2}, {id:ROPE, qty:1}] },
 ];
 const inventory = {};
@@ -6542,7 +6547,7 @@ if(isTouchDevice){
   const tapP = document.getElementById('tapToPlay');
   if(tapP) tapP.innerHTML = '<strong>Tap anywhere to play</strong>';
   const hintP = document.getElementById('playHint');
-  if(hintP) hintP.textContent = 'Break blocks to gather materials, then place your Crafting Table and tap it to craft — including windows and doors, which you can tap to open or close. Rabbits and deer are harmless — the moose will fight back if you attack it, and wolves and the black bear will attack on sight if you get too close. Progress is saved automatically in this browser.';
+  if(hintP) hintP.textContent = 'Tap Backpack (B) for your tent, compass and other starting gear, then break blocks to gather materials and place your Crafting Table to craft a campfire, lantern and troop flag. Rabbits and deer are harmless — the moose will fight back if you attack it, and wolves and the black bear will attack on sight if you get too close. Progress is saved automatically in this browser.';
 }
 overlay.addEventListener('click', ()=>{
   ensureAudio();
@@ -7120,6 +7125,11 @@ const BACKPACK_KEY = 'scoutcraft_backpack_v1';
 // invented twice.
 const SCOUT_ESSENTIALS = [POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR, WATER_BOTTLE,
   FLASHLIGHT, TRAIL_FOOD, FLINT, SUN_PROTECTION, COMPASS];
+// Beyond the 10 Essentials proper: the rest of a scout's basic camp kit, pre-packed the same way.
+// Tent no longer has a recipe (see RECIPES) — this is its only source now. Rope keeps its own
+// recipe too (see RECIPES), so this is just a starting supply on top of what you can still twist
+// from leaves yourself.
+const STARTER_CAMP_GEAR = [TENT, SLEEPING_BAG, SLEEPING_PAD, ROPE];
 const backpackStorage = {}; // id -> qty
 let backpackOpen = false;
 function backpackSlotCount(){ return Object.keys(backpackStorage).filter(id=>backpackStorage[id]>0).length; }
@@ -7137,6 +7147,7 @@ function loadBackpackStorage(){
   }catch(e){}
   // First time ever: pack it before the player even opens it.
   for(const id of SCOUT_ESSENTIALS) backpackStorage[id] = 1;
+  for(const id of STARTER_CAMP_GEAR) backpackStorage[id] = 1;
   backpackStorage[SCOUTBOOK] = 1;
   saveBackpackStorage();
 }
