@@ -42,6 +42,10 @@ const POCKETKNIFE=38, FIRST_AID_KIT=39, EXTRA_CLOTHING=40, RAIN_GEAR=41, WATER_B
 // CARRY_ONLY_ITEMS below. FISH is what it catches: a plain carried item like the essentials, no
 // special interaction of its own.
 const FISHING_POLE=47, FISH=48;
+// SCOUT_LAW_BOX is a world fixture like DUTCH_OVEN/BEAR_BOX above — never craftable or held, just
+// scattered across the map once at world-gen (see placeScoutLawBoxes) and removed for good the moment
+// each one is collected.
+const SCOUT_LAW_BOX=49;
 // Items with no block form at all (see doInteract) — right-clicking one does nothing, or whatever
 // its own special case above already handles (Flint ignites, Compass takes a bearing).
 const CARRY_ONLY_ITEMS = new Set([ROPE, POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR,
@@ -95,6 +99,7 @@ const BLOCK_COLOR = {
   [SCOUTBOOK]: 0x2a5f8a,
   [FISHING_POLE]: 0x8a6a3a,
   [FISH]: 0x7ab0c9,
+  [SCOUT_LAW_BOX]: 0xd4af37,
 };
 const BLOCK_NAME = {
   [GRASS]:'Grass', [DIRT]:'Dirt', [STONE]:'Stone', [SAND]:'Sand', [WOOD]:'Wood',
@@ -111,6 +116,7 @@ const BLOCK_NAME = {
   [RAIN_GEAR]:'Rain Gear', [WATER_BOTTLE]:'Water Bottle', [FLASHLIGHT]:'Flashlight',
   [TRAIL_FOOD]:'Trail Food', [SUN_PROTECTION]:'Sun Protection', [SCOUTBOOK]:'Scoutbook',
   [FISHING_POLE]:'Fishing Pole', [FISH]:'Fish',
+  [SCOUT_LAW_BOX]:'Scout Law Box',
 };
 // Every item the player can ever select. The hotbar only shows HOTBAR_SIZE of these at a time —
 // the rest are reachable through the Items panel (the palette button, or the "I" key), which lets
@@ -242,6 +248,7 @@ const BADGES = [
   { id:'troopflag',  emoji:'🚩', name:'Troop Flag',   hint:'Raise your troop flag at camp.',               test:()=> scoutStats.flags >= 1 },
   { id:'astronomy',  emoji:'⭐', name:'Astronomy',    hint:'Find the Big Dipper and stare at it for 10 seconds.', test:()=> scoutStats.dipperFound },
   { id:'fishing',    emoji:'🎣', name:'Fishing',      hint:'Catch 5 fish.',                                test:()=> scoutStats.fishCaught >= 5 },
+  { id:'scoutspirit',emoji:'🏅', name:'Scout Spirit', hint:'Find all 12 golden Scout Law boxes hidden around camp.', test:()=> scoutStats.lawsCollected.length >= SCOUT_LAW_POINTS.length },
 ];
 // Ranks are purely derived from how many badges you hold — no separate progression to track.
 // Eagle Scout always means "every badge earned," so it's tied to BADGES.length rather than a number
@@ -267,7 +274,7 @@ const earnedBadges = new Set();
 const scoutStats = {
   wood:0, rope:0, campfires:0, tents:0, flags:0, meals:0, compassUses:0,
   hiked:0, swam:0, highest:0, nightSeconds:0, recoveries:0, species:[],
-  campX:null, campZ:null, dipperFound:false, fishCaught:0,
+  campX:null, campZ:null, dipperFound:false, fishCaught:0, lawsCollected:[],
 };
 function saveScoutProgress(){
   try{
@@ -283,6 +290,7 @@ function loadScoutProgress(){
     if(st && typeof st === 'object'){
       for(const k in scoutStats) if(k in st) scoutStats[k] = st[k];
       if(!Array.isArray(scoutStats.species)) scoutStats.species = [];
+      if(!Array.isArray(scoutStats.lawsCollected)) scoutStats.lawsCollected = [];
     }
   }catch(e){}
 }
@@ -713,13 +721,14 @@ const PROTECTED_CELLS = new Set();
 // ---------- Texture atlas (procedurally drawn pixel-art, no external image assets) ----------
 // TILE=32 (was 16) gives 4x the pixel budget per block face — enough room for real structure
 // (cracks, grain, brick-by-brick variation, ripples) rather than flat color + noise.
-const TILE = 32, ATLAS_COLS = 4, ATLAS_ROWS = 9;
+const TILE = 32, ATLAS_COLS = 4, ATLAS_ROWS = 10;
 const T_GRASS_TOP=0, T_GRASS_SIDE=1, T_DIRT=2, T_STONE=3, T_SAND=4, T_LOG_SIDE=5, T_LOG_TOP=6,
       T_LEAVES=7, T_PLANKS=8, T_BEDROCK=9, T_CRAFT_TOP=10, T_CRAFT_SIDE=11, T_BRICKS=12, T_WATER=13,
       T_WINDOW=14, T_WINDOW_OPEN=15, T_DOOR=16, T_DOOR_OPEN=17, T_SAPLING=18, T_FLINT=19, T_FIRE=20,
       T_TORCH=21, T_LADDER=22, T_LEAVES_SPARSE=23, T_LEAVES_DENSE=24,
       T_TENT=25, T_CAMPFIRE=26, T_LANTERN=27, T_FLAG=28, T_BACKPACK=29,
-      T_DUTCH_OVEN=30, T_POT=31, T_PAN=32, T_GRIDDLE=33, T_BEAR_BOX=34, T_FLAG_POLE=35;
+      T_DUTCH_OVEN=30, T_POT=31, T_PAN=32, T_GRIDDLE=33, T_BEAR_BOX=34, T_FLAG_POLE=35,
+      T_SCOUT_LAW_BOX=36;
 
 function hexRGB(hex){ return [(hex>>16)&255, (hex>>8)&255, hex&255]; }
 function rgbStr(r,g,b){ return `rgb(${r|0},${g|0},${b|0})`; }
@@ -1306,6 +1315,29 @@ function drawBearBox(ctx,x0,y0){
   ctx.fillStyle = shadeStr(0xc9a020,1,6);
   ctx.fillRect(x0+cx-TILE*0.08, y0+cy-TILE*0.04, TILE*0.16, TILE*0.14);
 }
+function drawScoutLawBox(ctx,x0,y0){
+  // A small golden keepsake box, not a working container — banded in dark wood trim with a five-
+  // point star in the middle, since these are found and read once rather than opened and reused.
+  fillTile(ctx,x0,y0,0xd4af37);
+  speckle(ctx,x0,y0,0xd4af37,Math.round(TILE*TILE*0.06),10);
+  ctx.fillStyle = shadeStr(0x6b4a1a,1,4);
+  ctx.fillRect(x0, y0+TILE*0.04, TILE, TILE*0.08);
+  ctx.fillRect(x0, y0+TILE*0.46, TILE, TILE*0.08);
+  ctx.fillRect(x0, y0+TILE*0.88, TILE, TILE*0.08);
+  ctx.fillRect(x0+TILE*0.04, y0, TILE*0.08, TILE);
+  ctx.fillRect(x0+TILE*0.88, y0, TILE*0.08, TILE);
+  ctx.fillStyle = shadeStr(0xfff3c8,1,4);
+  const cx = x0+TILE*0.5, cy = y0+TILE*0.6, rOuter = TILE*0.15, rInner = TILE*0.06;
+  ctx.beginPath();
+  for(let i=0;i<5;i++){
+    const a = -Math.PI/2 + i*(Math.PI*2/5), a2 = a + Math.PI/5;
+    if(i===0) ctx.moveTo(cx+Math.cos(a)*rOuter, cy+Math.sin(a)*rOuter);
+    else ctx.lineTo(cx+Math.cos(a)*rOuter, cy+Math.sin(a)*rOuter);
+    ctx.lineTo(cx+Math.cos(a2)*rInner, cy+Math.sin(a2)*rInner);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
 function buildAtlas(){
   const canvas = document.createElement('canvas');
   canvas.width = TILE*ATLAS_COLS;
@@ -1316,7 +1348,7 @@ function buildAtlas(){
                 drawWindow, drawWindowOpen, drawDoor, drawDoorOpen, drawSapling, drawFlint, drawFire, drawTorch,
                 drawLadder, drawLeavesSparse, drawLeavesDense,
                 drawTent, drawCampfire, drawLantern, drawFlag, drawBackpack,
-                drawDutchOven, drawPot, drawPan, drawGriddle, drawBearBox, drawFlagPole];
+                drawDutchOven, drawPot, drawPan, drawGriddle, drawBearBox, drawFlagPole, drawScoutLawBox];
   draw.forEach((fn, i)=> fn(ctx, (i%ATLAS_COLS)*TILE, Math.floor(i/ATLAS_COLS)*TILE));
   const tex = new THREE.CanvasTexture(canvas);
   tex.magFilter = THREE.NearestFilter;
@@ -1365,6 +1397,7 @@ const BLOCK_TILES = {
   [PAN]: {top:T_PAN, side:T_PAN, bottom:T_PAN},
   [GRIDDLE]: {top:T_GRIDDLE, side:T_GRIDDLE, bottom:T_GRIDDLE},
   [BEAR_BOX]: {top:T_BEAR_BOX, side:T_BEAR_BOX, bottom:T_STONE},
+  [SCOUT_LAW_BOX]: {top:T_SCOUT_LAW_BOX, side:T_SCOUT_LAW_BOX, bottom:T_SCOUT_LAW_BOX},
 };
 // per-face-direction UV winding (0/1 flags select u0/u1 and vBottom/vTop), aligned to FACES order below
 const UV_PATTERNS = [
@@ -1467,6 +1500,7 @@ function generateWorld(){
     }
   }
   buildCookingArea();
+  placeScoutLawBoxes();
 }
 // ---------- Cooking area: a flat, permanent 20x20 camp-cooking clearing ----------
 // A fixed, indestructible set of camp cooking stations near world center: four campfires each with
@@ -1505,6 +1539,109 @@ function buildCookingArea(){
   }
   protectFire(x0+10, fy, z0+14); // a fifth, plain campfire
   protect(x0+15, fy, z0+14, BEAR_BOX);
+}
+// ---------- Scout Law boxes: 12 golden keepsakes, one per point of the Scout Law ----------
+// Scattered once at world-gen with their own seeded RNG (not Math.random()) so every fresh load
+// re-derives the exact same 12 world positions. Unlike the purely ambient wildlife elsewhere in this
+// file, these are real collectible progress toward the Scout Spirit badge, so — like the cooking
+// area's fixtures — they need to stay put across reloads rather than reshuffle every load.
+const SCOUT_LAW_POINTS = [
+  { id:'trustworthy', word:'Trustworthy', text:"Tell the truth, and people can count on your word." },
+  { id:'loyal',       word:'Loyal',       text:"Stick by your family, your friends, and your country." },
+  { id:'helpful',     word:'Helpful',     text:"Lend a hand to others, expecting nothing back." },
+  { id:'friendly',    word:'Friendly',    text:"Be a friend to everyone, even people very different from you." },
+  { id:'courteous',   word:'Courteous',   text:"Treat people with good manners." },
+  { id:'kind',        word:'Kind',        text:"Treat others the way you'd want to be treated." },
+  { id:'obedient',    word:'Obedient',    text:"Follow reasonable rules — at home, at school, and in camp." },
+  { id:'cheerful',    word:'Cheerful',    text:"Look for the bright side, and try to lift others up." },
+  { id:'thrifty',     word:'Thrifty',     text:"Take care of what you have, and save for what's ahead." },
+  { id:'brave',       word:'Brave',       text:"Do the right thing even when it's hard or scary." },
+  { id:'clean',       word:'Clean',       text:"Keep your body, your words, and your actions clean." },
+  { id:'reverent',    word:'Reverent',    text:"Respect your own faith and other people's beliefs." },
+];
+const SCOUT_LAW_BOX_MIN_SPACING = 12; // blocks apart, so 12 boxes actually spread across the map
+const scoutLawBoxes = new Map();  // "x,y,z" -> the SCOUT_LAW_POINTS entry still sitting there
+const scoutLawLabels = new Map(); // "x,y,z" -> the floating word-label sprite hovering over it
+// Boxes steer clear of the cooking area's own footprint so none ever lands on top of a fixture there.
+function inCookingArea(x,z){
+  const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
+  return x>=x0-4 && x<x0+COOKING_AREA_SIZE+4 && z>=z0-4 && z<z0+COOKING_AREA_SIZE+4;
+}
+function placeScoutLawBoxes(){
+  const rng = mulberry32(SEED ^ 0x5c0575e5);
+  const placed = [];
+  for(const law of SCOUT_LAW_POINTS){
+    let spot = null;
+    for(let tries=0; tries<300 && !spot; tries++){
+      const x = 6 + Math.floor(rng()*(WORLD_SIZE-12));
+      const z = 6 + Math.floor(rng()*(WORLD_SIZE-12));
+      if(inCookingArea(x,z)) continue;
+      const h = heightAt(x,z);
+      if(h<=SEA_LEVEL+1) continue; // dry land only
+      if(getBlock(x,h+1,z)!==AIR) continue; // not already occupied by a tree or other structure
+      if(placed.some(p=> Math.hypot(p.x-x, p.z-z) < SCOUT_LAW_BOX_MIN_SPACING)) continue;
+      spot = {x, y:h+1, z};
+    }
+    if(!spot) continue; // the map would have to be extraordinarily crowded for this to ever happen
+    placed.push(spot);
+    setBlock(spot.x, spot.y, spot.z, SCOUT_LAW_BOX);
+    scoutLawBoxes.set(spot.x+','+spot.y+','+spot.z, law);
+    PROTECTED_CELLS.add(spot.x+','+spot.y+','+spot.z);
+  }
+}
+// A small canvas-texture billboard (same technique as the player's floating name tag) showing the
+// law's word in gold on a dark plaque, so a box reads at a glance from a few blocks off.
+function buildLawLabelSprite(word){
+  const canvas = document.createElement('canvas');
+  canvas.width = 320; canvas.height = 72;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'rgba(20,14,0,0.6)';
+  ctx.fillRect(2,2,316,68);
+  ctx.strokeStyle = '#e8c56b';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(2,2,316,68);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ffe9a8';
+  ctx.font = 'bold 32px sans-serif';
+  ctx.fillText(word.toUpperCase(), 160, 37);
+  const tex = new THREE.CanvasTexture(canvas);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
+  sprite.scale.set(2.0, 0.45, 1);
+  return sprite;
+}
+// Runs once after loadEdits() has replayed any saved edits on top of the freshly generated world —
+// a box collected in an earlier session now sits under an AIR edit, so this drops it (and skips its
+// label) rather than leaving a floating word tag over a box that's no longer really there.
+function restoreScoutLawBoxes(){
+  for(const [key, law] of [...scoutLawBoxes]){
+    const [x,y,z] = key.split(',').map(Number);
+    if(getBlock(x,y,z) !== SCOUT_LAW_BOX){
+      scoutLawBoxes.delete(key);
+      continue;
+    }
+    const sprite = buildLawLabelSprite(law.word);
+    sprite.position.set(x+0.5, y+1.3, z+0.5);
+    scene.add(sprite);
+    scoutLawLabels.set(key, sprite);
+  }
+}
+function collectScoutLawBox(x,y,z){
+  const key = x+','+y+','+z;
+  const law = scoutLawBoxes.get(key);
+  if(!law) return;
+  scoutLawBoxes.delete(key);
+  PROTECTED_CELLS.delete(key);
+  applyWorldEdit(x, y, z, AIR);
+  const label = scoutLawLabels.get(key);
+  if(label){ scene.remove(label); scoutLawLabels.delete(key); }
+  if(!scoutStats.lawsCollected.includes(law.id)){
+    scoutStats.lawsCollected.push(law.id);
+    saveScoutProgress();
+    checkBadges();
+  }
+  SFX.badge();
+  addChatMessage('Camp', `📜 ${law.word} — ${law.text} (${scoutStats.lawsCollected.length}/${SCOUT_LAW_POINTS.length})`);
 }
 // writeFn(bx,by,bz,block,unconditional) decides how each cell actually gets written — plantTree/
 // plantBush use a raw setBlock (fast, unsynced — fine for deterministic world-gen), the *Synced
@@ -6362,6 +6499,7 @@ function doInteract(){
   if(hitBlock===CRAFTING_TABLE) openCrafting();
   else if(hitBlock===BACKPACK) openBackpackStorage();
   else if(hitBlock===BEAR_BOX) openBearBox();
+  else if(hitBlock===SCOUT_LAW_BOX) collectScoutLawBox(hit.x, hit.y, hit.z);
   else if(hitBlock in TOGGLE_MAP) toggleOpenable(hit.x, hit.y, hit.z, hitBlock);
   else placeBlock();
 }
@@ -7070,6 +7208,7 @@ function init(){
   generateWorld();
   loadEdits();
   restoreTorchLights();
+  restoreScoutLawBoxes();
   updateScoutHUD();
   buildMinimapTerrain();
   loadInventory();
