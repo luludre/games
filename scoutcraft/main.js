@@ -6477,6 +6477,26 @@ if(sashModalEl){
   sashModalEl.addEventListener('click', e=>{ if(e.target===sashModalEl) closeSash(true); });
   document.getElementById('btnSash').addEventListener('click', ()=>{ if(locked && !isDead) openSash(); });
 }
+
+// ---------- Quit / thank-you screen ----------
+// A deliberate in-game "I'm done for now" action, not tied to actually closing the tab (a page can't
+// intercept that with anything beyond a native browser prompt) — clicking Quit unlocks the mouse and
+// swaps in a full-screen thank-you screen with Andre's popcorn fundraiser link. World/inventory/badge
+// progress is already saved continuously during play, so there's nothing extra to do on the way out;
+// "Keep playing instead" just puts the overlay away again.
+const thankYouScreen = document.getElementById('thankYouScreen');
+function quitGame(){
+  if(document.pointerLockElement) document.exitPointerLock();
+  locked = false;
+  thankYouScreen.hidden = false;
+}
+function keepPlaying(){
+  thankYouScreen.hidden = true;
+  if(isTouchDevice) locked = true;
+  else document.body.requestPointerLock();
+}
+document.getElementById('btnQuit').addEventListener('click', ()=>{ if(locked && !isDead) quitGame(); });
+document.getElementById('btnKeepPlaying').addEventListener('click', keepPlaying);
 function openItems(){
   itemsOpen = true;
   itemsModal.hidden = false;
