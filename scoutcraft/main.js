@@ -3850,6 +3850,10 @@ const WORM_FALL_SPEED = 3;               // blocks/sec while falling
 const WORM_GROUND_SEARCH_RADIUS = 12;    // how far a grounded worm looks for a tree to head toward
 const WORM_GROUND_SEARCH_INTERVAL_S = 3; // how often a grounded worm re-checks for one
 const WORM_WALK_SPEED = 0.5;             // slow crawl while searching on open ground
+// Set to false to turn worms off entirely — no initial spawn, no restoring a previously-saved
+// population, no reproduction. Doesn't touch whatever's already saved in localStorage, so flipping
+// this back on later picks the population up again right where it left off.
+const WORMS_ENABLED = false;
 const worms = [];
 let wormGeo, wormMat;
 const WORMS_KEY = 'scoutcraft_worms_v1';
@@ -3862,6 +3866,7 @@ function saveWorms(){
   }catch(e){}
 }
 function loadWorms(){
+  if(!WORMS_ENABLED) return;
   let list = null;
   try{ list = JSON.parse(localStorage.getItem(WORMS_KEY) || 'null'); }catch(e){}
   if(Array.isArray(list) && list.length){
@@ -3920,6 +3925,7 @@ function spawnWorm(id,x,y,z,lastAteAt,lastReproducedAt,eatenCount){
 }
 // Spawns a brand-new worm (initial spawn or reproduction) and saves the updated population.
 function createWorm(x,y,z){
+  if(!WORMS_ENABLED) return null;
   if(worms.length>=WORM_MAX_POPULATION) return null;
   const now = Date.now();
   const id = 'w_'+Math.random().toString(36).slice(2,10);
@@ -4137,6 +4143,9 @@ function updateGophers(dt){
 // blocks of SEA_LEVEL vertically, and dies of old age after BUTTERFLY_LIFESPAN_MS.
 const BUTTERFLY_LIFESPAN_MS = DAY_LENGTH_S*1000 * 30; // 30 in-game days
 const BUTTERFLY_WATER_RANGE = 15; // stays within this many blocks of sea level, vertically
+// See WORMS_ENABLED above — same idea, kept as a separate flag since a worm's metamorphosis into a
+// butterfly is a distinct spawn path (createButterfly) from a worm's own initial spawn/reproduction.
+const BUTTERFLIES_ENABLED = false;
 const butterflies = [];
 const BUTTERFLIES_KEY = 'scoutcraft_butterflies_v1';
 function saveButterflies(){
@@ -4147,6 +4156,7 @@ function saveButterflies(){
   }catch(e){}
 }
 function loadButterflies(){
+  if(!BUTTERFLIES_ENABLED) return;
   try{
     const list = JSON.parse(localStorage.getItem(BUTTERFLIES_KEY) || '[]');
     if(Array.isArray(list)) for(const b of list) spawnButterfly(b.id, b.x, b.y, b.z, b.bornAt);
@@ -4285,6 +4295,7 @@ function spawnButterfly(id,x,y,z,bornAt){
 }
 // Spawns a brand-new butterfly (a worm's metamorphosis) and saves the updated population.
 function createButterfly(x,y,z){
+  if(!BUTTERFLIES_ENABLED) return null;
   const id = 'b_'+Math.random().toString(36).slice(2,10);
   const b = spawnButterfly(id,x,y,z,Date.now());
   if(b) saveButterflies();
