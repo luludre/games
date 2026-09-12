@@ -6158,6 +6158,10 @@ nameInput.value = myName==='Player' ? '' : myName;
 nameInput.addEventListener('click', e=> e.stopPropagation());
 nameInput.addEventListener('touchstart', e=> e.stopPropagation());
 nameInput.addEventListener('keydown', e=> e.stopPropagation());
+// Same reasoning as the name field above: without this, clicking the popcorn link would also bubble
+// up into overlay's own click-to-play handler and start the game right underneath the new tab.
+const overlayCreditsLink = document.querySelector('#overlay .credits a');
+if(overlayCreditsLink) overlayCreditsLink.addEventListener('click', e=> e.stopPropagation());
 if(isTouchDevice){
   document.body.classList.add('touch-device');
   const controlsP = document.getElementById('controlsText');
