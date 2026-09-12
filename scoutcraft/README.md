@@ -13,6 +13,10 @@ ScoutCraft began as a fork of [Blockcraft](../blockcraft) and keeps its whole en
 terrain generation, chunked meshing, day/night cycle, seasons and weather, animals, birds, fish and
 wildlife. What's new is everything in [Merit badges](#merit-badges) and [Camp gear](#camp-gear).
 
+Made by Andre Wu, with help from his dad and an AI coding agent, to help introduce more people to
+scouting. If you enjoyed it, consider supporting scouting, Andre's own scouting adventures, and our
+troop's heroes: [🍿 Andre's Popcorn Sale](https://trails-end.com/store/scout/HQ9SW6MR).
+
 ## Play locally
 
 Open `index.html` directly, or serve the folder (recommended, since some browsers restrict features on `file://`):
