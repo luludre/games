@@ -143,6 +143,19 @@
     background:rgba(0,0,0,0.35);color:#fff;border:2px solid rgba(255,255,255,0.4);border-radius:8px;
     padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap;}
   #btnSash:hover{background:rgba(0,0,0,0.55);}
+  #btnQuit{position:fixed;top:10px;right:10px;z-index:10;background:rgba(0,0,0,0.35);color:#fff;
+    border:2px solid rgba(255,255,255,0.4);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;}
+  #btnQuit:hover{background:rgba(180,40,30,0.6);}
+  #thankYouScreen{position:fixed;inset:0;z-index:40;background:linear-gradient(#1a2e1a,#0e1a0e);color:#f2e9d8;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
+  #thankYouScreen h1{font-size:2.2em;margin:0 0 10px;}
+  #thankYouScreen p{max-width:520px;line-height:1.6;font-size:15px;opacity:0.92;margin:8px 0;}
+  #popcornLink{display:inline-block;margin-top:18px;background:#c23b28;color:#fff;text-decoration:none;
+    font-weight:700;padding:12px 22px;border-radius:8px;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,0.4);}
+  #popcornLink:hover{background:#a82f1f;}
+  #btnKeepPlaying{margin-top:28px;background:none;border:1px solid rgba(255,255,255,0.4);color:#f2e9d8;
+    padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;}
+  #btnKeepPlaying:hover{background:rgba(255,255,255,0.1);}
   #sashModal{position:fixed;inset:0;z-index:31;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;}
   #sashPanel{background:#2b2320;color:#f2e9d8;width:min(620px,92vw);max-height:82vh;overflow:auto;border-radius:10px;
     border:2px solid #5a4632;box-shadow:0 10px 40px rgba(0,0,0,0.5);}
@@ -208,6 +221,15 @@
 </div>
 <button id="btnItems">🎒 Inventory</button>
 <button id="btnSash">🎖️ Badges</button>
+<button id="btnQuit">🚪 Quit</button>
+<div id="thankYouScreen" hidden>
+  <h1>🏕️ Thanks for playing ScoutCraft!</h1>
+  <p>Hope you had fun setting up camp, earning your badges, and exploring the woods. Come back
+  anytime — your camp will be exactly how you left it.</p>
+  <p>If you'd like to support Andre's troop, his popcorn sale is open right now:</p>
+  <a id="popcornLink" href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">🍿 Support Andre's Popcorn Sale</a>
+  <button id="btnKeepPlaying">Keep playing instead</button>
+</div>
 <div id="itemsModal" hidden>
   <div id="itemsPanel">
     <div id="itemsHeader">
