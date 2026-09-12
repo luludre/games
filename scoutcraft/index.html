@@ -114,6 +114,14 @@
   .bearBoxColLabel{font-size:11px;text-transform:uppercase;letter-spacing:0.05em;opacity:0.65;margin-bottom:8px;}
   .bearBoxGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px;min-height:60px;}
   .bearBoxEmptyNote{grid-column:1/-1;font-size:12px;opacity:0.5;padding:8px 0;}
+  #backpackModal{position:fixed;inset:0;z-index:31;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;}
+  #backpackPanel{background:#2b2015;color:#f2e9d8;width:min(760px,94vw);max-height:82vh;overflow:auto;border-radius:10px;border:2px solid #6b4a2f;box-shadow:0 10px 40px rgba(0,0,0,0.5);}
+  #backpackHeader{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #6b4a2f;position:sticky;top:0;background:#2b2015;}
+  #backpackHeader h2{margin:0;font-size:1.2em;}
+  #backpackHeader p{margin:4px 0 0;font-size:12px;opacity:0.75;}
+  #backpackClose{background:none;border:none;color:#f2e9d8;font-size:1.1em;cursor:pointer;padding:4px 10px;border-radius:6px;}
+  #backpackClose:hover{background:rgba(255,255,255,0.12);}
+  #backpackPanel .bearBoxCol:first-child{border-right:1px solid #6b4a2f;}
   .itemTile{background:rgba(255,255,255,0.06);border:2px solid transparent;border-radius:8px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;position:relative;}
   .itemTile:hover{background:rgba(255,255,255,0.14);}
   .itemTile.active{border-color:#fff;}
@@ -229,6 +237,27 @@
       <div class="bearBoxCol">
         <div class="bearBoxColLabel">Bear Box</div>
         <div id="bearBoxStorageGrid" class="bearBoxGrid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="backpackModal" hidden>
+  <div id="backpackPanel">
+    <div id="backpackHeader">
+      <div>
+        <h2>🎒 Backpack</h2>
+        <p>Click an item in your pack to store it, or in the backpack to take it back — <span id="backpackCount">0/20</span> slots used.</p>
+      </div>
+      <button id="backpackClose" aria-label="Close">Close ✕</button>
+    </div>
+    <div class="bearBoxColumns">
+      <div class="bearBoxCol">
+        <div class="bearBoxColLabel">Your Pack</div>
+        <div id="backpackYourGrid" class="bearBoxGrid"></div>
+      </div>
+      <div class="bearBoxCol">
+        <div class="bearBoxColLabel">Backpack</div>
+        <div id="backpackStorageGrid" class="bearBoxGrid"></div>
       </div>
     </div>
   </div>
