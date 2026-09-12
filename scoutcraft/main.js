@@ -3294,7 +3294,10 @@ function currentTemperatureF(){
   const noise = (smoothNoise01(t*0.05, 91)*2-1) * 4;
   const wb = currentWeatherBlend();
   const chillF = lerp(wb.from.chillF, wb.to.chillF, wb.lt);
-  return avgF + dailyOffset + noise - chillF;
+  // Season, time of day, and weather still all push it around within the range — winter still reads
+  // cooler than summer, a storm still knocks a few degrees off — it just never leaves a comfortable
+  // 40-90°F band, so the temperature-danger tiers below (calibrated for a wider swing) never trigger.
+  return Math.max(40, Math.min(90, avgF + dailyOffset + noise - chillF));
 }
 // Straight-up sky check from an arbitrary live position (the player), as opposed to
 // computeSkyExposure() which is baked per-column into chunk mesh vertex colors at build time.
