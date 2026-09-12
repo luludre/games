@@ -130,9 +130,10 @@ want and how far along you are ("14 / 25 wood").
 | 🚩 | Troop Flag | Raise your troop flag at camp |
 | ⭐ | Astronomy | Find the Big Dipper and stare at it for 10 seconds |
 | 🎣 | Fishing | Catch 5 fish |
+| 🏅 | Scout Spirit | Find all 12 golden Scout Law boxes hidden around camp |
 
 Ranks follow from the count alone — **Tenderfoot** (0), **Second Class** (2), **First Class** (5),
-**Star Scout** (8), **Life Scout** (11), **Eagle Scout** (all 15) — and your current rank and badge
+**Star Scout** (8), **Life Scout** (11), **Eagle Scout** (all 16) — and your current rank and badge
 count sit in the HUD at the top of the screen. Earning one plays a short bugle call and drops a
 banner telling you what you got, and what rank it just made you.
 
@@ -144,6 +145,14 @@ Nature Study deliberately tracks only the six ground animals and only within 9 b
 spawned to circle wherever the player is and fish fill every pond, so counting them made the badge
 free. Walking up to the black bear or a wolf, on the other hand, is a genuine dare — both attack on
 sight.
+
+Scout Spirit is a scavenger hunt for the real Scout Law: 12 small golden boxes, one for each point
+(Trustworthy, Loyal, Helpful, Friendly, Courteous, Kind, Obedient, Cheerful, Thrifty, Brave, Clean,
+Reverent), scattered across dry land well away from the cooking area, each with its word floating
+over it so it reads from a few blocks off. Right-click one to read what it means and collect it —
+they're indestructible until then, so there's no way to lose one by accident, and where they're
+hidden never changes between visits, only whether you've already found them. Collecting the last one
+earns the badge.
 
 ## Camp gear
 
