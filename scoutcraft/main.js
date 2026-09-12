@@ -5846,6 +5846,51 @@ function toggleOpenable(x,y,z,current){
   SFX.windowToggle(opening);
 }
 // ---------- First-person view-model (arm + held block, rendered as a separate overlay pass) ----------
+// A small drawn paper-map texture (aged cream background, a fold crease, a few contour-line
+// squiggles, a dashed trail and a north arrow) — same canvas-texture technique as the name tag and
+// the Scout Law box labels, just standing in for a scout's map rather than any specific held item.
+function buildMapTexture(){
+  const canvas = document.createElement('canvas');
+  canvas.width = 160; canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#e8d9ae';
+  ctx.fillRect(0,0,160,128);
+  for(let i=0;i<40;i++){
+    ctx.fillStyle = `rgba(${150+Math.random()*40|0},${120+Math.random()*40|0},${70+Math.random()*30|0},0.15)`;
+    ctx.beginPath();
+    ctx.arc(Math.random()*160, Math.random()*128, 6+Math.random()*14, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.strokeStyle = '#6b4a2b';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(4,4,152,120);
+  ctx.strokeStyle = 'rgba(90,60,30,0.4)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(80,6); ctx.lineTo(80,122); ctx.stroke();
+  ctx.strokeStyle = '#8a6a3a';
+  ctx.lineWidth = 1.5;
+  for(let i=0;i<5;i++){
+    ctx.beginPath();
+    const y0 = 20+i*18;
+    ctx.moveTo(16, y0);
+    for(let x=16;x<=144;x+=16) ctx.quadraticCurveTo(x+8, y0+(Math.random()*14-7), x+16, y0+(Math.random()*10-5));
+    ctx.stroke();
+  }
+  ctx.strokeStyle = '#a83b2c';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(20,110); ctx.lineTo(140,20); ctx.stroke();
+  ctx.setLineDash([]);
+  const cx=128, cy=28;
+  ctx.fillStyle = '#3a2a18';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy-14); ctx.lineTo(cx-5, cy+6); ctx.lineTo(cx, cy+2); ctx.lineTo(cx+5, cy+6);
+  ctx.closePath(); ctx.fill();
+  ctx.font = 'bold 11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('N', cx, cy-16);
+  return new THREE.CanvasTexture(canvas);
+}
 let handScene, handCamera, handGroup, armMesh, heldItemMesh;
 let handBobPhase = 0, handBobAmp = 0, swingT = 0;
 function buildHandModel(){
@@ -5862,17 +5907,23 @@ function buildHandModel(){
   armMesh.rotation.set(0.15, 0, -0.25);
   handGroup.add(armMesh);
 
-  heldItemMesh = new THREE.Mesh(new THREE.BoxGeometry(0.22,0.22,0.22), new THREE.MeshLambertMaterial({color:0xffffff}));
-  heldItemMesh.position.set(0.32,-0.34,-0.78);
+  // A folded paper map instead of a held-block cube — a thin box so it reads as a flat sheet, with
+  // the map texture on its front/back faces (the two facing the camera) and a plain paper-edge
+  // color on the four thin sides. Always the same prop regardless of what's actually selected —
+  // it's a fixed piece of gear, not a per-item indicator the way the old color-tinted cube was.
+  const paperEdge = new THREE.MeshLambertMaterial({ color: 0xd8c89a });
+  const mapFace = new THREE.MeshLambertMaterial({ map: buildMapTexture() });
+  heldItemMesh = new THREE.Mesh(new THREE.BoxGeometry(0.34,0.26,0.018),
+    [paperEdge, paperEdge, paperEdge, paperEdge, mapFace, mapFace]);
+  heldItemMesh.position.set(0.20,-0.30,-0.68);
+  heldItemMesh.rotation.set(-0.2, 0.25, 0.15);
   handGroup.add(heldItemMesh);
 
   handScene.add(handGroup);
-  updateHeldItemColor();
 }
-function updateHeldItemColor(){
-  if(!heldItemMesh) return;
-  heldItemMesh.material.color.setHex(BLOCK_COLOR[HOTBAR[selectedSlot]]);
-}
+// The map is a fixed prop now, not a color-coded stand-in for the held item — kept as a no-op
+// (rather than removing every call site) so selecting a different hotbar slot stays harmless.
+function updateHeldItemColor(){}
 function triggerSwing(){ swingT = 1; }
 function updateHandView(dt, moving, sprinting){
   handBobAmp += ((moving?1:0) - handBobAmp) * Math.min(1, dt*8);
