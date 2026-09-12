@@ -156,9 +156,16 @@ one per block.
 - **Compass** — right-click it anywhere in the world and it tells you how far camp is and which
   way, as a real bearing: *"🧭 Camp: 34 blocks NNE."* Before you've lit a campfire it points to the
   middle of the map instead.
-- **Backpack** — a camp fixture that doubles as a shortcut: right-click a placed one to open your
-  pack, the same panel the `I` key opens, so you can check what you're carrying without reaching
-  for the keyboard while your hands are full setting up camp.
+- **Backpack** — its own personal storage, separate from your regular inventory: right-click a
+  placed one to open a two-column panel (Your Pack / Backpack, same layout as the Bear Box) and
+  click an item on either side to move it across. It holds 20 slots — one per *distinct* item type,
+  each unlimited in quantity, the same way your own inventory never runs out of room for more of
+  something you're already carrying. It starts pre-packed, not empty: the real [Scout's 10
+  Essentials](https://www.scouting.org/skills/first-aid/kits/) — pocketknife, first aid kit, extra
+  clothing, rain gear, water bottle, flashlight, trail food, a fire starter (Flint), sun protection,
+  and a map & compass (Compass) — plus a Scoutbook, 11 slots filled from the very first time you
+  open one, 9 left free for whatever you want to stash. These eleven are carried items like Rope —
+  no block form, nothing happens if you try to place one.
 - **Troop Flag** — a real 3-block-tall flagpole, not a single cube: two bare pole segments topped
   with a gold-capped finial and a red pennant flying up where a real flag actually would. Breaking
   any part of it takes the whole pole down and hands back one Troop Flag item, same as a tent.

@@ -32,6 +32,15 @@ const DUTCH_OVEN=32, POT=33, PAN=34, GRIDDLE=35, BEAR_BOX=36;
 // FLAG_POLE is the bare-pole block placeFlag uses for the bottom two segments of a 3-tall Troop
 // Flag — never craftable or held on its own, same non-inventory status as the cooking fixtures above.
 const FLAG_POLE=37;
+// The Scout's 10 Essentials (the real BSA list) plus a Scoutbook — carried items like ROPE/COMPASS,
+// never placed as blocks (see CARRY_ONLY_ITEMS in doInteract). Not craftable; they only ever enter
+// play already packed in the Backpack (see SCOUT_ESSENTIALS/loadBackpackStorage).
+const POCKETKNIFE=38, FIRST_AID_KIT=39, EXTRA_CLOTHING=40, RAIN_GEAR=41, WATER_BOTTLE=42,
+      FLASHLIGHT=43, TRAIL_FOOD=44, SUN_PROTECTION=45, SCOUTBOOK=46;
+// Items with no block form at all (see doInteract) — right-clicking one does nothing, or whatever
+// its own special case above already handles (Flint ignites, Compass takes a bearing).
+const CARRY_ONLY_ITEMS = new Set([ROPE, POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR,
+  WATER_BOTTLE, FLASHLIGHT, TRAIL_FOOD, SUN_PROTECTION, SCOUTBOOK]);
 
 const BLOCK_COLOR = {
   [GRASS]:  0x5b8a3a,
@@ -70,6 +79,15 @@ const BLOCK_COLOR = {
   [PAN]: 0x2c2420,
   [GRIDDLE]: 0x3a3a3a,
   [BEAR_BOX]: 0x3a5f3a,
+  [POCKETKNIFE]: 0x8a1f1f,
+  [FIRST_AID_KIT]: 0xd94a3a,
+  [EXTRA_CLOTHING]: 0x4a6a8a,
+  [RAIN_GEAR]: 0xd9c93a,
+  [WATER_BOTTLE]: 0x3a7fd9,
+  [FLASHLIGHT]: 0x3a3a3a,
+  [TRAIL_FOOD]: 0x9a7a4a,
+  [SUN_PROTECTION]: 0xf0d080,
+  [SCOUTBOOK]: 0x2a5f8a,
 };
 const BLOCK_NAME = {
   [GRASS]:'Grass', [DIRT]:'Dirt', [STONE]:'Stone', [SAND]:'Sand', [WOOD]:'Wood',
@@ -82,12 +100,16 @@ const BLOCK_NAME = {
   [FLAG]:'Troop Flag', [COMPASS]:'Compass', [COOKED_MEAT]:'Cooked Meal', [BACKPACK]:'Backpack',
   [DUTCH_OVEN]:'Dutch Oven', [POT]:'Cooking Pot', [PAN]:'Frying Pan', [GRIDDLE]:'Griddle', [BEAR_BOX]:'Bear Box',
   [FLAG_POLE]:'Flagpole',
+  [POCKETKNIFE]:'Pocketknife', [FIRST_AID_KIT]:'First Aid Kit', [EXTRA_CLOTHING]:'Extra Clothing',
+  [RAIN_GEAR]:'Rain Gear', [WATER_BOTTLE]:'Water Bottle', [FLASHLIGHT]:'Flashlight',
+  [TRAIL_FOOD]:'Trail Food', [SUN_PROTECTION]:'Sun Protection', [SCOUTBOOK]:'Scoutbook',
 };
 // Every item the player can ever select. The hotbar only shows HOTBAR_SIZE of these at a time —
 // the rest are reachable through the Items panel (the palette button, or the "I" key), which lets
 // the player swap any hotbar slot for anything in this list.
 const ALL_ITEMS = [GRASS, DIRT, STONE, SAND, WOOD, LEAVES, PLANKS, WATER, CRAFTING_TABLE, BRICKS, STICK, WINDOW, DOOR, FLINT, TORCH, FIREWORK, LADDER, MEAT,
-  ROPE, TENT, CAMPFIRE, LANTERN, FLAG, COMPASS, COOKED_MEAT, BACKPACK];
+  ROPE, TENT, CAMPFIRE, LANTERN, FLAG, COMPASS, COOKED_MEAT, BACKPACK,
+  POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR, WATER_BOTTLE, FLASHLIGHT, TRAIL_FOOD, SUN_PROTECTION, SCOUTBOOK];
 const HOTBAR_SIZE = 9;
 // A scout's starting kit: building materials first, then the camp gear you earn badges with.
 const DEFAULT_HOTBAR = [WOOD, PLANKS, STONE, CRAFTING_TABLE, CAMPFIRE, TENT, FLAG, FLINT, COMPASS];
@@ -106,7 +128,9 @@ function loadHotbar(){
 // A few items are structures/tools, not plain materials — give them a distinct glyph on top of
 // their swatch so they read at a glance instead of just being "another colored square."
 const HOTBAR_ICON = { [CRAFTING_TABLE]: '🛠️', [WINDOW]: '🪟', [DOOR]: '🚪', [FLINT]: '🪨', [TORCH]: '🕯️', [FIREWORK]: '🎆', [LADDER]: '🪜', [MEAT]: '🍗',
-  [ROPE]: '🪢', [TENT]: '⛺', [CAMPFIRE]: '🔥', [LANTERN]: '🏮', [FLAG]: '🚩', [COMPASS]: '🧭', [COOKED_MEAT]: '🍖', [BACKPACK]: '🎒' };
+  [ROPE]: '🪢', [TENT]: '⛺', [CAMPFIRE]: '🔥', [LANTERN]: '🏮', [FLAG]: '🚩', [COMPASS]: '🧭', [COOKED_MEAT]: '🍖', [BACKPACK]: '🎒',
+  [POCKETKNIFE]: '🔪', [FIRST_AID_KIT]: '🩹', [EXTRA_CLOTHING]: '🧥', [RAIN_GEAR]: '☂️', [WATER_BOTTLE]: '🥤',
+  [FLASHLIGHT]: '🔦', [TRAIL_FOOD]: '🥜', [SUN_PROTECTION]: '🧴', [SCOUTBOOK]: '📘' };
 // Blocks with an open/closed state: right-clicking one toggles it to the other id in this map.
 const TOGGLE_MAP = { [WINDOW]:WINDOW_OPEN, [WINDOW_OPEN]:WINDOW, [DOOR]:DOOR_OPEN, [DOOR_OPEN]:DOOR };
 // Breaking the open form of a toggleable block gives you back its closed (placeable) form.
@@ -2859,7 +2883,7 @@ function respawnAfterDeath(){
 // plus that jump to morning.
 let sleeping = false;
 function trySleep(){
-  if(sleeping || craftingOpen || itemsOpen || sashOpen || bearBoxOpen) return;
+  if(sleeping || craftingOpen || itemsOpen || sashOpen || bearBoxOpen || backpackOpen) return;
   if(!nearestTent(4)){ addChatMessage('Camp', '⛺ You need to be near your tent to sleep.'); return; }
   if(!isScoutNight()){ addChatMessage('Camp', "☀️ You're not sleepy yet — try again after dark."); return; }
   sleeping = true;
@@ -6058,11 +6082,12 @@ window.addEventListener('keydown', e=>{
     if(craftingOpen){ closeCrafting(false); return; }
     if(itemsOpen){ closeItems(false); return; }
     if(bearBoxOpen){ closeBearBox(false); return; }
+    if(backpackOpen){ closeBackpackStorage(false); return; }
     if(sashOpen){ closeSash(false); return; }
   }
   if(e.code==='KeyM'){
     if(sashOpen){ closeSash(true); return; }
-    if(craftingOpen || itemsOpen || bearBoxOpen) return;
+    if(craftingOpen || itemsOpen || bearBoxOpen || backpackOpen) return;
     if(locked && !isDead) openSash();
     return;
   }
@@ -6115,12 +6140,11 @@ function doInteract(){
   if(held===MEAT){ tryEatMeat(); return; }
   if(held===COOKED_MEAT){ tryEatFood(COOKED_MEAT); return; }
   if(held===COMPASS){ useCompass(); return; }
-  // Rope is a material you build *with*, not a block — without this it would place an
-  // untextured cube, since it has no entry in BLOCK_TILES.
-  if(held===ROPE) return;
+  // Carried items with no block form at all — without this they'd place as an untextured cube,
+  // since none of them has a BLOCK_TILES entry.
+  if(CARRY_ONLY_ITEMS.has(held)) return;
   if(hitBlock===CRAFTING_TABLE) openCrafting();
-  // A placed Backpack is just a quick way back into your own pack — same panel the I key opens.
-  else if(hitBlock===BACKPACK) openItems();
+  else if(hitBlock===BACKPACK) openBackpackStorage();
   else if(hitBlock===BEAR_BOX) openBearBox();
   else if(hitBlock in TOGGLE_MAP) toggleOpenable(hit.x, hit.y, hit.z, hitBlock);
   else placeBlock();
@@ -6173,7 +6197,7 @@ overlay.addEventListener('click', ()=>{
 document.addEventListener('pointerlockchange', ()=>{
   if(isTouchDevice) return;
   locked = document.pointerLockElement === document.body;
-  overlay.hidden = locked || craftingOpen || itemsOpen || bearBoxOpen;
+  overlay.hidden = locked || craftingOpen || itemsOpen || bearBoxOpen || backpackOpen;
 });
 document.addEventListener('mousemove', e=>{
   if(!locked || isTouchDevice) return;
@@ -6638,6 +6662,99 @@ function closeBearBox(relock){
   } else if(!isTouchDevice) overlay.hidden = false;
 }
 
+// ---------- Backpack storage (your own pack, 20 slots — one per distinct item type) ----------
+// Unlike the Bear Box's single combined count, this caps the number of different item TYPES it can
+// hold at once, not the total quantity — one slot per type, unlimited within that slot, same as your
+// own hotbar/inventory already work. It's a personal stash rather than a camp-wide one, so it starts
+// pre-packed with the Scout's 10 Essentials (the real BSA list) plus a Scoutbook, instead of empty.
+const BACKPACK_SLOTS = 20;
+const BACKPACK_KEY = 'scoutcraft_backpack_v1';
+// Fire starter and map-and-compass are the two of the ten that are already real, functional items
+// elsewhere in the game (Flint ignites fires, Compass takes a bearing) — reused here rather than
+// invented twice.
+const SCOUT_ESSENTIALS = [POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR, WATER_BOTTLE,
+  FLASHLIGHT, TRAIL_FOOD, FLINT, SUN_PROTECTION, COMPASS];
+const backpackStorage = {}; // id -> qty
+let backpackOpen = false;
+function backpackSlotCount(){ return Object.keys(backpackStorage).filter(id=>backpackStorage[id]>0).length; }
+function saveBackpackStorage(){
+  try{ localStorage.setItem(BACKPACK_KEY, JSON.stringify(backpackStorage)); }catch(e){}
+}
+function loadBackpackStorage(){
+  try{
+    const raw = localStorage.getItem(BACKPACK_KEY);
+    if(raw){
+      const obj = JSON.parse(raw);
+      for(const k in obj) backpackStorage[k] = obj[k];
+      return;
+    }
+  }catch(e){}
+  // First time ever: pack it before the player even opens it.
+  for(const id of SCOUT_ESSENTIALS) backpackStorage[id] = 1;
+  backpackStorage[SCOUTBOOK] = 1;
+  saveBackpackStorage();
+}
+function depositToBackpackStorage(id){
+  if(invCount(id)<=0) return;
+  if(!backpackStorage[id] && backpackSlotCount()>=BACKPACK_SLOTS) return; // no free slot for a new type
+  invSub(id,1);
+  backpackStorage[id] = (backpackStorage[id]||0)+1;
+  saveInventory();
+  saveBackpackStorage();
+  updateHotbarUI();
+  renderBackpackStorage();
+}
+function withdrawFromBackpackStorage(id){
+  if(!backpackStorage[id]) return;
+  backpackStorage[id]--;
+  if(backpackStorage[id]<=0) delete backpackStorage[id];
+  invAdd(id,1);
+  saveInventory();
+  saveBackpackStorage();
+  updateHotbarUI();
+  renderBackpackStorage();
+}
+function renderBackpackStorage(){
+  document.getElementById('backpackCount').textContent = `${backpackSlotCount()}/${BACKPACK_SLOTS}`;
+  const yourGrid = document.getElementById('backpackYourGrid');
+  const packGrid = document.getElementById('backpackStorageGrid');
+  yourGrid.innerHTML = '';
+  packGrid.innerHTML = '';
+  const held = ALL_ITEMS.filter(id => id!==FIREWORK && invCount(id)>0);
+  if(held.length===0){
+    const note = document.createElement('div'); note.className = 'bearBoxEmptyNote'; note.textContent = "You aren't carrying anything.";
+    yourGrid.appendChild(note);
+  } else {
+    held.forEach(id => yourGrid.appendChild(makeBearBoxTile(id, invCount(id), ()=> depositToBackpackStorage(id))));
+  }
+  const stored = Object.keys(backpackStorage).map(Number).filter(id => backpackStorage[id]>0);
+  if(stored.length===0){
+    const note = document.createElement('div'); note.className = 'bearBoxEmptyNote'; note.textContent = 'Empty slots.';
+    packGrid.appendChild(note);
+  } else {
+    stored.forEach(id => packGrid.appendChild(makeBearBoxTile(id, backpackStorage[id], ()=> withdrawFromBackpackStorage(id))));
+  }
+}
+const backpackModal = document.getElementById('backpackModal');
+document.getElementById('backpackClose').addEventListener('click', ()=> closeBackpackStorage(true));
+backpackModal.addEventListener('click', e=>{ if(e.target===backpackModal) closeBackpackStorage(true); });
+function openBackpackStorage(){
+  backpackOpen = true;
+  backpackModal.hidden = false;
+  if(document.pointerLockElement) document.exitPointerLock();
+  if(isTouchDevice) locked = false;
+  overlay.hidden = true;
+  renderBackpackStorage();
+}
+function closeBackpackStorage(relock){
+  backpackOpen = false;
+  backpackModal.hidden = true;
+  if(relock){
+    if(isTouchDevice) locked = true;
+    else document.body.requestPointerLock();
+  } else if(!isTouchDevice) overlay.hidden = false;
+}
+
 // ---------- Camp log ----------
 // A small on-screen message log for local feedback (cooking hints, sleep, badge-adjacent tips) —
 // there's no chat to send here, single-player has no one else to send it to.
@@ -6728,6 +6845,7 @@ function init(){
   loadWorms();
   loadButterflies();
   loadBearBox();
+  loadBackpackStorage();
 
   window.addEventListener('resize', ()=>{
     camera.aspect = window.innerWidth/window.innerHeight;
