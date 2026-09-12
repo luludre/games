@@ -98,9 +98,11 @@ Blocks you break go into your inventory (shown as counts on the hotbar), and pla
 - 1 Stick + 1 Flint + 1 Window → 1 Lantern
 - 1 Flint + 2 Stone → 1 Compass
 - 2 Planks + 2 Sticks + 1 Rope → 1 Troop Flag
+- 2 Planks + 2 Rope → 1 Backpack
+- 2 Sticks + 1 Rope → 1 Fishing Pole
 
-Rope is the gateway: the Tent and the Troop Flag both need it, and it comes from leaves — so a
-scout's first job is always finding a tree.
+Rope is the gateway: the Tent, the Troop Flag, the Backpack and the Fishing Pole all need it, and it
+comes from leaves — so a scout's first job is always finding a tree.
 
 The Craft button lights up once you have enough materials. Your inventory (like your world edits) is saved to `localStorage`, so it persists across reloads.
 
@@ -127,9 +129,10 @@ want and how far along you are ("14 / 25 wood").
 | ⛑️ | First Aid | Heal back to full health after nearly dying |
 | 🚩 | Troop Flag | Raise your troop flag at camp |
 | ⭐ | Astronomy | Find the Big Dipper and stare at it for 10 seconds |
+| 🎣 | Fishing | Catch 5 fish |
 
 Ranks follow from the count alone — **Tenderfoot** (0), **Second Class** (2), **First Class** (5),
-**Star Scout** (8), **Life Scout** (11), **Eagle Scout** (all 14) — and your current rank and badge
+**Star Scout** (8), **Life Scout** (11), **Eagle Scout** (all 15) — and your current rank and badge
 count sit in the HUD at the top of the screen. Earning one plays a short bugle call and drops a
 banner telling you what you got, and what rank it just made you.
 
@@ -144,7 +147,7 @@ sight.
 
 ## Camp gear
 
-Seven craftable things the badges are built around. Break any of them to pick it back up — for the
+Eight craftable things the badges are built around. Break any of them to pick it back up — for the
 tent, breaking any single wall takes the whole shelter down and hands back just one Tent item, not
 one per block.
 
@@ -174,7 +177,12 @@ one per block.
 - **Troop Flag** — a real 3-block-tall flagpole, not a single cube: two bare pole segments topped
   with a gold-capped finial and a red pennant flying up where a real flag actually would. Breaking
   any part of it takes the whole pole down and hands back one Troop Flag item, same as a tent.
-  Purely yours to plant, and the last badge on the sash.
+  Purely yours to plant.
+- **Fishing Pole** — right-click it into any water with a fish nearby to cast your line, then hold
+  still (don't switch what you're holding, and don't wander more than a block and a half off) for 20
+  seconds to reel one in. A countdown reads out on screen the whole time it's cast, right-clicking
+  again reels the line back in early if you change your mind, and 5 fish caught earns the Fishing
+  badge — the last one on the sash.
 
 **Sleep:** stand near your tent after dark and press `K`. It can't actually fast-forward the real
 clock the world runs on, so — like the `N` key's day/night override — it jumps your own view to
