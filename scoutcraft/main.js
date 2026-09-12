@@ -6418,8 +6418,10 @@ const keys = {};
 let selectedSlot = 0;
 // Direct letter shortcuts for the hotbar, one per slot — no numbers, no scroll-wheel cycling.
 // Picked to avoid every letter already bound to something else (WASD move, E craft, I inventory,
-// V third-person), and clustered near WASD so they're reachable without moving your hand.
-const HOTBAR_KEYS = ['KeyQ','KeyR','KeyF','KeyT','KeyG','KeyC','KeyX','KeyZ','KeyB'];
+// V third-person, B backpack, M badges, K sleep, N day/night, L crawl toggle), and clustered as
+// tightly as possible around WASD so they're reachable without moving your hand — H is the one
+// key here that isn't in that immediate block, since B (its neighbor) is now taken by Backpack.
+const HOTBAR_KEYS = ['KeyQ','KeyR','KeyF','KeyT','KeyG','KeyC','KeyX','KeyZ','KeyH'];
 window.addEventListener('keydown', e=>{
   keys[e.code]=true;
   if(e.code==='KeyD' && e.altKey && e.shiftKey && !e.ctrlKey && !e.metaKey){
@@ -6452,6 +6454,12 @@ window.addEventListener('keydown', e=>{
     if(itemsOpen){ closeItems(true); return; }
     if(craftingOpen) return;
     if(locked && !isDead) openItems();
+    return;
+  }
+  if(e.code==='KeyB'){
+    if(backpackOpen){ closeBackpackStorage(true); return; }
+    if(craftingOpen || itemsOpen || bearBoxOpen || sashOpen) return;
+    if(locked && !isDead) openBackpackStorage();
     return;
   }
   if(e.code==='KeyV' && locked){ thirdPerson = !thirdPerson; return; }
@@ -6516,6 +6524,17 @@ nameInput.addEventListener('keydown', e=> e.stopPropagation());
 // up into overlay's own click-to-play handler and start the game right underneath the new tab.
 const overlayCreditsLink = document.querySelector('#overlay .credits a');
 if(overlayCreditsLink) overlayCreditsLink.addEventListener('click', e=> e.stopPropagation());
+// The long how-to-play paragraph starts collapsed so the front page reads clean at a glance —
+// this just reveals/re-hides it in place, same stopPropagation reasoning as the name field above.
+const btnHelp = document.getElementById('btnHelp');
+const playHint = document.getElementById('playHint');
+if(btnHelp && playHint){
+  btnHelp.addEventListener('click', e=>{
+    e.stopPropagation();
+    playHint.hidden = !playHint.hidden;
+    btnHelp.textContent = playHint.hidden ? '❓ How to play' : '✕ Hide help';
+  });
+}
 if(isTouchDevice){
   document.body.classList.add('touch-device');
   const controlsP = document.getElementById('controlsText');
@@ -7181,6 +7200,7 @@ function closeBackpackStorage(relock){
     else document.body.requestPointerLock();
   } else if(!isTouchDevice) overlay.hidden = false;
 }
+document.getElementById('btnBackpack').addEventListener('click', ()=>{ if(locked && !isDead) openBackpackStorage(); });
 
 // ---------- Camp log ----------
 // A small on-screen message log for local feedback (cooking hints, sleep, badge-adjacent tips) —

@@ -30,9 +30,14 @@
   #overlay p{max-width:520px;line-height:1.6;opacity:0.92;font-size:15px;}
   #overlay .key{background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:4px;}
   #overlay .small{margin-top:18px;font-size:12px;opacity:0.65;}
-  #overlay .credits{margin-top:14px;font-size:12px;opacity:0.8;}
-  #overlay .credits a{color:#ffcc4d;font-weight:600;text-decoration:none;}
+  #overlay .credits{margin-top:16px;font-size:16px;line-height:1.5;opacity:1;font-weight:600;
+    color:#fff3d6;background:rgba(255,204,77,0.14);border:1px solid rgba(255,204,77,0.45);
+    border-radius:10px;padding:14px 18px;}
+  #overlay .credits a{color:#ffcc4d;font-weight:700;text-decoration:none;}
   #overlay .credits a:hover{text-decoration:underline;}
+  #btnHelp{margin-top:8px;background:none;border:1px solid rgba(255,255,255,0.35);color:#f2e9d8;
+    padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;}
+  #btnHelp:hover{background:rgba(255,255,255,0.1);}
   #nameEntry{margin-top:14px;}
   #nameInput{font-size:16px;padding:8px 14px;border-radius:6px;border:2px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:#fff;text-align:center;width:200px;outline:none;}
   #nameInput::placeholder{color:rgba(255,255,255,0.55);}
@@ -96,8 +101,9 @@
   .recipe .need.short{color:#e58a6f;}
   .recipe button{background:#5b8a3a;border:none;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;flex:none;}
   .recipe button:disabled{background:#555;cursor:not-allowed;opacity:0.5;}
-  #btnItems{position:fixed;bottom:104px;left:50%;transform:translateX(-50%);z-index:10;background:rgba(0,0,0,0.35);color:#fff;border:2px solid rgba(255,255,255,0.4);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;}
-  #btnItems:hover{background:rgba(0,0,0,0.55);}
+  #panelButtons{position:fixed;bottom:104px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:8px;}
+  #panelButtons button{background:rgba(0,0,0,0.35);color:#fff;border:2px solid rgba(255,255,255,0.4);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap;}
+  #panelButtons button:hover{background:rgba(0,0,0,0.55);}
   #itemsModal{position:fixed;inset:0;z-index:31;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;}
   #itemsPanel{background:#2b2320;color:#f2e9d8;width:min(520px,92vw);max-height:82vh;overflow:auto;border-radius:10px;border:2px solid #5a4632;box-shadow:0 10px 40px rgba(0,0,0,0.5);}
   #itemsHeader{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #5a4632;position:sticky;top:0;background:#2b2320;}
@@ -144,10 +150,6 @@
   #badgeToast .bt-text{display:flex;flex-direction:column;gap:2px;font-size:13px;line-height:1.35;}
   #badgeToast .bt-text b{font-size:14px;}
   #badgeToast .bt-rank{opacity:0.85;font-size:12px;}
-  #btnSash{position:fixed;bottom:104px;left:calc(50% + 92px);transform:translateX(-50%);z-index:10;
-    background:rgba(0,0,0,0.35);color:#fff;border:2px solid rgba(255,255,255,0.4);border-radius:8px;
-    padding:5px 12px;font-size:12px;cursor:pointer;white-space:nowrap;}
-  #btnSash:hover{background:rgba(0,0,0,0.55);}
   #btnQuit{position:fixed;top:10px;right:10px;z-index:10;background:rgba(0,0,0,0.35);color:#fff;
     border:2px solid rgba(255,255,255,0.4);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;}
   #btnQuit:hover{background:rgba(180,40,30,0.6);}
@@ -208,7 +210,7 @@
 <div id="badgeToast" hidden></div>
 <div id="crosshair"></div>
 <div id="hotbar"></div>
-<div id="hint">Left click: break / attack &nbsp;·&nbsp; Right click: place (or cook raw meat on a campfire / take a bearing with the compass / open a table or backpack / toggle a window or door / cast a fishing pole into water / collect a golden Scout Law box) &nbsp;·&nbsp; Q R F T G C X Z B: select item &nbsp;·&nbsp; I: pack &nbsp;·&nbsp; M: badge sash &nbsp;·&nbsp; E: craft &nbsp;·&nbsp; K: sleep in tent &nbsp;·&nbsp; V: 3rd person &nbsp;·&nbsp; Ctrl: hold to crawl &nbsp;·&nbsp; L: toggle crawl &nbsp;·&nbsp; N: cycle day/night &nbsp;·&nbsp; Esc: release mouse</div>
+<div id="hint">Left click: break / attack &nbsp;·&nbsp; Right click: place (or cook raw meat on a campfire / take a bearing with the compass / open a table or backpack / toggle a window or door / cast a fishing pole into water / collect a golden Scout Law box) &nbsp;·&nbsp; Q R F T G C X Z H: select item &nbsp;·&nbsp; I: inventory &nbsp;·&nbsp; B: backpack &nbsp;·&nbsp; M: badge sash &nbsp;·&nbsp; E: craft &nbsp;·&nbsp; K: sleep in tent &nbsp;·&nbsp; V: 3rd person &nbsp;·&nbsp; Ctrl: hold to crawl &nbsp;·&nbsp; L: toggle crawl &nbsp;·&nbsp; N: cycle day/night &nbsp;·&nbsp; Esc: release mouse</div>
 <div id="craftHint">Right-click the table (or press E) to craft</div>
 <div id="fishingHint"></div>
 <div id="chatLog"></div>
@@ -232,8 +234,11 @@
     <div id="craftingRecipes"></div>
   </div>
 </div>
-<button id="btnItems">🎒 Inventory</button>
-<button id="btnSash">🎖️ Badges</button>
+<div id="panelButtons">
+  <button id="btnItems">📦 Inventory (I)</button>
+  <button id="btnBackpack">🎒 Backpack (B)</button>
+  <button id="btnSash">🎖️ Badges (M)</button>
+</div>
 <button id="btnQuit">🚪 Quit</button>
 <div id="thankYouScreen" hidden>
   <h1>🏕️ Thanks for playing ScoutCraft!</h1>
@@ -328,11 +333,12 @@
     woodcraft, firecraft and a good tent actually count for something.<br><br>
     <span class="key">WASD</span> move &nbsp; <span class="key">Space</span> jump &nbsp; <span class="key">Shift</span> sprint &nbsp; <span class="key">Ctrl</span> crawl &nbsp; <span class="key">L</span> toggle crawl<br>
     <span class="key">Mouse</span> look &nbsp; <span class="key">Left click</span> break / attack &nbsp; <span class="key">Right click</span> place<br>
-    <span class="key">Q R F T G C X Z B</span> select item &nbsp; <span class="key">I</span> pack &nbsp; <span class="key">M</span> badge sash &nbsp; <span class="key">E</span> craft at workbench &nbsp; <span class="key">K</span> sleep in tent &nbsp; <span class="key">V</span> 3rd person &nbsp; <span class="key">N</span> cycle day/night
+    <span class="key">Q R F T G C X Z H</span> select item &nbsp; <span class="key">I</span> inventory &nbsp; <span class="key">B</span> backpack &nbsp; <span class="key">M</span> badge sash &nbsp; <span class="key">E</span> craft at workbench &nbsp; <span class="key">K</span> sleep in tent &nbsp; <span class="key">V</span> 3rd person &nbsp; <span class="key">N</span> cycle day/night
   </p>
   <div id="nameEntry"><input id="nameInput" type="text" maxlength="16" placeholder="Your name" autocomplete="off"></div>
   <p id="tapToPlay"><strong>Click anywhere to play</strong></p>
-  <p id="playHint" class="small">Chop a tree for wood and leaves, put down your Camp Workbench, and press E beside it to craft. Twist leaves into <b>rope</b>, then build a <b>tent</b> you can actually walk into, a <b>campfire</b>, a <b>lantern</b>, a <b>compass</b>, a <b>backpack</b> and your <b>troop flag</b> — each one earns a merit badge, and badges promote you from Tenderfoot all the way to Eagle Scout. Press <span class="key">M</span> to see your sash, or <span class="key">K</span> near your tent after dark to sleep through the night. Cook raw meat on a campfire for a meal worth twice as much. Rabbits and deer are harmless — moose fight back if provoked, and wolves and the black bear attack on sight. Progress saves automatically in this browser.</p>
+  <button id="btnHelp">❓ How to play</button>
+  <p id="playHint" class="small" hidden>Chop a tree for wood and leaves, put down your Camp Workbench, and press E beside it to craft. Twist leaves into <b>rope</b>, then build a <b>tent</b> you can actually walk into, a <b>campfire</b>, a <b>lantern</b>, a <b>compass</b>, a <b>backpack</b> and your <b>troop flag</b> — each one earns a merit badge, and badges promote you from Tenderfoot all the way to Eagle Scout. Press <span class="key">M</span> to see your sash, or <span class="key">K</span> near your tent after dark to sleep through the night. Cook raw meat on a campfire for a meal worth twice as much. Rabbits and deer are harmless — moose fight back if provoked, and wolves and the black bear attack on sight. Progress saves automatically in this browser.</p>
   <p class="credits">Built by Andre Wu, his dad, and an AI to help others discover scouting! Andre scouts
   with Troop 904 out of Dublin, CA. If you had fun, please consider supporting his scouting adventures
   and our heroes: <a href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">🍿 Andre's Popcorn Sale</a></p>
