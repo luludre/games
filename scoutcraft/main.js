@@ -55,13 +55,13 @@ const SLEEPING_BAG=50, SLEEPING_PAD=51;
 const US_FLAG_TL=52, US_FLAG_TC=53, US_FLAG_TR=54, US_FLAG_BL=55, US_FLAG_BC=56, US_FLAG_BR=57;
 const US_FLAG_BLOCKS = new Set([US_FLAG_TL, US_FLAG_TC, US_FLAG_TR, US_FLAG_BL, US_FLAG_BC, US_FLAG_BR]);
 // A pair of carved camp totems (see buildTotem) — a 4-tall one playing the Scout Oath, a 3-tall one
-// playing the Outdoor Code, each built from these 4 symbol segments cycled top to bottom so no two
+// playing the Outdoor Code, each built from these 5 symbol segments cycled top to bottom so no two
 // adjacent rings repeat. World fixtures like DUTCH_OVEN/BEAR_BOX/SCOUT_LAW_BOX above: never craftable
 // or held, just placed once at world-gen. Numbered from 115 (well past the ~57 cooking-item ids that
 // get assigned programmatically starting at US_FLAG_BR+1 — see COOK_ID below) so the two ranges can
 // never collide regardless of how many ingredients/dishes that table grows to.
-const TOTEM_COMPASS=115, TOTEM_STAR=116, TOTEM_FLAME=117, TOTEM_TENT=118;
-const TOTEM_BLOCKS = [TOTEM_COMPASS, TOTEM_STAR, TOTEM_FLAME, TOTEM_TENT];
+const TOTEM_COMPASS=115, TOTEM_STAR=116, TOTEM_FLAME=117, TOTEM_TENT=118, TOTEM_FLEUR=119;
+const TOTEM_BLOCKS = [TOTEM_FLEUR, TOTEM_STAR, TOTEM_COMPASS, TOTEM_FLAME, TOTEM_TENT];
 // Items with no block form at all (see doInteract) — right-clicking one does nothing, or whatever
 // its own special case above already handles (Flint ignites, Compass takes a bearing).
 const CARRY_ONLY_ITEMS = new Set([ROPE, POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR,
@@ -120,7 +120,7 @@ const BLOCK_COLOR = {
   [SLEEPING_PAD]: 0x8a9a7a,
   [US_FLAG_TL]: 0x3c3b6e, [US_FLAG_TC]: 0xb22234, [US_FLAG_TR]: 0xb22234,
   [US_FLAG_BL]: 0xb22234, [US_FLAG_BC]: 0xffffff, [US_FLAG_BR]: 0xb22234,
-  [TOTEM_COMPASS]: 0x6b4226, [TOTEM_STAR]: 0x6b4226, [TOTEM_FLAME]: 0x6b4226, [TOTEM_TENT]: 0x6b4226,
+  [TOTEM_COMPASS]: 0x6b4226, [TOTEM_STAR]: 0x6b4226, [TOTEM_FLAME]: 0x6b4226, [TOTEM_TENT]: 0x6b4226, [TOTEM_FLEUR]: 0x6b4226,
 };
 const BLOCK_NAME = {
   [GRASS]:'Grass', [DIRT]:'Dirt', [STONE]:'Stone', [SAND]:'Sand', [WOOD]:'Wood',
@@ -141,7 +141,7 @@ const BLOCK_NAME = {
   [SLEEPING_BAG]:'Sleeping Bag', [SLEEPING_PAD]:'Sleeping Pad',
   [US_FLAG_TL]:'US Flag', [US_FLAG_TC]:'US Flag', [US_FLAG_TR]:'US Flag',
   [US_FLAG_BL]:'US Flag', [US_FLAG_BC]:'US Flag', [US_FLAG_BR]:'US Flag',
-  [TOTEM_COMPASS]:'Scout Totem', [TOTEM_STAR]:'Scout Totem', [TOTEM_FLAME]:'Scout Totem', [TOTEM_TENT]:'Scout Totem',
+  [TOTEM_COMPASS]:'Scout Totem', [TOTEM_STAR]:'Scout Totem', [TOTEM_FLAME]:'Scout Totem', [TOTEM_TENT]:'Scout Totem', [TOTEM_FLEUR]:'Scout Totem',
 };
 // Every item the player can ever select. The hotbar only shows HOTBAR_SIZE of these at a time —
 // the rest are reachable through the Items panel (the palette button, or the "I" key), which lets
@@ -891,7 +891,7 @@ const T_GRASS_TOP=0, T_GRASS_SIDE=1, T_DIRT=2, T_STONE=3, T_SAND=4, T_LOG_SIDE=5
       T_DUTCH_OVEN=30, T_POT=31, T_PAN=32, T_GRIDDLE=33, T_BEAR_BOX=34, T_FLAG_POLE=35,
       T_SCOUT_LAW_BOX=36,
       T_US_FLAG_TL=37, T_US_FLAG_TC=38, T_US_FLAG_TR=39, T_US_FLAG_BL=40, T_US_FLAG_BC=41, T_US_FLAG_BR=42,
-      T_TOTEM_COMPASS=43, T_TOTEM_STAR=44, T_TOTEM_FLAME=45, T_TOTEM_TENT=46;
+      T_TOTEM_COMPASS=43, T_TOTEM_STAR=44, T_TOTEM_FLAME=45, T_TOTEM_TENT=46, T_TOTEM_FLEUR=47;
 
 function hexRGB(hex){ return [(hex>>16)&255, (hex>>8)&255, hex&255]; }
 function rgbStr(r,g,b){ return `rgb(${r|0},${g|0},${b|0})`; }
@@ -1488,18 +1488,43 @@ function drawScoutLawBox(ctx,x0,y0){
   ctx.fill();
 }
 // ---------- Scout totems (see buildTotem) ----------
-// Four carved-wood symbol segments, cycled top to bottom so two camp totems (Scout Oath, Outdoor
-// Code) each read as a real stack of distinct rings rather than one texture repeated. Kept deliberately
-// generic/geometric — a compass, a star, a flame, a tent — rather than any specific real-world totem
-// pole tradition, since this is meant to read as camp craft, not a reproduction of anyone's culture.
+// Five carved-wood symbol segments, cycled top to bottom so the two camp totems (Scout Oath, Outdoor
+// Code) each read as a real stack of distinct rings rather than one texture repeated, topped with a
+// carved eagle (see buildTotemEagleMesh) the way a real hand-carved camp totem often is. Kept
+// deliberately generic/geometric — a fleur-de-lis, a star, a compass, a flame, a tent — rather than
+// any specific real-world totem pole tradition's actual iconography or painted formline style, since
+// this is meant to read as camp craft (the same spirit as the wooden Scout-totem projects real troops
+// carve for their own camps), not a reproduction of anyone's culture.
 function drawTotemRing(ctx,x0,y0){
   fillTile(ctx,x0,y0,0x6b4226);
   speckle(ctx,x0,y0,0x6b4226,Math.round(TILE*TILE*0.14),10);
+  // A few faint concentric grain rings, like a real cut log's growth rings, so it reads as an actual
+  // carved wooden segment rather than a flat speckled fill.
+  ctx.strokeStyle = 'rgba(46,28,14,0.35)';
+  ctx.lineWidth = 1;
+  for(let i=0;i<3;i++){
+    ctx.beginPath();
+    ctx.arc(x0+TILE*0.5, y0+TILE*0.5, TILE*(0.12+i*0.1), 0, Math.PI*2);
+    ctx.stroke();
+  }
   // Dark grooves top and bottom suggest each ring is its own carved segment, stacked rather than one
   // continuous pole.
   ctx.fillStyle = shadeStr(0x2e1c0e,1,4);
   ctx.fillRect(x0, y0, TILE, TILE*0.07);
   ctx.fillRect(x0, y0+TILE*0.93, TILE, TILE*0.07);
+}
+function drawTotemFleur(ctx,x0,y0){
+  drawTotemRing(ctx,x0,y0);
+  ctx.fillStyle = shadeStr(0xe8d9a0,1,4);
+  const cx=x0+TILE*0.5, cy=y0+TILE*0.5;
+  ctx.fillRect(cx-TILE*0.03, cy-TILE*0.28, TILE*0.06, TILE*0.4);
+  ctx.beginPath();
+  ctx.moveTo(cx-TILE*0.03, cy-TILE*0.28); ctx.lineTo(cx-TILE*0.22, cy-TILE*0.05); ctx.lineTo(cx-TILE*0.03, cy-TILE*0.05);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx+TILE*0.03, cy-TILE*0.28); ctx.lineTo(cx+TILE*0.22, cy-TILE*0.05); ctx.lineTo(cx+TILE*0.03, cy-TILE*0.05);
+  ctx.closePath(); ctx.fill();
+  ctx.fillRect(cx-TILE*0.18, cy+TILE*0.1, TILE*0.36, TILE*0.07);
 }
 function drawTotemCompass(ctx,x0,y0){
   drawTotemRing(ctx,x0,y0);
@@ -1648,7 +1673,7 @@ function buildAtlas(){
                 drawTent, drawCampfire, drawLantern, drawFlag, drawBackpack,
                 drawDutchOven, drawPot, drawPan, drawGriddle, drawBearBox, drawFlagPole, drawScoutLawBox,
                 drawUSFlagTL, drawUSFlagTC, drawUSFlagTR, drawUSFlagBL, drawUSFlagBC, drawUSFlagBR,
-                drawTotemCompass, drawTotemStar, drawTotemFlame, drawTotemTent];
+                drawTotemCompass, drawTotemStar, drawTotemFlame, drawTotemTent, drawTotemFleur];
   draw.forEach((fn, i)=> fn(ctx, (i%ATLAS_COLS)*TILE, Math.floor(i/ATLAS_COLS)*TILE));
   const tex = new THREE.CanvasTexture(canvas);
   tex.magFilter = THREE.NearestFilter;
@@ -1708,6 +1733,7 @@ const BLOCK_TILES = {
   [TOTEM_STAR]: {top:T_TOTEM_STAR, side:T_TOTEM_STAR, bottom:T_TOTEM_STAR},
   [TOTEM_FLAME]: {top:T_TOTEM_FLAME, side:T_TOTEM_FLAME, bottom:T_TOTEM_FLAME},
   [TOTEM_TENT]: {top:T_TOTEM_TENT, side:T_TOTEM_TENT, bottom:T_TOTEM_TENT},
+  [TOTEM_FLEUR]: {top:T_TOTEM_FLEUR, side:T_TOTEM_FLEUR, bottom:T_TOTEM_FLEUR},
 };
 // per-face-direction UV winding (0/1 flags select u0/u1 and vBottom/vTop), aligned to FACES order below
 const UV_PATTERNS = [
@@ -1918,17 +1944,31 @@ function buildGiantFlag(){
 // (same block ids are reused across both, so position is what tells them apart) and rebuilt fresh
 // every load rather than appended to, same reasoning as buildGiantFlag being re-asserted after
 // loadEdits below — a stale saved edit on one of these two cells shouldn't be able to erase it.
-const totems = []; // {x, z, play}
+const totems = []; // {x, z, play, eagleMesh}
 function totemAt(x,z){ return totems.find(t => t.x===x && t.z===z); }
+// A carved eagle capping each totem, the way a real hand-carved camp totem often is — reuses the
+// exact same box-composition bird model as the ambient wildlife (see buildBirdMesh/BIG_EAGLE_SPECIES),
+// just posed statically (wings left flat at their neutral, un-flapped angle) rather than animated.
+function buildTotemEagleMesh(){
+  const eagle = buildBirdMesh(BIG_EAGLE_SPECIES);
+  eagle.scale.setScalar(2.2);
+  return eagle;
+}
 function buildTotem(x, z, height, play){
   const baseY = COOKING_AREA_Y + 1;
   for(let i=0;i<height;i++){
     setBlock(x, baseY+i, z, TOTEM_BLOCKS[i % TOTEM_BLOCKS.length]);
     PROTECTED_CELLS.add(x+','+(baseY+i)+','+z);
   }
-  totems.push({ x, z, play });
+  const eagleMesh = buildTotemEagleMesh();
+  eagleMesh.position.set(x+0.5, baseY+height, z+0.5);
+  scene.add(eagleMesh);
+  totems.push({ x, z, play, eagleMesh });
 }
 function buildTotems(){
+  // Called again after loadEdits (see init()), same as buildGiantFlag — without clearing the old
+  // eagle meshes first, a second call would leave two stacked on top of each totem.
+  for(const t of totems) scene.remove(t.eagleMesh);
   totems.length = 0;
   const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
   buildTotem(x0+COOKING_AREA_SIZE-2, z0+2, 4, playScoutOath);   // NE corner
