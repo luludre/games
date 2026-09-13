@@ -59,7 +59,7 @@ Then visit `http://localhost:8000`.
 - `E` — open/close crafting when standing near a Camp Workbench
 - `M` (or the **🎖️ Badges (M)** button) — open your merit badge sash
 - `K` — sleep through the night, if you're near your tent and it's after dark
-- `V` — toggle third-person camera (see your own blocky character)
+- `V` — toggle first-person view (third-person, seeing your own blocky character, is the default)
 - The **❓ How to play** button on the start screen reveals the full tutorial paragraph (chopping trees, crafting, badges) — collapsed by default so the front page stays short; click it again (now **✕ Hide help**) to put it away.
 - The **🚪 Quit** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
 - That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you quit so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
@@ -339,8 +339,14 @@ While you're playing, the game quietly checks every 5 minutes whether `main.js` 
 
 - The world is a fixed 128×128 block area (4x the original map) with procedurally generated hills, a beach/water line, and scattered trees — regenerated from a fixed seed, so it's the same every time you load it. The world is flooded three blocks higher than its original sea level, so some ground that used to be shoreline is underwater now.
 - Your current coordinates are shown live in the top-left HUD.
-- Your blocky character (visible in third person, `V`) wears a scout's uniform — a khaki shirt, army
-  green pants, and an army green cap with a brim.
+- The camera starts in third person, showing your own blocky character in its scout uniform — a
+  khaki shirt, army green pants, and a wide-brimmed army green hat. Moving the mouse turns your
+  character freely without moving the camera, so you can spin all the way around to see your own
+  face; stop moving the mouse for a second and a half and the camera eases back to its normal spot
+  behind you. `V` switches to the classic first-person view instead.
+- Your name tag floats over your head with your current rank underneath it (Tenderfoot, Second
+  Class, and so on through Eagle Scout) instead of a health readout — your hearts are already shown
+  in the HUD, so this doubles as a second place to glance at your standing.
 - A small drawn paper map floats in view — a fold crease, a few contour-line squiggles, a dashed
   trail and a north arrow — in place of the arm-and-held-block view most voxel games show. It's a
   fixed prop, not a per-item indicator; it looks the same no matter what's actually selected in your

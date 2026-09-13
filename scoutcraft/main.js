@@ -2236,10 +2236,10 @@ const headMaterials = [skinMaterial, skinMaterial, skinMaterial, skinMaterial, s
 
 function createCharacterMesh(shirtColor){
   const group = new THREE.Group();
-  // A scout's uniform: khaki shirt, army green pants and cap.
-  const shirtMat = new THREE.MeshLambertMaterial({ color: shirtColor!==undefined ? shirtColor : 0xc3b091 });
+  // A scout's uniform: khaki shirt, army green pants and hat.
+  const shirtMat = new THREE.MeshLambertMaterial({ color: shirtColor!==undefined ? shirtColor : 0xa89272 });
   const pantsMat = new THREE.MeshLambertMaterial({ color: 0x4b5320 });
-  const capMat = new THREE.MeshLambertMaterial({ color: 0x4b5320 });
+  const hatMat = new THREE.MeshLambertMaterial({ color: 0x4b5320 });
 
   function box(w,h,d,mat,pivotTop){
     const geo = new THREE.BoxGeometry(w,h,d);
@@ -2259,14 +2259,15 @@ function createCharacterMesh(shirtColor){
   legL.position.set(-0.14, 0.7, 0);
   const legR = box(0.22,0.7,0.22, pantsMat, true);
   legR.position.set(0.14, 0.7, 0);
-  // Cap: a crown sitting right on top of the head plus a brim jutting forward (-Z, same "forward"
-  // convention as the face texture) from its lower front edge.
-  const capCrown = box(0.54,0.18,0.54, capMat);
-  capCrown.position.set(0, 1.89, 0);
-  const capBrim = box(0.5,0.05,0.2, capMat);
-  capBrim.position.set(0, 1.805, -0.36);
+  // A wide-brimmed scout hat rather than a baseball cap — the crown sinks down over the top of the
+  // head instead of stacking a full extra block above it (so it sits low enough to clear the name
+  // tag floating above), and the brim extends evenly on every side, not just a front bill.
+  const hatCrown = box(0.42,0.10,0.42, hatMat);
+  hatCrown.position.set(0, 1.75, 0);
+  const hatBrim = box(0.76,0.05,0.76, hatMat);
+  hatBrim.position.set(0, 1.675, 0);
 
-  group.add(head, body, armL, armR, legL, legR, capCrown, capBrim);
+  group.add(head, body, armL, armR, legL, legR, hatCrown, hatBrim);
   group.userData.parts = { armL, armR, legL, legR };
   group.traverse(o => { if(o.isMesh){ o.castShadow = true; } });
   return group;
@@ -2282,7 +2283,7 @@ function animateWalk(group, state, dt, moving, sprinting){
   legR.rotation.x = -swing;
 }
 // ---------- Floating name/HP tag (drawn on a canvas, shown as a billboard sprite above the head) ----------
-function buildNameTagCanvas(name, hp, maxHp){
+function buildNameTagCanvas(name, rank){
   const canvas = document.createElement('canvas');
   canvas.width = 256; canvas.height = 64;
   const ctx = canvas.getContext('2d');
@@ -2293,22 +2294,22 @@ function buildNameTagCanvas(name, hp, maxHp){
   ctx.font = 'bold 24px sans-serif';
   ctx.fillText(name, 128, 28);
   ctx.font = '18px sans-serif';
-  ctx.fillStyle = '#ff6b6b';
-  ctx.fillText('❤ ' + Math.max(0, Math.round(hp)) + '/' + maxHp, 128, 52);
+  ctx.fillStyle = '#f0dfa8';
+  ctx.fillText(rank, 128, 52);
   return canvas;
 }
 function createNameTagSprite(){
-  const tex = new THREE.CanvasTexture(buildNameTagCanvas('', 0, PLAYER_MAX_HP));
+  const tex = new THREE.CanvasTexture(buildNameTagCanvas('', rankFor(0)));
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
   sprite.scale.set(1.6, 0.4, 1);
   sprite.position.set(0, 2.05, 0);
   return { sprite, tex, lastKey: null };
 }
-function updateNameTag(tag, name, hp, maxHp){
-  const key = name + ':' + Math.max(0, Math.round(hp));
+function updateNameTag(tag, name, rank){
+  const key = name + ':' + rank;
   if(tag.lastKey === key) return;
   tag.lastKey = key;
-  const canvas = buildNameTagCanvas(name, hp, maxHp);
+  const canvas = buildNameTagCanvas(name, rank);
   tag.tex.dispose();
   tag.tex = new THREE.CanvasTexture(canvas);
   tag.sprite.material.map = tag.tex;
@@ -3215,7 +3216,15 @@ function tryAttack(){
   return true;
 }
 
-let thirdPerson = false;
+let thirdPerson = true;
+// Cancels player.yaw's own contribution to the third-person camera's angle while the mouse is
+// actively moving, so the camera holds its current view instead of always sitting directly behind
+// you — the character (whose own rotation still tracks player.yaw untouched) spins freely in view,
+// letting you turn all the way around to see your own face. Once the mouse stops for PEEK_HOLD_S,
+// this eases back to 0 at PEEK_EASE_RATE, so the camera catches back up and settles behind you again.
+let peekYaw = 0, peekTimer = 0;
+const PEEK_HOLD_S = 1.5;
+const PEEK_EASE_RATE = 3;
 let characterMesh;
 let myNameTag;
 const myWalkState = { phase:0, amp:0 };
@@ -3226,7 +3235,7 @@ function updateCharacterAnim(dt, moving, sprinting){
   // Cheap third-person "crawling" tell: squash the whole body toward the ground rather than building a
   // separate prone pose. The group's origin is at the feet, so this alone keeps it planted correctly.
   characterMesh.scale.y = player.crawling ? 0.42 : 1;
-  updateNameTag(myNameTag, myName, myHP, PLAYER_MAX_HP);
+  updateNameTag(myNameTag, myName, rankFor(earnedBadges.size));
 }
 
 // ---------- World edits ----------
@@ -6646,6 +6655,12 @@ document.addEventListener('mousemove', e=>{
   player.yaw -= e.movementX * 0.0022;
   player.pitch -= e.movementY * 0.0022;
   player.pitch = Math.max(-Math.PI/2+0.01, Math.min(Math.PI/2-0.01, player.pitch));
+  // Exactly cancels the player.yaw change above for camera purposes (see peekYaw's own comment) —
+  // the camera holds still while the character keeps turning with the mouse.
+  if(thirdPerson){
+    peekYaw += e.movementX * 0.0022;
+    peekTimer = PEEK_HOLD_S;
+  }
 });
 document.addEventListener('contextmenu', e=> e.preventDefault());
 document.addEventListener('mousedown', e=>{
@@ -7419,7 +7434,11 @@ function animate(now){
 
   if(thirdPerson){
     characterMesh.visible = true;
-    const dir = getLookDir(player.yaw, player.pitch);
+    // Once the mouse has been still for PEEK_HOLD_S, ease the extra swing back out so the camera
+    // settles behind the character again instead of staying wherever the last peek left it.
+    if(peekTimer > 0) peekTimer -= dt;
+    else peekYaw += (0 - peekYaw) * Math.min(1, dt*PEEK_EASE_RATE);
+    const dir = getLookDir(player.yaw + peekYaw, player.pitch);
     const dist = 4.5;
     camera.position.set(
       player.pos.x - dir.x*dist,
