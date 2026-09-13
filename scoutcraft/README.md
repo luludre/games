@@ -4,7 +4,7 @@ Welcome to **Camp Merit Ridge** — set up camp in the wilderness and earn your 
 entirely in the browser — procedurally generated terrain, block breaking/placing, crafting — built
 with [three.js](https://threejs.org/) — with a scouting layer on top: rope you twist from leaves, a
 walk-in tent you pitch, campfires you cook on, a compass that finds its way back to camp, and
-sixteen merit badges that promote you from Tenderfoot to Eagle Scout.
+sixteen merit badges that promote you from Scout to Eagle Scout.
 
 No build step, no server-side code, no dependencies to install, no account to make. Everything —
 your world, your inventory, your progress — lives in this browser's `localStorage`.
@@ -145,8 +145,8 @@ want and how far along you are ("14 / 25 wood").
 | 🎣 | Fishing | Catch 5 fish |
 | 🏅 | Scout Spirit | Find all 12 golden Scout Law boxes hidden around camp |
 
-Ranks follow from the count alone — **Tenderfoot** (0), **Second Class** (2), **First Class** (5),
-**Star Scout** (8), **Life Scout** (11), **Eagle Scout** (all 16) — and your current rank and badge
+Ranks follow from the count alone — **Scout** (0), **Tenderfoot** (1), **Second Class** (2),
+**First Class** (5), **Star Scout** (8), **Life Scout** (11), **Eagle Scout** (all 16) — and your current rank and badge
 count sit in the HUD at the top of the screen. Earning one plays a short bugle call and drops a
 banner telling you what you got, and what rank it just made you.
 
@@ -376,7 +376,7 @@ While you're playing, the game quietly checks every 5 minutes whether `main.js` 
   without moving the camera, so you can spin all the way around to see your own face; stop moving
   the mouse for a second and a half and the camera eases back to its normal spot
   behind you. `V` switches to the classic first-person view instead.
-- Your name tag floats over your head with your current rank underneath it (Tenderfoot, Second
+- Your name tag floats over your head with your current rank underneath it (Scout, Tenderfoot, Second
   Class, and so on through Eagle Scout) instead of a health readout — your hearts are already shown
   in the HUD, so this doubles as a second place to glance at your standing.
 - A small drawn paper map floats in view — a fold crease, a few contour-line squiggles, a dashed
