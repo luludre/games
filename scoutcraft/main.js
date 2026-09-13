@@ -2754,6 +2754,32 @@ function buildNeckerchiefMesh(colorHex){
   g.userData.mat = mat;
   return g;
 }
+// A dark iron belt buckle plate, stamped with a simple black fleur-de-lis-style scout emblem — the
+// same generic three-pronged blaze already used for the Troop Flag's own pennant, just black-on-iron
+// here instead of pale-on-red.
+function buildBuckleTexture(){
+  const w=32, h=24;
+  const canvas = document.createElement('canvas');
+  canvas.width=w; canvas.height=h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#2a2a2a';
+  ctx.fillRect(0,0,w,h);
+  for(let i=0;i<40;i++){
+    ctx.fillStyle = `rgba(255,255,255,${Math.random()*0.08})`;
+    ctx.fillRect(Math.random()*w, Math.random()*h, 1, 1);
+  }
+  ctx.fillStyle = '#0a0a0a';
+  const cx=w/2, cy=h/2;
+  ctx.fillRect(cx-1, cy-8, 2, 11);
+  ctx.beginPath();
+  ctx.moveTo(cx-1, cy-8); ctx.lineTo(cx-6, cy-2); ctx.lineTo(cx-1, cy-2);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx+1, cy-8); ctx.lineTo(cx+6, cy-2); ctx.lineTo(cx+1, cy-2);
+  ctx.closePath(); ctx.fill();
+  ctx.fillRect(cx-5, cy+3, 10, 2);
+  return pixelTexture(canvas);
+}
 
 function createCharacterMesh(shirtColor){
   const group = new THREE.Group();
@@ -2815,6 +2841,15 @@ function createCharacterMesh(shirtColor){
   const backpackFlapMat = new THREE.MeshLambertMaterial({ color: 0x1f4783 });
   const backpackFlap = box(0.3, 0.14, 0.03, backpackFlapMat);
   backpackFlap.position.set(0, 1.22, 0.35);
+  // Army green belt right at the shirt/pants seam — slightly wider and deeper than the torso so it
+  // visibly wraps over it rather than looking flush-inset — with a dark iron buckle stamped with a
+  // black scout emblem centered on the front face.
+  const beltMat = new THREE.MeshLambertMaterial({ color: 0x3d4a1f });
+  const belt = box(0.54, 0.09, 0.32, beltMat);
+  belt.position.set(0, 0.68, 0);
+  const buckleMat = new THREE.MeshLambertMaterial({ map: buildBuckleTexture() });
+  const buckle = box(0.16, 0.11, 0.02, buckleMat);
+  buckle.position.set(0, 0.68, -0.17);
   // Short pants up top, bare leg (skin) through the knee/shin, a short sock, then a hiking shoe.
   const legSegments = [{h:0.20,mat:pantsMat},{h:0.30,mat:skinMaterial},{h:0.10,mat:sockMat},{h:0.10,mat:shoeMat}];
   const legL = makeLimb(0.22,0.22, legSegments);
@@ -2831,7 +2866,7 @@ function createCharacterMesh(shirtColor){
   const hatBrim = box(0.9,0.05,0.9, hatMat);
   hatBrim.position.set(0, 1.675, 0);
 
-  group.add(head, body, armL, armR, legL, legR, hatCrown, hatBrim, neckerchief, backpack, backpackFlap);
+  group.add(head, body, armL, armR, legL, legR, hatCrown, hatBrim, neckerchief, backpack, backpackFlap, belt, buckle);
   group.userData.parts = { armL, armR, legL, legR };
   // Stashed so applyUniformCustomization can update the troop number / neckerchief color live, after
   // the front-page overlay is actually submitted, without rebuilding this whole mesh.
