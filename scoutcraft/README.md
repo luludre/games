@@ -346,6 +346,14 @@ something, so aiming at it uses its own much longer line-of-sight check instead 
 but you do still have to actually be there: within about 10 blocks of the pole, the same as standing
 in front of it, not clear across the clearing looking up.
 
+Two more fixed monuments sit in the clearing's other free corners: a 4-tall **Scout Totem** and a
+3-tall one, each a stack of carved wooden rings — a compass, a star, a flame, a tent, cycling top to
+bottom so no two adjacent rings repeat (original geometric art, not a reproduction of any real
+totem-pole tradition). Right-click either one — ordinary reach applies, no special long-range check
+needed at this height — and it plays a full recitation: the Scout Oath on the taller one, the Outdoor
+Code on the shorter one (see [`assets/README.md`](assets/README.md)), the same "one at a time, wait
+for it to finish" behavior as the flag's Pledge.
+
 A rustic wooden sign floats over the clearing naming the camp — "🏕️ Camp Merit Ridge" — the same
 canvas-texture billboard technique as the Scout Law boxes' word labels, just styled like carved wood
 instead of a gold plaque.
@@ -459,7 +467,8 @@ While you're playing, the game quietly checks every 5 minutes whether `main.js` 
   hiking shoes, a wide-brimmed army green hat, and a blue backpack worn on the back. The shirt front
   has two chest pockets and a row of buttons down the placket, a small US flag patch sits on the
   right sleeve, and your troop number (if you entered one) is stitched onto the left sleeve in army
-  green. Before you start, the front-page overlay asks for your troop number and lets you pick a
+  green. An army green belt at the waist has a dark iron buckle stamped with a simple black scout
+  emblem. Before you start, the front-page overlay asks for your troop number and lets you pick a
   neckerchief color — it's tied around the collar with two long, sharp-tipped ends hanging down the
   front, and both choices are remembered in this browser for next time. Moving the mouse turns your
   character freely without moving the camera, so you can spin all the way around to see your own

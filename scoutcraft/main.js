@@ -54,6 +54,14 @@ const SLEEPING_BAG=50, SLEEPING_PAD=51;
 // like DUTCH_OVEN/BEAR_BOX/SCOUT_LAW_BOX above: never craftable or held, just placed once at world-gen.
 const US_FLAG_TL=52, US_FLAG_TC=53, US_FLAG_TR=54, US_FLAG_BL=55, US_FLAG_BC=56, US_FLAG_BR=57;
 const US_FLAG_BLOCKS = new Set([US_FLAG_TL, US_FLAG_TC, US_FLAG_TR, US_FLAG_BL, US_FLAG_BC, US_FLAG_BR]);
+// A pair of carved camp totems (see buildTotem) — a 4-tall one playing the Scout Oath, a 3-tall one
+// playing the Outdoor Code, each built from these 4 symbol segments cycled top to bottom so no two
+// adjacent rings repeat. World fixtures like DUTCH_OVEN/BEAR_BOX/SCOUT_LAW_BOX above: never craftable
+// or held, just placed once at world-gen. Numbered from 115 (well past the ~57 cooking-item ids that
+// get assigned programmatically starting at US_FLAG_BR+1 — see COOK_ID below) so the two ranges can
+// never collide regardless of how many ingredients/dishes that table grows to.
+const TOTEM_COMPASS=115, TOTEM_STAR=116, TOTEM_FLAME=117, TOTEM_TENT=118;
+const TOTEM_BLOCKS = [TOTEM_COMPASS, TOTEM_STAR, TOTEM_FLAME, TOTEM_TENT];
 // Items with no block form at all (see doInteract) — right-clicking one does nothing, or whatever
 // its own special case above already handles (Flint ignites, Compass takes a bearing).
 const CARRY_ONLY_ITEMS = new Set([ROPE, POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR,
@@ -112,6 +120,7 @@ const BLOCK_COLOR = {
   [SLEEPING_PAD]: 0x8a9a7a,
   [US_FLAG_TL]: 0x3c3b6e, [US_FLAG_TC]: 0xb22234, [US_FLAG_TR]: 0xb22234,
   [US_FLAG_BL]: 0xb22234, [US_FLAG_BC]: 0xffffff, [US_FLAG_BR]: 0xb22234,
+  [TOTEM_COMPASS]: 0x6b4226, [TOTEM_STAR]: 0x6b4226, [TOTEM_FLAME]: 0x6b4226, [TOTEM_TENT]: 0x6b4226,
 };
 const BLOCK_NAME = {
   [GRASS]:'Grass', [DIRT]:'Dirt', [STONE]:'Stone', [SAND]:'Sand', [WOOD]:'Wood',
@@ -132,6 +141,7 @@ const BLOCK_NAME = {
   [SLEEPING_BAG]:'Sleeping Bag', [SLEEPING_PAD]:'Sleeping Pad',
   [US_FLAG_TL]:'US Flag', [US_FLAG_TC]:'US Flag', [US_FLAG_TR]:'US Flag',
   [US_FLAG_BL]:'US Flag', [US_FLAG_BC]:'US Flag', [US_FLAG_BR]:'US Flag',
+  [TOTEM_COMPASS]:'Scout Totem', [TOTEM_STAR]:'Scout Totem', [TOTEM_FLAME]:'Scout Totem', [TOTEM_TENT]:'Scout Totem',
 };
 // Every item the player can ever select. The hotbar only shows HOTBAR_SIZE of these at a time —
 // the rest are reachable through the Items panel (the palette button, or the "I" key), which lets
@@ -872,7 +882,7 @@ const PROTECTED_CELLS = new Set();
 // ---------- Texture atlas (procedurally drawn pixel-art, no external image assets) ----------
 // TILE=32 (was 16) gives 4x the pixel budget per block face — enough room for real structure
 // (cracks, grain, brick-by-brick variation, ripples) rather than flat color + noise.
-const TILE = 32, ATLAS_COLS = 4, ATLAS_ROWS = 11;
+const TILE = 32, ATLAS_COLS = 4, ATLAS_ROWS = 12;
 const T_GRASS_TOP=0, T_GRASS_SIDE=1, T_DIRT=2, T_STONE=3, T_SAND=4, T_LOG_SIDE=5, T_LOG_TOP=6,
       T_LEAVES=7, T_PLANKS=8, T_BEDROCK=9, T_CRAFT_TOP=10, T_CRAFT_SIDE=11, T_BRICKS=12, T_WATER=13,
       T_WINDOW=14, T_WINDOW_OPEN=15, T_DOOR=16, T_DOOR_OPEN=17, T_SAPLING=18, T_FLINT=19, T_FIRE=20,
@@ -880,7 +890,8 @@ const T_GRASS_TOP=0, T_GRASS_SIDE=1, T_DIRT=2, T_STONE=3, T_SAND=4, T_LOG_SIDE=5
       T_TENT=25, T_CAMPFIRE=26, T_LANTERN=27, T_FLAG=28, T_BACKPACK=29,
       T_DUTCH_OVEN=30, T_POT=31, T_PAN=32, T_GRIDDLE=33, T_BEAR_BOX=34, T_FLAG_POLE=35,
       T_SCOUT_LAW_BOX=36,
-      T_US_FLAG_TL=37, T_US_FLAG_TC=38, T_US_FLAG_TR=39, T_US_FLAG_BL=40, T_US_FLAG_BC=41, T_US_FLAG_BR=42;
+      T_US_FLAG_TL=37, T_US_FLAG_TC=38, T_US_FLAG_TR=39, T_US_FLAG_BL=40, T_US_FLAG_BC=41, T_US_FLAG_BR=42,
+      T_TOTEM_COMPASS=43, T_TOTEM_STAR=44, T_TOTEM_FLAME=45, T_TOTEM_TENT=46;
 
 function hexRGB(hex){ return [(hex>>16)&255, (hex>>8)&255, hex&255]; }
 function rgbStr(r,g,b){ return `rgb(${r|0},${g|0},${b|0})`; }
@@ -1476,6 +1487,54 @@ function drawScoutLawBox(ctx,x0,y0){
   ctx.closePath();
   ctx.fill();
 }
+// ---------- Scout totems (see buildTotem) ----------
+// Four carved-wood symbol segments, cycled top to bottom so two camp totems (Scout Oath, Outdoor
+// Code) each read as a real stack of distinct rings rather than one texture repeated. Kept deliberately
+// generic/geometric — a compass, a star, a flame, a tent — rather than any specific real-world totem
+// pole tradition, since this is meant to read as camp craft, not a reproduction of anyone's culture.
+function drawTotemRing(ctx,x0,y0){
+  fillTile(ctx,x0,y0,0x6b4226);
+  speckle(ctx,x0,y0,0x6b4226,Math.round(TILE*TILE*0.14),10);
+  // Dark grooves top and bottom suggest each ring is its own carved segment, stacked rather than one
+  // continuous pole.
+  ctx.fillStyle = shadeStr(0x2e1c0e,1,4);
+  ctx.fillRect(x0, y0, TILE, TILE*0.07);
+  ctx.fillRect(x0, y0+TILE*0.93, TILE, TILE*0.07);
+}
+function drawTotemCompass(ctx,x0,y0){
+  drawTotemRing(ctx,x0,y0);
+  const cx=x0+TILE*0.5, cy=y0+TILE*0.5, r=TILE*0.32;
+  ctx.fillStyle = shadeStr(0xe8d9a0,1,4);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy-r); ctx.lineTo(cx+r*0.28, cy-r*0.28); ctx.lineTo(cx+r, cy); ctx.lineTo(cx+r*0.28, cy+r*0.28);
+  ctx.lineTo(cx, cy+r); ctx.lineTo(cx-r*0.28, cy+r*0.28); ctx.lineTo(cx-r, cy); ctx.lineTo(cx-r*0.28, cy-r*0.28);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = shadeStr(0x8a1f1f,1,4);
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.18,0,Math.PI*2); ctx.fill();
+}
+function drawTotemStar(ctx,x0,y0){
+  drawTotemRing(ctx,x0,y0);
+  ctx.fillStyle = shadeStr(0xe8d9a0,1,4);
+  drawStar(ctx, x0+TILE*0.5, y0+TILE*0.5, TILE*0.34, TILE*0.14);
+}
+function drawTotemFlame(ctx,x0,y0){
+  drawTotemRing(ctx,x0,y0);
+  const cx = x0+TILE*0.5;
+  blob(ctx, cx, y0+TILE*0.62, TILE*0.22, 0xc62b0e, 14);
+  blob(ctx, cx, y0+TILE*0.46, TILE*0.16, 0xff7a1a, 16);
+  blob(ctx, cx, y0+TILE*0.33, TILE*0.1, 0xffce4d, 14);
+}
+function drawTotemTent(ctx,x0,y0){
+  drawTotemRing(ctx,x0,y0);
+  ctx.fillStyle = shadeStr(0xe8d9a0,1,4);
+  ctx.beginPath();
+  ctx.moveTo(x0+TILE*0.5, y0+TILE*0.22);
+  ctx.lineTo(x0+TILE*0.8, y0+TILE*0.74);
+  ctx.lineTo(x0+TILE*0.2, y0+TILE*0.74);
+  ctx.closePath();
+  ctx.fill();
+}
 // ---------- Giant US flag (see buildGiantFlag) ----------
 // Drawn once at real detail on an offscreen canvas well above tile resolution, then each of the 6
 // mural blocks just crops+downscales its own slice out of it into the atlas — that's what lets 50
@@ -1588,7 +1647,8 @@ function buildAtlas(){
                 drawLadder, drawLeavesSparse, drawLeavesDense,
                 drawTent, drawCampfire, drawLantern, drawFlag, drawBackpack,
                 drawDutchOven, drawPot, drawPan, drawGriddle, drawBearBox, drawFlagPole, drawScoutLawBox,
-                drawUSFlagTL, drawUSFlagTC, drawUSFlagTR, drawUSFlagBL, drawUSFlagBC, drawUSFlagBR];
+                drawUSFlagTL, drawUSFlagTC, drawUSFlagTR, drawUSFlagBL, drawUSFlagBC, drawUSFlagBR,
+                drawTotemCompass, drawTotemStar, drawTotemFlame, drawTotemTent];
   draw.forEach((fn, i)=> fn(ctx, (i%ATLAS_COLS)*TILE, Math.floor(i/ATLAS_COLS)*TILE));
   const tex = new THREE.CanvasTexture(canvas);
   tex.magFilter = THREE.NearestFilter;
@@ -1644,6 +1704,10 @@ const BLOCK_TILES = {
   [US_FLAG_BL]: {top:T_US_FLAG_BL, side:T_US_FLAG_BL, bottom:T_US_FLAG_BL},
   [US_FLAG_BC]: {top:T_US_FLAG_BC, side:T_US_FLAG_BC, bottom:T_US_FLAG_BC},
   [US_FLAG_BR]: {top:T_US_FLAG_BR, side:T_US_FLAG_BR, bottom:T_US_FLAG_BR},
+  [TOTEM_COMPASS]: {top:T_TOTEM_COMPASS, side:T_TOTEM_COMPASS, bottom:T_TOTEM_COMPASS},
+  [TOTEM_STAR]: {top:T_TOTEM_STAR, side:T_TOTEM_STAR, bottom:T_TOTEM_STAR},
+  [TOTEM_FLAME]: {top:T_TOTEM_FLAME, side:T_TOTEM_FLAME, bottom:T_TOTEM_FLAME},
+  [TOTEM_TENT]: {top:T_TOTEM_TENT, side:T_TOTEM_TENT, bottom:T_TOTEM_TENT},
 };
 // per-face-direction UV winding (0/1 flags select u0/u1 and vBottom/vTop), aligned to FACES order below
 const UV_PATTERNS = [
@@ -1777,6 +1841,7 @@ function generateWorld(){
   placeFallenLogs();
   buildCookingArea();
   buildGiantFlag();
+  buildTotems();
   placeScoutLawBoxes();
 }
 // ---------- Cooking area: a flat, permanent 20x20 camp-cooking clearing ----------
@@ -1845,6 +1910,29 @@ function buildGiantFlag(){
       protect(poleX-1-col, flagTopY-row, poleZ, grid[row][col]);
     }
   }
+}
+// ---------- Scout totems: two more fixed camp monuments, tucked into free corners of the cooking
+// clearing clear of every station/the horse/the flag — a 4-tall one reciting the Scout Oath, a
+// 3-tall one reciting the Outdoor Code. Segments cycle through TOTEM_BLOCKS bottom to top so no two
+// adjacent rings repeat. `totems` is read by doInteract to find which one a click actually landed on
+// (same block ids are reused across both, so position is what tells them apart) and rebuilt fresh
+// every load rather than appended to, same reasoning as buildGiantFlag being re-asserted after
+// loadEdits below — a stale saved edit on one of these two cells shouldn't be able to erase it.
+const totems = []; // {x, z, play}
+function totemAt(x,z){ return totems.find(t => t.x===x && t.z===z); }
+function buildTotem(x, z, height, play){
+  const baseY = COOKING_AREA_Y + 1;
+  for(let i=0;i<height;i++){
+    setBlock(x, baseY+i, z, TOTEM_BLOCKS[i % TOTEM_BLOCKS.length]);
+    PROTECTED_CELLS.add(x+','+(baseY+i)+','+z);
+  }
+  totems.push({ x, z, play });
+}
+function buildTotems(){
+  totems.length = 0;
+  const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
+  buildTotem(x0+COOKING_AREA_SIZE-2, z0+2, 4, playScoutOath);   // NE corner
+  buildTotem(x0+2, z0+COOKING_AREA_SIZE-2, 3, playOutdoorCode); // SW corner
 }
 // ---------- Scout Law boxes: 12 golden keepsakes, one per point of the Scout Law ----------
 // Scattered once at world-gen with their own seeded RNG (not Math.random()) so every fresh load
@@ -2666,6 +2754,32 @@ function buildNeckerchiefMesh(colorHex){
   g.userData.mat = mat;
   return g;
 }
+// A dark iron belt buckle plate, stamped with a simple black fleur-de-lis-style scout emblem — the
+// same generic three-pronged blaze already used for the Troop Flag's own pennant, just black-on-iron
+// here instead of pale-on-red.
+function buildBuckleTexture(){
+  const w=32, h=24;
+  const canvas = document.createElement('canvas');
+  canvas.width=w; canvas.height=h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#2a2a2a';
+  ctx.fillRect(0,0,w,h);
+  for(let i=0;i<40;i++){
+    ctx.fillStyle = `rgba(255,255,255,${Math.random()*0.08})`;
+    ctx.fillRect(Math.random()*w, Math.random()*h, 1, 1);
+  }
+  ctx.fillStyle = '#0a0a0a';
+  const cx=w/2, cy=h/2;
+  ctx.fillRect(cx-1, cy-8, 2, 11);
+  ctx.beginPath();
+  ctx.moveTo(cx-1, cy-8); ctx.lineTo(cx-6, cy-2); ctx.lineTo(cx-1, cy-2);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx+1, cy-8); ctx.lineTo(cx+6, cy-2); ctx.lineTo(cx+1, cy-2);
+  ctx.closePath(); ctx.fill();
+  ctx.fillRect(cx-5, cy+3, 10, 2);
+  return pixelTexture(canvas);
+}
 
 function createCharacterMesh(shirtColor){
   const group = new THREE.Group();
@@ -2727,6 +2841,15 @@ function createCharacterMesh(shirtColor){
   const backpackFlapMat = new THREE.MeshLambertMaterial({ color: 0x1f4783 });
   const backpackFlap = box(0.3, 0.14, 0.03, backpackFlapMat);
   backpackFlap.position.set(0, 1.22, 0.35);
+  // Army green belt right at the shirt/pants seam — slightly wider and deeper than the torso so it
+  // visibly wraps over it rather than looking flush-inset — with a dark iron buckle stamped with a
+  // black scout emblem centered on the front face.
+  const beltMat = new THREE.MeshLambertMaterial({ color: 0x3d4a1f });
+  const belt = box(0.54, 0.09, 0.32, beltMat);
+  belt.position.set(0, 0.68, 0);
+  const buckleMat = new THREE.MeshLambertMaterial({ map: buildBuckleTexture() });
+  const buckle = box(0.16, 0.11, 0.02, buckleMat);
+  buckle.position.set(0, 0.68, -0.17);
   // Short pants up top, bare leg (skin) through the knee/shin, a short sock, then a hiking shoe.
   const legSegments = [{h:0.20,mat:pantsMat},{h:0.30,mat:skinMaterial},{h:0.10,mat:sockMat},{h:0.10,mat:shoeMat}];
   const legL = makeLimb(0.22,0.22, legSegments);
@@ -2743,7 +2866,7 @@ function createCharacterMesh(shirtColor){
   const hatBrim = box(0.9,0.05,0.9, hatMat);
   hatBrim.position.set(0, 1.675, 0);
 
-  group.add(head, body, armL, armR, legL, legR, hatCrown, hatBrim, neckerchief, backpack, backpackFlap);
+  group.add(head, body, armL, armR, legL, legR, hatCrown, hatBrim, neckerchief, backpack, backpackFlap, belt, buckle);
   group.userData.parts = { armL, armR, legL, legR };
   // Stashed so applyUniformCustomization can update the troop number / neckerchief color live, after
   // the front-page overlay is actually submitted, without rebuilding this whole mesh.
@@ -3413,6 +3536,29 @@ function playPledge(){
   pledgePlaying = true;
   setTimeout(()=>{ pledgePlaying = false; }, PLEDGE_CLIP_DURATION_S*1000);
 }
+// Same full-recitation-not-trimmed approach as the Pledge above, one clip per camp totem (see
+// buildTotem/doInteract) — a bit of buffer past each file's real length (14.03s/11.44s) so the
+// "still playing" guard clears a beat after the audio itself actually finishes.
+const SCOUT_OATH_CLIP_DURATION_S = 15;
+const scoutOathClip = makeClipPlayer('assets/scout-oath.m4a', SCOUT_OATH_CLIP_DURATION_S, 0.3);
+let scoutOathPlaying = false;
+function playScoutOath(){
+  if(scoutOathPlaying) return;
+  const started = scoutOathClip.play();
+  if(!started) return;
+  scoutOathPlaying = true;
+  setTimeout(()=>{ scoutOathPlaying = false; }, SCOUT_OATH_CLIP_DURATION_S*1000);
+}
+const OUTDOOR_CODE_CLIP_DURATION_S = 12;
+const outdoorCodeClip = makeClipPlayer('assets/outdoor-code.m4a', OUTDOOR_CODE_CLIP_DURATION_S, 0.3);
+let outdoorCodePlaying = false;
+function playOutdoorCode(){
+  if(outdoorCodePlaying) return;
+  const started = outdoorCodeClip.play();
+  if(!started) return;
+  outdoorCodePlaying = true;
+  setTimeout(()=>{ outdoorCodePlaying = false; }, OUTDOOR_CODE_CLIP_DURATION_S*1000);
+}
 function playRoar(){
   if(lionRoarClip.play()) return;
   const ctx = ensureAudio();
@@ -3580,6 +3726,8 @@ const SFX = {
 lionRoarClip.load();
 fireworkBurstClip.load();
 pledgeClip.load();
+scoutOathClip.load();
+outdoorCodeClip.load();
 
 // ---------- Combat ----------
 let myHP = PLAYER_MAX_HP;
@@ -7462,6 +7610,11 @@ function doInteract(){
   // fixed or player-placed — opens its recipe window regardless of what's in hand, same priority a
   // Crafting Table or the Bear Box already gets below.
   if(hitBlock in BLOCK_TO_WARE_KEY){ openCookware(BLOCK_TO_WARE_KEY[hitBlock]); return; }
+  if(hit && TOTEM_BLOCKS.includes(hitBlock)){
+    const totem = totemAt(hit.x, hit.z);
+    if(totem) totem.play();
+    return;
+  }
   if(held===FLINT){ tryIgniteFire(hit); return; }
   if(held===FIREWORK){ launchFirework(); return; }
   if(FOOD_RESTORE[held]!=null){ tryEatFood(held); return; }
@@ -8564,6 +8717,7 @@ function init(){
   // they'd silently punch through it. Unlike a Scout Law box, there's no legitimate way for this to be
   // missing, so it just gets placed again rather than accepting the loss.
   buildGiantFlag();
+  buildTotems();
   buildCampSign();
   buildKayak();
   buildHorse();
