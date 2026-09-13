@@ -263,10 +263,11 @@ const BADGES = [
   { id:'climbing',   emoji:'🧗', name:'Climbing',     hint:'Get 18 blocks above sea level.',               test:()=> scoutStats.highest >= 18 },
   { id:'nature',     emoji:'🦌', name:'Nature Study', hint:'Study all 5 animals up close — the bear and moose included.', test:()=> scoutStats.species.length >= ANIMAL_TYPES.length },
   { id:'nightwatch', emoji:'🦉', name:'Night Watch',  hint:'Spend 5 minutes outdoors after dark.',         test:()=> scoutStats.nightSeconds >= 300 },
-  { id:'firstaid',   emoji:'⛑️',          name:'First Aid',    hint:'Heal back to full health after nearly dying.', test:()=> scoutStats.recoveries >= 1 },
+  { id:'firstaid',   emoji:'⛑️',          name:'First Aid',    hint:'Use your First Aid Kit.',                     test:()=> scoutStats.firstAidUses >= 1 },
   { id:'troopflag',  emoji:'🚩', name:'Troop Flag',   hint:'Raise your troop flag at camp.',               test:()=> scoutStats.flags >= 1 },
   { id:'astronomy',  emoji:'⭐', name:'Astronomy',    hint:'Find the Big Dipper and stare at it for 10 seconds.', test:()=> scoutStats.dipperFound },
   { id:'fishing',    emoji:'🎣', name:'Fishing',      hint:'Catch 5 fish.',                                test:()=> scoutStats.fishCaught >= 5 },
+  { id:'kayaking',   emoji:'🛶', name:'Kayaking',     hint:'Paddle the lake for 30 seconds.',              test:()=> scoutStats.kayakSeconds >= 30 },
   { id:'scoutspirit',emoji:'🏅', name:'Scout Spirit', hint:'Find all 12 golden Scout Law boxes hidden around camp.', test:()=> scoutStats.lawsCollected.length >= SCOUT_LAW_POINTS.length },
 ];
 // Ranks are purely derived from how many badges you hold — no separate progression to track.
@@ -293,8 +294,8 @@ const earnedBadges = new Set();
 // species is an array rather than a Set purely so it survives JSON.stringify into localStorage.
 const scoutStats = {
   wood:0, rope:0, campfires:0, tents:0, flags:0, meals:0, compassUses:0,
-  hiked:0, swam:0, highest:0, nightSeconds:0, recoveries:0, species:[],
-  campX:null, campZ:null, dipperFound:false, fishCaught:0, lawsCollected:[],
+  hiked:0, swam:0, highest:0, nightSeconds:0, species:[],
+  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, lawsCollected:[],
 };
 function saveScoutProgress(){
   try{
@@ -404,9 +405,8 @@ const Scout = {
   },
 };
 
-// ---- Continuous tracking (distance, altitude, night time, health recovery, wildlife) ----
+// ---- Continuous tracking (distance, altitude, night time, wildlife) ----
 let scoutLastX = null, scoutLastZ = null;
-let scoutWasLow = false;
 let scoutSpeciesScanTimer = 0;
 let scoutSaveTimer = 0;
 let dipperGazeTimer = 0, dipperGraceTimer = 0;
@@ -438,6 +438,7 @@ function updateScout(dt){
   if(above > scoutStats.highest) scoutStats.highest = above;
 
   if(isScoutNight()) scoutStats.nightSeconds += dt;
+  if(player.inKayak) scoutStats.kayakSeconds += dt;
 
   // Astronomy: keep the Big Dipper roughly in view, at night, for 10 seconds of attention. A brief
   // glance away (mouse drift, checking your footing) doesn't wipe the streak — only DIPPER_GAZE_GRACE_S
@@ -451,10 +452,6 @@ function updateScout(dt){
     dipperGraceTimer -= dt;
     if(dipperGraceTimer <= 0) dipperGazeTimer = 0;
   }
-
-  // First aid: drop below 3 hearts, then get all the way back to full.
-  if(myHP <= 3*HP_PER_HEART) scoutWasLow = true;
-  else if(scoutWasLow && myHP >= PLAYER_MAX_HP){ scoutWasLow = false; scoutStats.recoveries++; }
 
   // Nature study: what's within sight right now. Twice a second is plenty and keeps this off the
   // per-frame budget.
@@ -579,8 +576,19 @@ function tryFish(){
 }
 function updateFishing(dt){
   if(!fishingSpot) return;
-  if(!locked || isDead){ fishingSpot = null; fishingTimer = 0; return; }
-  if(HOTBAR[selectedSlot] !== FISHING_POLE){ fishingSpot = null; fishingTimer = 0; return; }
+  // These two used to reset the line with no message at all — indistinguishable from a catch simply
+  // never landing. Opening any panel (the Badges screen included, the obvious thing to check while
+  // waiting out the 20-second hold) or swapping off the Fishing Pole both silently broke the line.
+  if(!locked || isDead){
+    if(!isDead) addChatMessage('Camp', '🎣 You lost your line.');
+    fishingSpot = null; fishingTimer = 0;
+    return;
+  }
+  if(HOTBAR[selectedSlot] !== FISHING_POLE){
+    addChatMessage('Camp', '🎣 You lost your line.');
+    fishingSpot = null; fishingTimer = 0;
+    return;
+  }
   if(keys['KeyW']||keys['KeyA']||keys['KeyS']||keys['KeyD']){
     addChatMessage('Camp', '🎣 You moved and lost your line.');
     fishingSpot = null; fishingTimer = 0;
@@ -640,10 +648,11 @@ function badgeProgress(b){
     climbing:   ()=> [Math.max(0,Math.floor(scoutStats.highest)), 18, 'blocks up'],
     nature:     ()=> [scoutStats.species.length, ANIMAL_TYPES.length, 'animals'],
     nightwatch: ()=> [Math.floor(scoutStats.nightSeconds), 300, 'seconds'],
-    firstaid:   ()=> [scoutStats.recoveries, 1, 'recoveries'],
+    firstaid:   ()=> [scoutStats.firstAidUses, 1, 'uses'],
     troopflag:  ()=> [scoutStats.flags, 1, 'flags'],
     astronomy:  ()=> [scoutStats.dipperFound?1:0, 1, 'found'],
     fishing:    ()=> [scoutStats.fishCaught, 5, 'fish'],
+    kayaking:   ()=> [Math.floor(scoutStats.kayakSeconds), 30, 'seconds'],
     scoutspirit:()=> [scoutStats.lawsCollected.length, SCOUT_LAW_POINTS.length, 'boxes'],
   }[b.id];
   if(!p) return null;
@@ -2339,7 +2348,7 @@ const player = {
   pos: new THREE.Vector3(0,0,0),
   vel: new THREE.Vector3(0,0,0),
   yaw: 0, pitch: 0, onGround: false, crawling: false, inWater: false,
-  canDoubleJump: false, spaceWasDown: false, crawlMode: false, ridingEagle: null,
+  canDoubleJump: false, spaceWasDown: false, crawlMode: false, ridingEagle: null, inKayak: false,
   width: 0.6, height: PLAYER_HEIGHT, eye: PLAYER_EYE,
 };
 // 10 fixed spawn points spread across the map, as fractions of WORLD_SIZE so they scale with it.
@@ -5201,6 +5210,92 @@ function updateBigEagles(dt){
   }
 }
 
+// ---------- Kayak: a fixed prop moored at the lake near camp — hop in and it paddles a slow loop
+// around the lake entirely on its own, the same "along for the ride" idea as riding a Giant Eagle
+// (see player.ridingEagle above: position overridden every frame, mouse-look untouched) but grounded
+// in something a Scout would actually do at camp. The loop's center/radius were picked by hand
+// against this seed's real generated terrain (see heightAt) so the whole circle stays over open
+// water without ever brushing the shore, and the dock sits exactly on that circle so the ride starts
+// with no snap. It's a free-standing THREE mesh like the animals, not a voxel block — nothing to
+// place or break.
+const KAYAK_LAKE_CENTER = { x: 54, z: 29 };
+const KAYAK_LAKE_RADIUS = 10;
+const KAYAK_START_ANGLE = Math.atan2(9.5, 3.5); // the dock's own angle on the circle
+const KAYAK_SPEED = 2; // blocks/second — a full loop takes ~31s, about one badge's worth
+const KAYAK_ANGULAR_SPEED = KAYAK_SPEED / KAYAK_LAKE_RADIUS;
+const KAYAK_ENTER_RADIUS = 1.3;
+const KAYAK_SIT_Y = SEA_LEVEL + 0.35; // floating just above the water surface
+let kayakMesh = null;
+let kayakAngle = KAYAK_START_ANGLE;
+function kayakDockPos(){
+  return {
+    x: KAYAK_LAKE_CENTER.x + Math.cos(KAYAK_START_ANGLE)*KAYAK_LAKE_RADIUS,
+    z: KAYAK_LAKE_CENTER.z + Math.sin(KAYAK_START_ANGLE)*KAYAK_LAKE_RADIUS,
+  };
+}
+// Box-composition build, same technique as the fish/bird models above: a flattened hull, two corner-
+// rotated boxes at bow and stern to read as points from above, a dark cockpit rim, and a paddle laid
+// across it at rest.
+function buildKayakMesh(){
+  const g = new THREE.Group();
+  const hullMat = new THREE.MeshLambertMaterial({ color: 0xf0b429 });
+  const rimMat = new THREE.MeshLambertMaterial({ color: 0x2a2420 });
+  const hull = animalBox(0.85, 0.3, 1.9, hullMat);
+  hull.position.y = 0.15;
+  g.add(hull);
+  for(const side of [1,-1]){
+    const cap = animalBox(0.6, 0.3, 0.6, hullMat);
+    cap.position.set(0, 0.15, side*1.28);
+    cap.rotation.y = Math.PI/4;
+    g.add(cap);
+  }
+  const cockpit = animalBox(0.5, 0.08, 0.9, rimMat);
+  cockpit.position.y = 0.32;
+  g.add(cockpit);
+  const paddle = new THREE.Group();
+  const shaftMat = new THREE.MeshLambertMaterial({ color: 0x8a6a3a });
+  paddle.add(animalBox(0.06, 0.06, 1.4, shaftMat));
+  for(const side of [1,-1]){
+    const blade = animalBox(0.18, 0.03, 0.35, hullMat);
+    blade.position.z = side*0.72;
+    paddle.add(blade);
+  }
+  paddle.rotation.y = Math.PI/5;
+  paddle.position.set(0.1, 0.4, 0);
+  g.add(paddle);
+  return g;
+}
+function buildKayak(){
+  kayakMesh = buildKayakMesh();
+  const dock = kayakDockPos();
+  kayakMesh.position.set(dock.x, KAYAK_SIT_Y, dock.z);
+  scene.add(kayakMesh);
+}
+// Walking (or swimming) up to the moored kayak hops you in automatically — no key needed, same as
+// stepping into the flow of a real dock. Checked every normal-movement frame from updatePlayer.
+function tryEnterKayak(){
+  if(player.inKayak || player.ridingEagle || isDead) return;
+  const dock = kayakDockPos();
+  const dx = player.pos.x-dock.x, dz = player.pos.z-dock.z;
+  if(dx*dx+dz*dz > KAYAK_ENTER_RADIUS*KAYAK_ENTER_RADIUS) return;
+  player.inKayak = true;
+  kayakAngle = KAYAK_START_ANGLE;
+  player.vel.set(0,0,0);
+  addChatMessage('Camp', '🛶 You hop in the kayak — it starts paddling on its own!');
+}
+function updateKayakRide(dt){
+  kayakAngle += KAYAK_ANGULAR_SPEED*dt;
+  const x = KAYAK_LAKE_CENTER.x + Math.cos(kayakAngle)*KAYAK_LAKE_RADIUS;
+  const z = KAYAK_LAKE_CENTER.z + Math.sin(kayakAngle)*KAYAK_LAKE_RADIUS;
+  player.pos.set(x, KAYAK_SIT_Y, z);
+  player.vel.set(0,0,0);
+  player.onGround = false;
+  // Face of travel — same atan2(-vx,-vz) tangent convention as the eagle's circling above.
+  const vx = -Math.sin(kayakAngle), vz = Math.cos(kayakAngle);
+  kayakMesh.position.set(x, KAYAK_SIT_Y, z);
+  kayakMesh.rotation.y = Math.atan2(-vx, -vz);
+}
+
 // ---------- Fish: swim in the water, ambient wildlife ----------
 // Same local-only, recycled-near-the-player home-point approach as birds/fireflies, but a fish's home
 // is a specific nearby water column (found by scanning for heightAt(x,z) < SEA_LEVEL, the exact
@@ -6446,6 +6541,23 @@ function updatePlayer(dt){
     player.vel.set(0,0,0);
     player.onGround = false;
     player.fallFrom = player.pos.y; // no fall damage accrued while riding, however high it flies
+    return;
+  }
+
+  if(!player.inKayak) tryEnterKayak();
+  if(player.inKayak){
+    // Space hops you out wherever you are on the loop — the kayak doesn't wait, it just paddles on
+    // without you, so getting back requires swimming to shore like any other lake crossing.
+    const spaceDown = !!keys['Space'];
+    const exitPressed = spaceDown && !player.spaceWasDown;
+    player.spaceWasDown = spaceDown;
+    if(exitPressed){
+      player.inKayak = false;
+      player.onGround = false;
+      addChatMessage('Camp', '🛶 You climb out and swim clear of the kayak.');
+      return;
+    }
+    updateKayakRide(dt);
     return;
   }
 
@@ -7781,6 +7893,8 @@ function useFirstAid(){
   myHP = Math.min(PLAYER_MAX_HP, myHP + FIRST_AID_HEAL_HP);
   updateHeartsUI();
   firstAidCooldown = FIRST_AID_COOLDOWN_S;
+  Scout.bump('firstAidUses');
+  saveScoutProgress();
   SFX.craft();
   addChatMessage('Camp', '➕ First Aid: patched up a couple hearts.');
 }
@@ -7886,6 +8000,7 @@ function init(){
   // missing, so it just gets placed again rather than accepting the loss.
   buildGiantFlag();
   buildCampSign();
+  buildKayak();
   restoreTorchLights();
   restoreScoutLawBoxes();
   updateScoutHUD();
