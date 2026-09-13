@@ -25,4 +25,11 @@ A 512x512 pixel-art 3D isometric grass block icon with a transparent background 
 - Source: Generated procedurally using a custom Python script rendering hand-crafted 16x16 pixel textures for the grass and dirt faces.
 - License: Released into the **public domain** (CC0) — free to use for any purpose.
 
-Everything else in the game (textures, other sound effects) is generated procedurally at runtime — these are the only three real asset files.
+## pledge-of-allegiance.m4a
+
+A recitation of the Pledge of Allegiance, provided directly by Andre's family for this game.
+
+- Source: supplied as a WAV/AIFF recording, converted to AAC (`.m4a`) for browser compatibility with `afconvert` (no re-encoding of the actual audio, just a container/codec change).
+- Played in full (not trimmed) when the player left-clicks the giant flag at the cooking area.
+
+Everything else in the game (textures, other sound effects) is generated procedurally at runtime — these are the only four real asset files.

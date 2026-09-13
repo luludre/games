@@ -260,6 +260,11 @@ below it. Each of those 6 blocks is really just its own slice of one shared, hig
 image — 13 stripes, a blue canton, and all 50 stars individually drawn and actually countable up
 close — cropped and downscaled into that block's texture, so the six line up into one seamless image
 rather than six separately-drawn tiles. Like the cooking fixtures, it's permanently indestructible.
+Left-click it and it plays a full recitation of the Pledge of Allegiance (see
+[`assets/README.md`](assets/README.md)) — one at a time, a second click while it's still playing does
+nothing until it finishes. It sits well above the ordinary ~6-block reach you'd use to break or attack
+something, so this uses its own much longer line-of-sight check instead — stand back in the clearing,
+look up at it, and click, no need to get anywhere near it.
 
 A rustic wooden sign floats over the clearing naming the camp — "🏕️ Camp Merit Ridge" — the same
 canvas-texture billboard technique as the Scout Law boxes' word labels, just styled like carved wood

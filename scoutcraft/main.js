@@ -53,6 +53,7 @@ const SLEEPING_BAG=50, SLEEPING_PAD=51;
 // cell of a 3-wide x 2-tall mural, each just its own slice of one shared flag image. World fixtures
 // like DUTCH_OVEN/BEAR_BOX/SCOUT_LAW_BOX above: never craftable or held, just placed once at world-gen.
 const US_FLAG_TL=52, US_FLAG_TC=53, US_FLAG_TR=54, US_FLAG_BL=55, US_FLAG_BC=56, US_FLAG_BR=57;
+const US_FLAG_BLOCKS = new Set([US_FLAG_TL, US_FLAG_TC, US_FLAG_TR, US_FLAG_BL, US_FLAG_BC, US_FLAG_BR]);
 // Items with no block form at all (see doInteract) — right-clicking one does nothing, or whatever
 // its own special case above already handles (Flint ignites, Compass takes a bearing).
 const CARRY_ONLY_ITEMS = new Set([ROPE, POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR,
@@ -3097,6 +3098,19 @@ const lionRoarClip = makeClipPlayer('assets/lion-roar.ogg', 2.2, 0.35);
 // one clean burst moment (found by scanning the recording for its loudest window) out of the full
 // 46s file rather than needing a separately re-encoded clip.
 const fireworkBurstClip = makeClipPlayer('assets/firework-burst.ogg', 1.5, 0.4, 22.75);
+// A full recitation (see assets/README.md), played end to end rather than trimmed like the clips
+// above — pledgePlaying just blocks a second click from overlapping a recitation already underway,
+// clearing itself once the clip's own length has actually elapsed.
+const PLEDGE_CLIP_DURATION_S = 12;
+const pledgeClip = makeClipPlayer('assets/pledge-of-allegiance.m4a', PLEDGE_CLIP_DURATION_S, 0.3);
+let pledgePlaying = false;
+function playPledge(){
+  if(pledgePlaying) return;
+  const started = pledgeClip.play();
+  if(!started) return;
+  pledgePlaying = true;
+  setTimeout(()=>{ pledgePlaying = false; }, PLEDGE_CLIP_DURATION_S*1000);
+}
 function playRoar(){
   if(lionRoarClip.play()) return;
   const ctx = ensureAudio();
@@ -3263,6 +3277,7 @@ const SFX = {
 };
 lionRoarClip.load();
 fireworkBurstClip.load();
+pledgeClip.load();
 
 // ---------- Combat ----------
 let myHP = PLAYER_MAX_HP;
@@ -6514,6 +6529,22 @@ function raycastBlock(maxDist=6, step=0.02){
   }
   return null;
 }
+// The giant flag's mural sits atop a 12-block pole — well past raycastBlock's normal ~6-block reach,
+// which is deliberately short for ordinary mining/attacking. Reciting the Pledge in front of it isn't
+// that kind of interaction, so it gets its own much longer raycast instead of widening reach for
+// everything else. A coarser 0.1 step is fine here since it only needs to catch a chunky 3x2 target.
+const FLAG_PLEDGE_MAX_DIST = 40;
+function raycastUSFlag(){
+  const dir = getLookDir(player.yaw, player.pitch);
+  const origin = camera.position;
+  for(let t=0; t<FLAG_PLEDGE_MAX_DIST; t+=0.1){
+    const bx=Math.floor(origin.x+dir.x*t), by=Math.floor(origin.y+dir.y*t), bz=Math.floor(origin.z+dir.z*t);
+    const b = getBlock(bx,by,bz);
+    if(b===AIR || b===WATER) continue;
+    return US_FLAG_BLOCKS.has(b); // first solid thing in the way must actually be the flag, not something in front of it
+  }
+  return false;
+}
 let lastTreeWarningAt = 0;
 const TREE_WARNING_COOLDOWN_MS = 5000;
 function breakBlock(){
@@ -6833,7 +6864,10 @@ window.addEventListener('keydown', e=>{
 window.addEventListener('keyup', e=>{ keys[e.code]=false; });
 
 const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-function doAttackOrBreak(){ if(!tryAttack()) breakBlock(); }
+function doAttackOrBreak(){
+  if(raycastUSFlag()){ playPledge(); return; }
+  if(!tryAttack()) breakBlock();
+}
 // Cooking meat over a campfire doubles what it's worth — the practical payoff for Firecraft.
 const FOOD_RESTORE = { [MEAT]: MEAT_HUNGER_RESTORE, [COOKED_MEAT]: MEAT_HUNGER_RESTORE*2 };
 function tryEatFood(id){
