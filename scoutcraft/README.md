@@ -6,7 +6,7 @@ Welcome to **Camp Merit Ridge** — set up camp in the wilderness and earn your 
 entirely in the browser — procedurally generated terrain, block breaking/placing, crafting — built
 with [three.js](https://threejs.org/) — with a scouting layer on top: rope you twist from leaves, a
 walk-in tent you pitch, campfires you cook on, a compass that finds its way back to camp, and
-twenty merit badges that promote you from Scout to Eagle Scout.
+twenty-one merit badges that promote you from Scout to Eagle Scout.
 
 No build step, no server-side code, no dependencies to install, no account to make. Everything —
 your world, your inventory, your progress — lives in this browser's `localStorage`.
@@ -69,7 +69,7 @@ Then visit `http://localhost:8000`.
 - The **🏅 Share My Achievements** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
 - Closing the tab or navigating away without clicking it first triggers the browser's own "Leave site?" confirmation instead — a browser won't let a page show its own custom screen at that exact moment, so this is the closest real equivalent, just enough of a pause to reconsider. It only fires once; if you've already seen the actual thank-you screen, closing from there doesn't prompt twice.
 - That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you open it so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
-- The thank-you screen also draws a shareable badge picture on the spot — your current rank plus all 20 merit badges, earned ones lit up in gold and the rest dimmed, regenerated fresh every time you open it just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
+- The thank-you screen also draws a shareable badge picture on the spot — your current rank plus all 21 merit badges, earned ones lit up in gold and the rest dimmed, regenerated fresh every time you open it just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
 
 The front page says so directly, but worth repeating here too: ScoutCraft is designed for a desktop or laptop with a real keyboard and mouse — that's where every control above actually applies. On a phone or tablet (iPad included), the game automatically switches to touch controls instead — no setup needed, just open the page in Safari and tap to play — but that's a fallback, not the intended experience:
 
@@ -149,11 +149,12 @@ want and how far along you are ("14 / 25 wood").
 | 🐴 | Horseback Riding | Ride 200 blocks on horseback |
 | 🌦️ | Weather | Experience 3 different weather conditions |
 | 🤿 | Scuba Diving | Spend 20 seconds fully underwater |
+| 📜 | Camp Traditions | Recite the Pledge of Allegiance, the Scout Oath, and the Outdoor Code |
 | 🏅 | Scout Spirit | Find all 12 golden Scout Law boxes hidden around camp |
 
 Ranks follow from the count alone — **None** (0, nothing earned yet), **Scout** (1), **Tenderfoot**
 (2), **Second Class** (3), **First Class** (6), **Star Scout** (9), **Life Scout** (12), **Eagle
-Scout** (15 — just over 3/4 of all 20, not literally every one of them) — and your current rank and
+Scout** (16 — just over 3/4 of all 21, not literally every one of them) — and your current rank and
 badge count sit in the HUD at the top of the screen. Earning one plays a short bugle call and drops a
 banner telling you what you got, and what rank it just made you.
 
@@ -228,26 +229,26 @@ single wall takes the whole shelter down and hands back just one Tent item, not 
   hanging straight down toward the water regardless of the rod's own tilt, swapping back once it
   isn't. A countdown reads out above the panel buttons the whole time it's cast, right-clicking again
   reels the line back in early if you change your mind, and 5 fish caught earns the Fishing badge —
-  the sixth-to-last one on the sash.
+  the seventh-to-last one on the sash.
 - **Kayak** — moored right at the water's edge on the lake near camp. Walk or swim up to it and
   you're in, no key needed, and it immediately starts paddling a slow loop around the lake entirely
   on its own — look around all you like, but WASD won't steer it, this one's hands-free. Press
   `Space` to hop out wherever you are on the loop; the kayak doesn't wait for you, it just carries on
   without you, so getting back to shore means swimming like any other lake crossing. A full loop
   takes about 31 seconds, and 30 seconds of actual paddling earns the Kayaking badge, the
-  fifth-to-last one on the sash.
+  sixth-to-last one on the sash.
 - **Horse** — tied up in a free corner of the cooking area. Walk up and you're mounted automatically,
   same as the Kayak, but this one you actually steer: regular WASD-relative-to-your-look-direction
   movement, just faster than sprinting, with no jump or fall damage while you're in the saddle. Press
   `Space` to hop down wherever you are — the horse just stands there afterward rather than trotting
   home, so walking back up to it (from wherever you left it) mounts it again. 200 blocks ridden earns
-  the Horseback Riding badge, the fourth-to-last one on the sash.
+  the Horseback Riding badge, the fifth-to-last one on the sash.
 - **Diving mask & snorkel** — no crafting needed, they just show up on your character the moment your
   head actually goes under the surface of any water (not just wading waist-deep) and vanish the
   instant you come back up, along with a murky blue-green tint over the whole view and a soft vignette
   overlay so being underwater actually looks and feels different from being on dry land. 20 seconds of
   real head-underwater time (it adds up across dives, it doesn't need to be one continuous breath)
-  earns the Scuba Diving badge, the second-to-last one on the sash.
+  earns the Scuba Diving badge, the third-to-last one on the sash.
 
 **Sleep:** stand near your tent with your Sleeping Bag and Sleeping Pad out of your Backpack and in
 your own inventory, after dark, and press `K`. It can't actually fast-forward the real clock the world
@@ -355,14 +356,24 @@ but you do still have to actually be there: within about 10 blocks of the pole, 
 in front of it, not clear across the clearing looking up.
 
 Two more fixed monuments sit in the clearing's other free corners, styled after the wooden totems
-real troops carve as camp/Eagle projects rather than any real Indigenous totem-pole tradition: a
-4-tall **Scout Totem** and a 3-tall one, each a stack of carved wooden rings — complete with faint
-growth-ring grain — cycling through a fleur-de-lis, a star, a compass, a flame, and a tent so no two
-adjacent rings repeat, and each one topped with a perched eagle, wings spread (the same model the
-ambient Giant Eagles use, just posed still). Right-click either one — ordinary reach applies, no
-special long-range check needed at this height — and it plays a full recitation: the Scout Oath on
-the taller one, the Outdoor Code on the shorter one (see [`assets/README.md`](assets/README.md)), the
-same "one at a time, wait for it to finish" behavior as the flag's Pledge.
+real troops carve as camp/Eagle projects rather than any real Indigenous totem-pole tradition. Each
+one is a stack of carved wooden rings — complete with faint growth-ring grain — one ring per line of
+the real text it recites, rather than a handful of symbols repeating: the **Scout Oath Totem**, 4
+rings tall, reads bottom to top "On my honor," the Physically Strong/Mentally Awake/Morally Straight
+creed, "To obey the Scout Law," and "Duty to God and Country," each carved with its own small icon
+(a bronze plaque, a hiker/book/pillar trio, a compass flanked by two scouts, a cross and shield) and
+labeled with a floating wood-plaque sign carrying the actual words, topped with a perched eagle, wings
+spread (the same model the ambient Giant Eagles use, just posed still). The **Outdoor Code Totem**,
+5 rings tall, reads the same way bottom to top — an "As an American..." recap plaque, then the Code's
+own 4 points (Conservation, Considerate, Fire, Clean) each with its own icon (a pine tree, a hiker and
+peak, a ringed campfire, a broom) — topped with a perched owl instead of an eagle, and its own title
+sign ("The Outdoor Code") floating just under the owl. Both totems also hang a small always-lit
+lantern for a bit of warm glow after dark. Right-click either one — ordinary reach applies, no special
+long-range check needed at this height — and it plays a full recitation: the Scout Oath on the eagle-
+topped one, the Outdoor Code on the owl-topped one (see [`assets/README.md`](assets/README.md)), the
+same "one at a time, wait for it to finish" behavior as the flag's Pledge. Reciting all three — the
+flag's Pledge and both totems' recitations, each only needs to happen once — earns the Camp
+Traditions badge.
 
 A rustic wooden sign floats over the clearing naming the camp — "🏕️ Camp Merit Ridge" — the same
 canvas-texture billboard technique as the Scout Law boxes' word labels, just styled like carved wood

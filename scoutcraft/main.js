@@ -54,14 +54,23 @@ const SLEEPING_BAG=50, SLEEPING_PAD=51;
 // like DUTCH_OVEN/BEAR_BOX/SCOUT_LAW_BOX above: never craftable or held, just placed once at world-gen.
 const US_FLAG_TL=52, US_FLAG_TC=53, US_FLAG_TR=54, US_FLAG_BL=55, US_FLAG_BC=56, US_FLAG_BR=57;
 const US_FLAG_BLOCKS = new Set([US_FLAG_TL, US_FLAG_TC, US_FLAG_TR, US_FLAG_BL, US_FLAG_BC, US_FLAG_BR]);
-// A pair of carved camp totems (see buildTotem) — a 4-tall one playing the Scout Oath, a 3-tall one
-// playing the Outdoor Code, each built from these 5 symbol segments cycled top to bottom so no two
-// adjacent rings repeat. World fixtures like DUTCH_OVEN/BEAR_BOX/SCOUT_LAW_BOX above: never craftable
-// or held, just placed once at world-gen. Numbered from 115 (well past the ~57 cooking-item ids that
-// get assigned programmatically starting at US_FLAG_BR+1 — see COOK_ID below) so the two ranges can
-// never collide regardless of how many ingredients/dishes that table grows to.
-const TOTEM_COMPASS=115, TOTEM_STAR=116, TOTEM_FLAME=117, TOTEM_TENT=118, TOTEM_FLEUR=119;
-const TOTEM_BLOCKS = [TOTEM_FLEUR, TOTEM_STAR, TOTEM_COMPASS, TOTEM_FLAME, TOTEM_TENT];
+// A pair of carved camp totems (see buildScoutOathTotem/buildOutdoorCodeTotem) — each one a stack of
+// purpose-built rings, one per line of the real text it recites, rather than generic repeating
+// symbols. World fixtures like DUTCH_OVEN/BEAR_BOX/SCOUT_LAW_BOX above: never craftable or held, just
+// placed once at world-gen. Numbered from 115 (well past the ~57 cooking-item ids that get assigned
+// programmatically starting at US_FLAG_BR+1 — see COOK_ID below) so the two ranges can never collide
+// regardless of how many ingredients/dishes that table grows to.
+// The Scout Oath totem: bottom to top, the "On my honor" plaque, the Physically Strong/Mentally
+// Awake/Morally Straight creed, "To obey the Scout Law", and "Duty to God and Country".
+const TOTEM_OATH_BASE=115, TOTEM_OATH_CREED=116, TOTEM_OATH_LAW=117, TOTEM_OATH_DUTY=118;
+const SCOUT_OATH_TOTEM_BLOCKS = [TOTEM_OATH_BASE, TOTEM_OATH_CREED, TOTEM_OATH_LAW, TOTEM_OATH_DUTY];
+// The Outdoor Code totem: bottom to top, an "As an American..." recap plaque (reusing the same blank-
+// plaque tile as TOTEM_OATH_BASE — see BLOCK_TILES), then the Code's own 4 points in recitation order.
+const TOTEM_CODE_BASE=119, TOTEM_CODE_CONSERVATION=120, TOTEM_CODE_CONSIDERATE=121, TOTEM_CODE_FIRE=122, TOTEM_CODE_CLEAN=123;
+const OUTDOOR_CODE_TOTEM_BLOCKS = [TOTEM_CODE_BASE, TOTEM_CODE_CONSERVATION, TOTEM_CODE_CONSIDERATE, TOTEM_CODE_FIRE, TOTEM_CODE_CLEAN];
+// What doInteract checks a hit block against to decide "was this any totem at all" before looking up
+// which specific one via totemAt.
+const ALL_TOTEM_BLOCKS = [...SCOUT_OATH_TOTEM_BLOCKS, ...OUTDOOR_CODE_TOTEM_BLOCKS];
 // Items with no block form at all (see doInteract) — right-clicking one does nothing, or whatever
 // its own special case above already handles (Flint ignites, Compass takes a bearing).
 const CARRY_ONLY_ITEMS = new Set([ROPE, POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR,
@@ -120,7 +129,8 @@ const BLOCK_COLOR = {
   [SLEEPING_PAD]: 0x8a9a7a,
   [US_FLAG_TL]: 0x3c3b6e, [US_FLAG_TC]: 0xb22234, [US_FLAG_TR]: 0xb22234,
   [US_FLAG_BL]: 0xb22234, [US_FLAG_BC]: 0xffffff, [US_FLAG_BR]: 0xb22234,
-  [TOTEM_COMPASS]: 0x6b4226, [TOTEM_STAR]: 0x6b4226, [TOTEM_FLAME]: 0x6b4226, [TOTEM_TENT]: 0x6b4226, [TOTEM_FLEUR]: 0x6b4226,
+  [TOTEM_OATH_BASE]: 0x6b4226, [TOTEM_OATH_CREED]: 0x6b4226, [TOTEM_OATH_LAW]: 0x6b4226, [TOTEM_OATH_DUTY]: 0x6b4226,
+  [TOTEM_CODE_BASE]: 0x6b4226, [TOTEM_CODE_CONSERVATION]: 0x6b4226, [TOTEM_CODE_CONSIDERATE]: 0x6b4226, [TOTEM_CODE_FIRE]: 0x6b4226, [TOTEM_CODE_CLEAN]: 0x6b4226,
 };
 const BLOCK_NAME = {
   [GRASS]:'Grass', [DIRT]:'Dirt', [STONE]:'Stone', [SAND]:'Sand', [WOOD]:'Wood',
@@ -141,7 +151,8 @@ const BLOCK_NAME = {
   [SLEEPING_BAG]:'Sleeping Bag', [SLEEPING_PAD]:'Sleeping Pad',
   [US_FLAG_TL]:'US Flag', [US_FLAG_TC]:'US Flag', [US_FLAG_TR]:'US Flag',
   [US_FLAG_BL]:'US Flag', [US_FLAG_BC]:'US Flag', [US_FLAG_BR]:'US Flag',
-  [TOTEM_COMPASS]:'Scout Totem', [TOTEM_STAR]:'Scout Totem', [TOTEM_FLAME]:'Scout Totem', [TOTEM_TENT]:'Scout Totem', [TOTEM_FLEUR]:'Scout Totem',
+  [TOTEM_OATH_BASE]:'Scout Oath Totem', [TOTEM_OATH_CREED]:'Scout Oath Totem', [TOTEM_OATH_LAW]:'Scout Oath Totem', [TOTEM_OATH_DUTY]:'Scout Oath Totem',
+  [TOTEM_CODE_BASE]:'Outdoor Code Totem', [TOTEM_CODE_CONSERVATION]:'Outdoor Code Totem', [TOTEM_CODE_CONSIDERATE]:'Outdoor Code Totem', [TOTEM_CODE_FIRE]:'Outdoor Code Totem', [TOTEM_CODE_CLEAN]:'Outdoor Code Totem',
 };
 // Every item the player can ever select. The hotbar only shows HOTBAR_SIZE of these at a time —
 // the rest are reachable through the Items panel (the palette button, or the "I" key), which lets
@@ -381,6 +392,7 @@ const BADGES = [
   { id:'horseback',  emoji:'🐴', name:'Horseback Riding', hint:'Ride 200 blocks on horseback.',            test:()=> scoutStats.horsebackBlocks >= HORSEBACK_BADGE_BLOCKS },
   { id:'weather',    emoji:'🌦️', name:'Weather',      hint:'Experience 3 different weather conditions.',   test:()=> scoutStats.weatherSeen.length >= 3 },
   { id:'scuba',      emoji:'🤿', name:'Scuba Diving', hint:'Spend 20 seconds fully underwater.',           test:()=> scoutStats.scubaSeconds >= 20 },
+  { id:'camptraditions', emoji:'📜', name:'Camp Traditions', hint:'Recite the Pledge of Allegiance, the Scout Oath, and the Outdoor Code.', test:()=> scoutStats.recitations.length >= 3 },
   { id:'scoutspirit',emoji:'🏅', name:'Scout Spirit', hint:'Find all 12 golden Scout Law boxes hidden around camp.', test:()=> scoutStats.lawsCollected.length >= SCOUT_LAW_POINTS.length },
 ];
 // Ranks are purely derived from how many badges you hold — no separate progression to track. A brand
@@ -417,7 +429,7 @@ const earnedBadges = new Set();
 const scoutStats = {
   wood:0, rope:0, campfires:0, tents:0, flags:0, compassUses:0,
   hiked:0, swam:0, highest:0, nightSeconds:0, species:[],
-  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, horsebackBlocks:0, lawsCollected:[], cookwareUsed:[], weatherSeen:[], scubaSeconds:0,
+  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, horsebackBlocks:0, lawsCollected:[], cookwareUsed:[], weatherSeen:[], scubaSeconds:0, recitations:[],
 };
 function saveScoutProgress(){
   try{
@@ -436,6 +448,7 @@ function loadScoutProgress(){
       if(!Array.isArray(scoutStats.lawsCollected)) scoutStats.lawsCollected = [];
       if(!Array.isArray(scoutStats.cookwareUsed)) scoutStats.cookwareUsed = [];
       if(!Array.isArray(scoutStats.weatherSeen)) scoutStats.weatherSeen = [];
+      if(!Array.isArray(scoutStats.recitations)) scoutStats.recitations = [];
     }
   }catch(e){}
 }
@@ -536,6 +549,12 @@ const Scout = {
   foundDipper(){
     if(scoutStats.dipperFound) return;
     scoutStats.dipperFound = true;
+    saveScoutProgress();
+    checkBadges();
+  },
+  recited(name){
+    if(!name || scoutStats.recitations.includes(name)) return;
+    scoutStats.recitations.push(name);
     saveScoutProgress();
     checkBadges();
   },
@@ -790,6 +809,7 @@ function badgeProgress(b){
     horseback:  ()=> [Math.floor(scoutStats.horsebackBlocks), HORSEBACK_BADGE_BLOCKS, 'blocks'],
     weather:    ()=> [scoutStats.weatherSeen.length, 3, 'conditions'],
     scuba:      ()=> [Math.floor(scoutStats.scubaSeconds), 20, 'seconds'],
+    camptraditions: ()=> [scoutStats.recitations.length, 3, 'recitations'],
     scoutspirit:()=> [scoutStats.lawsCollected.length, SCOUT_LAW_POINTS.length, 'boxes'],
   }[b.id];
   if(!p) return null;
@@ -894,7 +914,7 @@ const PROTECTED_CELLS = new Set();
 // ---------- Texture atlas (procedurally drawn pixel-art, no external image assets) ----------
 // TILE=32 (was 16) gives 4x the pixel budget per block face — enough room for real structure
 // (cracks, grain, brick-by-brick variation, ripples) rather than flat color + noise.
-const TILE = 32, ATLAS_COLS = 4, ATLAS_ROWS = 12;
+const TILE = 32, ATLAS_COLS = 4, ATLAS_ROWS = 13;
 const T_GRASS_TOP=0, T_GRASS_SIDE=1, T_DIRT=2, T_STONE=3, T_SAND=4, T_LOG_SIDE=5, T_LOG_TOP=6,
       T_LEAVES=7, T_PLANKS=8, T_BEDROCK=9, T_CRAFT_TOP=10, T_CRAFT_SIDE=11, T_BRICKS=12, T_WATER=13,
       T_WINDOW=14, T_WINDOW_OPEN=15, T_DOOR=16, T_DOOR_OPEN=17, T_SAPLING=18, T_FLINT=19, T_FIRE=20,
@@ -903,7 +923,8 @@ const T_GRASS_TOP=0, T_GRASS_SIDE=1, T_DIRT=2, T_STONE=3, T_SAND=4, T_LOG_SIDE=5
       T_DUTCH_OVEN=30, T_POT=31, T_PAN=32, T_GRIDDLE=33, T_BEAR_BOX=34, T_FLAG_POLE=35,
       T_SCOUT_LAW_BOX=36,
       T_US_FLAG_TL=37, T_US_FLAG_TC=38, T_US_FLAG_TR=39, T_US_FLAG_BL=40, T_US_FLAG_BC=41, T_US_FLAG_BR=42,
-      T_TOTEM_COMPASS=43, T_TOTEM_STAR=44, T_TOTEM_FLAME=45, T_TOTEM_TENT=46, T_TOTEM_FLEUR=47;
+      T_TOTEM_OATH_BASE=43, T_TOTEM_OATH_CREED=44, T_TOTEM_OATH_LAW=45, T_TOTEM_OATH_DUTY=46,
+      T_TOTEM_CODE_CLEAN=47, T_TOTEM_CODE_FIRE=48, T_TOTEM_CODE_CONSIDERATE=49, T_TOTEM_CODE_CONSERVATION=50;
 
 function hexRGB(hex){ return [(hex>>16)&255, (hex>>8)&255, hex&255]; }
 function rgbStr(r,g,b){ return `rgb(${r|0},${g|0},${b|0})`; }
@@ -1499,14 +1520,14 @@ function drawScoutLawBox(ctx,x0,y0){
   ctx.closePath();
   ctx.fill();
 }
-// ---------- Scout totems (see buildTotem) ----------
-// Five carved-wood symbol segments, cycled top to bottom so the two camp totems (Scout Oath, Outdoor
-// Code) each read as a real stack of distinct rings rather than one texture repeated, topped with a
-// carved eagle (see buildTotemEagleMesh) the way a real hand-carved camp totem often is. Kept
-// deliberately generic/geometric — a fleur-de-lis, a star, a compass, a flame, a tent — rather than
-// any specific real-world totem pole tradition's actual iconography or painted formline style, since
-// this is meant to read as camp craft (the same spirit as the wooden Scout-totem projects real troops
-// carve for their own camps), not a reproduction of anyone's culture.
+// ---------- Scout totems (see buildScoutOathTotem/buildOutdoorCodeTotem) ----------
+// Each camp totem is a stack of carved-wood rings, one per line of the real text it recites, so it
+// reads as a real stack of distinct rings rather than one texture repeated — topped with a carved
+// eagle (Scout Oath) or owl (Outdoor Code), the way a real hand-carved camp totem often is. The
+// per-ring icons (a cross, a compass, a campfire, a pine tree, and so on below) are kept deliberately
+// generic/geometric rather than any specific real-world totem pole tradition's actual iconography or
+// painted formline style, since this is meant to read as camp craft (the same spirit as the wooden
+// Scout-totem projects real troops carve for their own camps), not a reproduction of anyone's culture.
 function drawTotemRing(ctx,x0,y0){
   fillTile(ctx,x0,y0,0x6b4226);
   speckle(ctx,x0,y0,0x6b4226,Math.round(TILE*TILE*0.14),10);
@@ -1525,22 +1546,52 @@ function drawTotemRing(ctx,x0,y0){
   ctx.fillRect(x0, y0, TILE, TILE*0.07);
   ctx.fillRect(x0, y0+TILE*0.93, TILE, TILE*0.07);
 }
-function drawTotemFleur(ctx,x0,y0){
+// ---------- The 4 purpose-built rings of the Scout Oath totem (see buildScoutOathTotem) — the
+// actual wording lives on floating plaque sprites built alongside each ring (buildTotemPlaqueSprite);
+// these tile drawings are the carved icon underneath each one, same gold-on-wood technique as the
+// generic totem symbols above.
+function drawTotemOathBase(ctx,x0,y0){
   drawTotemRing(ctx,x0,y0);
-  ctx.fillStyle = shadeStr(0xe8d9a0,1,4);
   const cx=x0+TILE*0.5, cy=y0+TILE*0.5;
-  ctx.fillRect(cx-TILE*0.03, cy-TILE*0.28, TILE*0.06, TILE*0.4);
-  ctx.beginPath();
-  ctx.moveTo(cx-TILE*0.03, cy-TILE*0.28); ctx.lineTo(cx-TILE*0.22, cy-TILE*0.05); ctx.lineTo(cx-TILE*0.03, cy-TILE*0.05);
-  ctx.closePath(); ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(cx+TILE*0.03, cy-TILE*0.28); ctx.lineTo(cx+TILE*0.22, cy-TILE*0.05); ctx.lineTo(cx+TILE*0.03, cy-TILE*0.05);
-  ctx.closePath(); ctx.fill();
-  ctx.fillRect(cx-TILE*0.18, cy+TILE*0.1, TILE*0.36, TILE*0.07);
+  // a small bronze plaque let into the wood — the real words ("On my honor...") are the floating sign
+  // sprite mounted just in front of it, this is too small to actually read at tile resolution.
+  ctx.fillStyle = shadeStr(0x8a6a3a,1,4);
+  ctx.fillRect(cx-TILE*0.32, cy-TILE*0.18, TILE*0.64, TILE*0.36);
+  ctx.strokeStyle = shadeStr(0xe8d9a0,1,4);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(cx-TILE*0.32, cy-TILE*0.18, TILE*0.64, TILE*0.36);
+  ctx.strokeStyle = 'rgba(232,217,160,0.5)';
+  for(let i=0;i<3;i++){
+    ctx.beginPath();
+    ctx.moveTo(cx-TILE*0.24, cy-TILE*0.08+i*TILE*0.08);
+    ctx.lineTo(cx+TILE*0.24, cy-TILE*0.08+i*TILE*0.08);
+    ctx.stroke();
+  }
 }
-function drawTotemCompass(ctx,x0,y0){
+// Physically Strong (a peak), Mentally Awake (an open book), Morally Straight (an upright pillar) —
+// the Scout Oath's own three-part creed, left to right.
+function drawTotemOathCreed(ctx,x0,y0){
   drawTotemRing(ctx,x0,y0);
-  const cx=x0+TILE*0.5, cy=y0+TILE*0.5, r=TILE*0.32;
+  const cy = y0+TILE*0.5;
+  ctx.fillStyle = shadeStr(0xe8d9a0,1,4);
+  ctx.beginPath();
+  ctx.moveTo(x0+TILE*0.16, cy+TILE*0.16);
+  ctx.lineTo(x0+TILE*0.26, cy-TILE*0.14);
+  ctx.lineTo(x0+TILE*0.36, cy+TILE*0.16);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillRect(x0+TILE*0.44, cy-TILE*0.1, TILE*0.14, TILE*0.2);
+  ctx.strokeStyle = shadeStr(0x2e1c0e,1,4);
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(x0+TILE*0.51, cy-TILE*0.1); ctx.lineTo(x0+TILE*0.51, cy+TILE*0.1); ctx.stroke();
+  ctx.fillStyle = shadeStr(0xe8d9a0,1,4);
+  ctx.fillRect(x0+TILE*0.68, cy-TILE*0.16, TILE*0.1, TILE*0.32);
+}
+// To obey the Scout Law — a diamond compass rose flanked by two tiny scout figures standing shoulder
+// to shoulder.
+function drawTotemOathLaw(ctx,x0,y0){
+  drawTotemRing(ctx,x0,y0);
+  const cx=x0+TILE*0.5, cy=y0+TILE*0.5, r=TILE*0.2;
   ctx.fillStyle = shadeStr(0xe8d9a0,1,4);
   ctx.beginPath();
   ctx.moveTo(cx, cy-r); ctx.lineTo(cx+r*0.28, cy-r*0.28); ctx.lineTo(cx+r, cy); ctx.lineTo(cx+r*0.28, cy+r*0.28);
@@ -1549,28 +1600,89 @@ function drawTotemCompass(ctx,x0,y0){
   ctx.fill();
   ctx.fillStyle = shadeStr(0x8a1f1f,1,4);
   ctx.beginPath(); ctx.arc(cx,cy,r*0.18,0,Math.PI*2); ctx.fill();
-}
-function drawTotemStar(ctx,x0,y0){
-  drawTotemRing(ctx,x0,y0);
   ctx.fillStyle = shadeStr(0xe8d9a0,1,4);
-  drawStar(ctx, x0+TILE*0.5, y0+TILE*0.5, TILE*0.34, TILE*0.14);
+  for(const side of [-1,1]){
+    const fx = cx + side*TILE*0.32;
+    ctx.beginPath(); ctx.arc(fx, cy-TILE*0.15, TILE*0.045, 0, Math.PI*2); ctx.fill();
+    ctx.fillRect(fx-TILE*0.05, cy-TILE*0.09, TILE*0.1, TILE*0.2);
+  }
 }
-function drawTotemFlame(ctx,x0,y0){
+// Duty to God (a simple cross) and Country (a small striped shield) — the topmost ring, right under
+// the eagle.
+function drawTotemOathDuty(ctx,x0,y0){
   drawTotemRing(ctx,x0,y0);
-  const cx = x0+TILE*0.5;
-  blob(ctx, cx, y0+TILE*0.62, TILE*0.22, 0xc62b0e, 14);
-  blob(ctx, cx, y0+TILE*0.46, TILE*0.16, 0xff7a1a, 16);
-  blob(ctx, cx, y0+TILE*0.33, TILE*0.1, 0xffce4d, 14);
-}
-function drawTotemTent(ctx,x0,y0){
-  drawTotemRing(ctx,x0,y0);
+  const cy = y0+TILE*0.5;
   ctx.fillStyle = shadeStr(0xe8d9a0,1,4);
+  ctx.fillRect(x0+TILE*0.26, cy-TILE*0.22, TILE*0.06, TILE*0.4);
+  ctx.fillRect(x0+TILE*0.17, cy-TILE*0.08, TILE*0.24, TILE*0.06);
+  const sx = x0+TILE*0.6, sw = TILE*0.24, sh = TILE*0.34, sy = cy-TILE*0.18;
+  ctx.fillStyle = shadeStr(0xe8d9a0,1,6);
+  ctx.fillRect(sx, sy, sw, sh*0.7);
   ctx.beginPath();
-  ctx.moveTo(x0+TILE*0.5, y0+TILE*0.22);
-  ctx.lineTo(x0+TILE*0.8, y0+TILE*0.74);
-  ctx.lineTo(x0+TILE*0.2, y0+TILE*0.74);
+  ctx.moveTo(sx, sy+sh*0.7); ctx.lineTo(sx+sw, sy+sh*0.7); ctx.lineTo(sx+sw/2, sy+sh);
   ctx.closePath();
   ctx.fill();
+  ctx.fillStyle = shadeStr(0x8a1f1f,1,6);
+  for(let i=0;i<3;i++) ctx.fillRect(sx, sy+i*sh*0.7/3, sw, sh*0.7/9);
+}
+// ---------- The 4 code-point rings of the Outdoor Code totem (see buildOutdoorCodeTotem), same
+// gold-on-wood icon technique, actual wording on the plaque sprites beside each one. Its base ring
+// reuses T_TOTEM_OATH_BASE (see BLOCK_TILES) — the same blank engraved-plaque look, carrying its own
+// recap text on its own sprite instead of a distinct tile.
+function drawTotemCodeClean(ctx,x0,y0){
+  drawTotemRing(ctx,x0,y0);
+  const cx=x0+TILE*0.5;
+  ctx.fillStyle = shadeStr(0xe8d9a0,1,4);
+  ctx.fillRect(cx-TILE*0.025, y0+TILE*0.2, TILE*0.05, TILE*0.42);
+  ctx.beginPath();
+  ctx.moveTo(cx-TILE*0.14, y0+TILE*0.78);
+  ctx.lineTo(cx+TILE*0.14, y0+TILE*0.78);
+  ctx.lineTo(cx+TILE*0.05, y0+TILE*0.58);
+  ctx.lineTo(cx-TILE*0.05, y0+TILE*0.58);
+  ctx.closePath();
+  ctx.fill();
+}
+function drawTotemCodeFire(ctx,x0,y0){
+  drawTotemRing(ctx,x0,y0);
+  const cx = x0+TILE*0.5;
+  ctx.fillStyle = shadeStr(0x8a8a8a,1,6);
+  for(const a of [-0.6,-0.2,0.2,0.6]){
+    ctx.beginPath();
+    ctx.arc(cx+Math.sin(a)*TILE*0.26, y0+TILE*0.76+Math.cos(a)*TILE*0.05, TILE*0.05, 0, Math.PI*2);
+    ctx.fill();
+  }
+  blob(ctx, cx, y0+TILE*0.62, TILE*0.18, 0xc62b0e, 14);
+  blob(ctx, cx, y0+TILE*0.48, TILE*0.13, 0xff7a1a, 16);
+  blob(ctx, cx, y0+TILE*0.37, TILE*0.08, 0xffce4d, 14);
+}
+function drawTotemCodeConsiderate(ctx,x0,y0){
+  drawTotemRing(ctx,x0,y0);
+  const cx=x0+TILE*0.5, cy=y0+TILE*0.5;
+  ctx.fillStyle = shadeStr(0xe8d9a0,1,4);
+  ctx.beginPath();
+  ctx.moveTo(cx-TILE*0.3, cy+TILE*0.2);
+  ctx.lineTo(cx-TILE*0.05, cy-TILE*0.22);
+  ctx.lineTo(cx+TILE*0.18, cy+TILE*0.2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath(); ctx.arc(cx-TILE*0.2, cy+TILE*0.08, TILE*0.05, 0, Math.PI*2); ctx.fill();
+  ctx.fillRect(cx-TILE*0.25, cy+TILE*0.12, TILE*0.1, TILE*0.16);
+}
+function drawTotemCodeConservation(ctx,x0,y0){
+  drawTotemRing(ctx,x0,y0);
+  const cx=x0+TILE*0.5, cy=y0+TILE*0.5;
+  ctx.fillStyle = shadeStr(0x2f6b2a,1,6);
+  for(let i=0;i<3;i++){
+    const w = TILE*(0.26-i*0.06), y = cy-TILE*0.06+i*TILE*0.13;
+    ctx.beginPath();
+    ctx.moveTo(cx, y-TILE*0.16);
+    ctx.lineTo(cx-w/2, y+TILE*0.02);
+    ctx.lineTo(cx+w/2, y+TILE*0.02);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.fillStyle = shadeStr(0x5a3d22,1,4);
+  ctx.fillRect(cx-TILE*0.03, cy+TILE*0.16, TILE*0.06, TILE*0.1);
 }
 // ---------- Giant US flag (see buildGiantFlag) ----------
 // Drawn once at real detail on an offscreen canvas well above tile resolution, then each of the 6
@@ -1685,7 +1797,8 @@ function buildAtlas(){
                 drawTent, drawCampfire, drawLantern, drawFlag, drawBackpack,
                 drawDutchOven, drawPot, drawPan, drawGriddle, drawBearBox, drawFlagPole, drawScoutLawBox,
                 drawUSFlagTL, drawUSFlagTC, drawUSFlagTR, drawUSFlagBL, drawUSFlagBC, drawUSFlagBR,
-                drawTotemCompass, drawTotemStar, drawTotemFlame, drawTotemTent, drawTotemFleur];
+                drawTotemOathBase, drawTotemOathCreed, drawTotemOathLaw, drawTotemOathDuty,
+                drawTotemCodeClean, drawTotemCodeFire, drawTotemCodeConsiderate, drawTotemCodeConservation];
   draw.forEach((fn, i)=> fn(ctx, (i%ATLAS_COLS)*TILE, Math.floor(i/ATLAS_COLS)*TILE));
   const tex = new THREE.CanvasTexture(canvas);
   tex.magFilter = THREE.NearestFilter;
@@ -1741,11 +1854,15 @@ const BLOCK_TILES = {
   [US_FLAG_BL]: {top:T_US_FLAG_BL, side:T_US_FLAG_BL, bottom:T_US_FLAG_BL},
   [US_FLAG_BC]: {top:T_US_FLAG_BC, side:T_US_FLAG_BC, bottom:T_US_FLAG_BC},
   [US_FLAG_BR]: {top:T_US_FLAG_BR, side:T_US_FLAG_BR, bottom:T_US_FLAG_BR},
-  [TOTEM_COMPASS]: {top:T_TOTEM_COMPASS, side:T_TOTEM_COMPASS, bottom:T_TOTEM_COMPASS},
-  [TOTEM_STAR]: {top:T_TOTEM_STAR, side:T_TOTEM_STAR, bottom:T_TOTEM_STAR},
-  [TOTEM_FLAME]: {top:T_TOTEM_FLAME, side:T_TOTEM_FLAME, bottom:T_TOTEM_FLAME},
-  [TOTEM_TENT]: {top:T_TOTEM_TENT, side:T_TOTEM_TENT, bottom:T_TOTEM_TENT},
-  [TOTEM_FLEUR]: {top:T_TOTEM_FLEUR, side:T_TOTEM_FLEUR, bottom:T_TOTEM_FLEUR},
+  [TOTEM_OATH_BASE]: {top:T_TOTEM_OATH_BASE, side:T_TOTEM_OATH_BASE, bottom:T_TOTEM_OATH_BASE},
+  [TOTEM_OATH_CREED]: {top:T_TOTEM_OATH_CREED, side:T_TOTEM_OATH_CREED, bottom:T_TOTEM_OATH_CREED},
+  [TOTEM_OATH_LAW]: {top:T_TOTEM_OATH_LAW, side:T_TOTEM_OATH_LAW, bottom:T_TOTEM_OATH_LAW},
+  [TOTEM_OATH_DUTY]: {top:T_TOTEM_OATH_DUTY, side:T_TOTEM_OATH_DUTY, bottom:T_TOTEM_OATH_DUTY},
+  [TOTEM_CODE_BASE]: {top:T_TOTEM_OATH_BASE, side:T_TOTEM_OATH_BASE, bottom:T_TOTEM_OATH_BASE},
+  [TOTEM_CODE_CLEAN]: {top:T_TOTEM_CODE_CLEAN, side:T_TOTEM_CODE_CLEAN, bottom:T_TOTEM_CODE_CLEAN},
+  [TOTEM_CODE_FIRE]: {top:T_TOTEM_CODE_FIRE, side:T_TOTEM_CODE_FIRE, bottom:T_TOTEM_CODE_FIRE},
+  [TOTEM_CODE_CONSIDERATE]: {top:T_TOTEM_CODE_CONSIDERATE, side:T_TOTEM_CODE_CONSIDERATE, bottom:T_TOTEM_CODE_CONSIDERATE},
+  [TOTEM_CODE_CONSERVATION]: {top:T_TOTEM_CODE_CONSERVATION, side:T_TOTEM_CODE_CONSERVATION, bottom:T_TOTEM_CODE_CONSERVATION},
 };
 // per-face-direction UV winding (0/1 flags select u0/u1 and vBottom/vTop), aligned to FACES order below
 const UV_PATTERNS = [
@@ -1951,12 +2068,12 @@ function buildGiantFlag(){
 }
 // ---------- Scout totems: two more fixed camp monuments, tucked into free corners of the cooking
 // clearing clear of every station/the horse/the flag — a 4-tall one reciting the Scout Oath, a
-// 3-tall one reciting the Outdoor Code. Segments cycle through TOTEM_BLOCKS bottom to top so no two
-// adjacent rings repeat. `totems` is read by doInteract to find which one a click actually landed on
-// (same block ids are reused across both, so position is what tells them apart) and rebuilt fresh
-// every load rather than appended to, same reasoning as buildGiantFlag being re-asserted after
-// loadEdits below — a stale saved edit on one of these two cells shouldn't be able to erase it.
-const totems = []; // {x, z, play, eagleMesh}
+// 5-tall one reciting the Outdoor Code. `totems` is read by doInteract to find which one a click
+// actually landed on (matched purely by position, since the two totems no longer share block ids)
+// and rebuilt fresh every load rather than appended to, same reasoning as buildGiantFlag being
+// re-asserted after loadEdits below — a stale saved edit on one of these two cells shouldn't be able
+// to erase it.
+const totems = []; // {x, z, play, meshes} — meshes is everything buildTotems needs to scene.remove()
 function totemAt(x,z){ return totems.find(t => t.x===x && t.z===z); }
 // A carved eagle capping each totem, the way a real hand-carved camp totem often is — reuses the
 // exact same box-composition bird model as the ambient wildlife (see buildBirdMesh/BIG_EAGLE_SPECIES),
@@ -1966,25 +2083,147 @@ function buildTotemEagleMesh(){
   eagle.scale.setScalar(2.2);
   return eagle;
 }
-function buildTotem(x, z, height, play){
-  const baseY = COOKING_AREA_Y + 1;
-  for(let i=0;i<height;i++){
-    setBlock(x, baseY+i, z, TOTEM_BLOCKS[i % TOTEM_BLOCKS.length]);
-    PROTECTED_CELLS.add(x+','+(baseY+i)+','+z);
+// A small carved-wood plaque, same canvas-texture billboard technique as the campsite welcome sign
+// (buildCampSignSprite) and the Scout Law box labels, just sized to sit against one totem ring rather
+// than float over the whole clearing. Optional smaller subtitle line for the base plaque's oath text.
+function buildTotemPlaqueSprite(title, subtitle){
+  const canvas = document.createElement('canvas');
+  canvas.width = 360; canvas.height = subtitle ? 108 : 76;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#5a3d22';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.strokeStyle = '#2e1c0e';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(3,3,canvas.width-6,canvas.height-6);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#f0dfa8';
+  ctx.font = 'bold 26px sans-serif';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(title, canvas.width/2, subtitle ? 36 : canvas.height/2);
+  if(subtitle){
+    ctx.font = '15px sans-serif';
+    ctx.fillStyle = '#e0cf98';
+    const words = subtitle.split(' ');
+    let line = '', y = 68, lineH = 19;
+    for(const w of words){
+      const test = line ? line+' '+w : w;
+      if(ctx.measureText(test).width > canvas.width-24 && line){
+        ctx.fillText(line, canvas.width/2, y);
+        line = w; y += lineH;
+      } else line = test;
+    }
+    if(line) ctx.fillText(line, canvas.width/2, y);
   }
+  const tex = new THREE.CanvasTexture(canvas);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
+  sprite.scale.set(1.7, 1.7*canvas.height/canvas.width, 1);
+  return sprite;
+}
+// A small hanging lantern with a warm, always-lit point light — the campfire glow at the base of the
+// clearing's other fixtures, brought up to totem height. Purely decorative (unlike the placeable
+// Lantern item, this one can't be picked up), positioned off to one side like it's hung from a wing.
+function buildTotemLantern(){
+  const g = new THREE.Group();
+  const bodyMat = new THREE.MeshLambertMaterial({ color: 0x3a3a3a });
+  const glassMat = new THREE.MeshLambertMaterial({ color: 0xffd980, emissive: 0xffaa33, emissiveIntensity: 0.8 });
+  const hook = animalBox(0.05, 0.14, 0.05, bodyMat);
+  hook.position.set(0,0.14,0);
+  g.add(hook);
+  const glass = animalBox(0.16, 0.2, 0.16, glassMat);
+  glass.position.y = -0.03;
+  g.add(glass);
+  const cap = animalBox(0.2, 0.05, 0.2, bodyMat);
+  cap.position.y = 0.08;
+  g.add(cap);
+  const light = new THREE.PointLight(0xffaa44, 1.6, 8, 1.8);
+  g.add(light);
+  return g;
+}
+// An owl, the same box-composition bird model as the ambient wildlife (see BIRD_SPECIES' own 'owl'
+// entry) but under its own species id so it gets its own material cache slot for a lighter, more
+// owl-like facial disc than the plain ambient bird uses.
+const TOTEM_OWL_SPECIES = { id:'totemowl', name:'Owl', body:0x7a5a3a, accent:0xc9a86a, head:0xe0d0a0, size:1.25, pitch:0.55 };
+function buildTotemOwlMesh(){
+  const owl = buildBirdMesh(TOTEM_OWL_SPECIES);
+  owl.scale.setScalar(2.0);
+  return owl;
+}
+// The Scout Oath totem: 4 purpose-built rings instead of the generic cycling symbols (see
+// TOTEM_OATH_BASE etc.), each paired with a floating plaque sprite carrying the Oath's own words,
+// an eagle topper reused from the generic totem, and a small hanging lantern for the warm glow real
+// hand-carved camp totems are often lit with at night.
+function buildScoutOathTotem(x, z){
+  const baseY = COOKING_AREA_Y + 1;
+  const rings = [
+    { block: TOTEM_OATH_BASE,  title: 'ON MY HONOR', subtitle: 'I will do my best to do my duty' },
+    { block: TOTEM_OATH_CREED, title: 'PHYSICALLY STRONG • MENTALLY AWAKE • MORALLY STRAIGHT' },
+    { block: TOTEM_OATH_LAW,   title: 'TO OBEY THE SCOUT LAW' },
+    { block: TOTEM_OATH_DUTY,  title: 'DUTY TO GOD AND COUNTRY' },
+  ];
+  const meshes = [];
+  rings.forEach((ring, i) => {
+    setBlock(x, baseY+i, z, ring.block);
+    PROTECTED_CELLS.add(x+','+(baseY+i)+','+z);
+    const plaque = buildTotemPlaqueSprite(ring.title, ring.subtitle);
+    plaque.position.set(x+0.5, baseY+i+0.5, z+0.82);
+    scene.add(plaque);
+    meshes.push(plaque);
+  });
+  const height = rings.length;
   const eagleMesh = buildTotemEagleMesh();
   eagleMesh.position.set(x+0.5, baseY+height, z+0.5);
   scene.add(eagleMesh);
-  totems.push({ x, z, play, eagleMesh });
+  meshes.push(eagleMesh);
+  const lantern = buildTotemLantern();
+  lantern.position.set(x+0.5+0.9, baseY+height-0.3, z+0.5);
+  scene.add(lantern);
+  meshes.push(lantern);
+  totems.push({ x, z, play: playScoutOath, meshes });
+}
+// The Outdoor Code totem: an owl topper (instead of the Oath totem's eagle) over a title plaque and
+// 5 purpose-built rings — an "As an American..." recap at the base, then the Code's own 4 points in
+// recitation order, tallest of the two totems since the Code has one more line than the Oath's creed.
+function buildOutdoorCodeTotem(x, z){
+  const baseY = COOKING_AREA_Y + 1;
+  const rings = [
+    { block: TOTEM_CODE_BASE, title: 'AS AN AMERICAN', subtitle: 'I will do my best to be clean in my outdoor manners, be careful with fire, be considerate in the outdoors, and be conservation-minded' },
+    { block: TOTEM_CODE_CONSERVATION, title: 'BE CONSERVATION MINDED' },
+    { block: TOTEM_CODE_CONSIDERATE,  title: 'BE CONSIDERATE IN THE OUTDOORS' },
+    { block: TOTEM_CODE_FIRE,         title: 'BE CAREFUL WITH FIRE' },
+    { block: TOTEM_CODE_CLEAN,        title: 'BE CLEAN IN MY OUTDOOR MANNERS' },
+  ];
+  const meshes = [];
+  rings.forEach((ring, i) => {
+    setBlock(x, baseY+i, z, ring.block);
+    PROTECTED_CELLS.add(x+','+(baseY+i)+','+z);
+    const plaque = buildTotemPlaqueSprite(ring.title, ring.subtitle);
+    plaque.position.set(x+0.5, baseY+i+0.5, z+0.82);
+    scene.add(plaque);
+    meshes.push(plaque);
+  });
+  const height = rings.length;
+  const titlePlaque = buildTotemPlaqueSprite('THE OUTDOOR CODE');
+  titlePlaque.position.set(x+0.5, baseY+height+0.45, z+0.82);
+  scene.add(titlePlaque);
+  meshes.push(titlePlaque);
+  const owlMesh = buildTotemOwlMesh();
+  owlMesh.position.set(x+0.5, baseY+height, z+0.5);
+  scene.add(owlMesh);
+  meshes.push(owlMesh);
+  const lantern = buildTotemLantern();
+  lantern.position.set(x+0.5+0.8, baseY+height-0.2, z+0.5);
+  scene.add(lantern);
+  meshes.push(lantern);
+  totems.push({ x, z, play: playOutdoorCode, meshes });
 }
 function buildTotems(){
   // Called again after loadEdits (see init()), same as buildGiantFlag — without clearing the old
-  // eagle meshes first, a second call would leave two stacked on top of each totem.
-  for(const t of totems) scene.remove(t.eagleMesh);
+  // meshes first, a second call would leave duplicates stacked on top of each totem.
+  for(const t of totems) for(const m of t.meshes) scene.remove(m);
   totems.length = 0;
   const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
-  buildTotem(x0+COOKING_AREA_SIZE-2, z0+2, 4, playScoutOath);   // NE corner
-  buildTotem(x0+2, z0+COOKING_AREA_SIZE-2, 3, playOutdoorCode); // SW corner
+  buildScoutOathTotem(x0+COOKING_AREA_SIZE-2, z0+2);      // NE corner
+  buildOutdoorCodeTotem(x0+2, z0+COOKING_AREA_SIZE-2);    // SW corner
 }
 // ---------- Scout Law boxes: 12 golden keepsakes, one per point of the Scout Law ----------
 // Scattered once at world-gen with their own seeded RNG (not Math.random()) so every fresh load
@@ -3613,10 +3852,11 @@ function playPledge(){
   if(!started) return;
   pledgePlaying = true;
   setTimeout(()=>{ pledgePlaying = false; }, PLEDGE_CLIP_DURATION_S*1000);
+  Scout.recited('pledge');
 }
 // Same full-recitation-not-trimmed approach as the Pledge above, one clip per camp totem (see
-// buildTotem/doInteract) — a bit of buffer past each file's real length (14.03s/11.44s) so the
-// "still playing" guard clears a beat after the audio itself actually finishes.
+// buildScoutOathTotem/buildOutdoorCodeTotem/doInteract) — a bit of buffer past each file's real
+// length (14.03s/11.44s) so the "still playing" guard clears a beat after the audio itself finishes.
 const SCOUT_OATH_CLIP_DURATION_S = 15;
 const scoutOathClip = makeClipPlayer('assets/scout-oath.m4a', SCOUT_OATH_CLIP_DURATION_S, 0.3);
 let scoutOathPlaying = false;
@@ -3626,6 +3866,7 @@ function playScoutOath(){
   if(!started) return;
   scoutOathPlaying = true;
   setTimeout(()=>{ scoutOathPlaying = false; }, SCOUT_OATH_CLIP_DURATION_S*1000);
+  Scout.recited('scoutoath');
 }
 const OUTDOOR_CODE_CLIP_DURATION_S = 12;
 const outdoorCodeClip = makeClipPlayer('assets/outdoor-code.m4a', OUTDOOR_CODE_CLIP_DURATION_S, 0.3);
@@ -3636,6 +3877,7 @@ function playOutdoorCode(){
   if(!started) return;
   outdoorCodePlaying = true;
   setTimeout(()=>{ outdoorCodePlaying = false; }, OUTDOOR_CODE_CLIP_DURATION_S*1000);
+  Scout.recited('outdoorcode');
 }
 function playRoar(){
   if(lionRoarClip.play()) return;
@@ -7734,7 +7976,7 @@ function doInteract(){
   // fixed or player-placed — opens its recipe window regardless of what's in hand, same priority a
   // Crafting Table or the Bear Box already gets below.
   if(hitBlock in BLOCK_TO_WARE_KEY){ openCookware(BLOCK_TO_WARE_KEY[hitBlock]); return; }
-  if(hit && TOTEM_BLOCKS.includes(hitBlock)){
+  if(hit && ALL_TOTEM_BLOCKS.includes(hitBlock)){
     const totem = totemAt(hit.x, hit.z);
     if(totem) totem.play();
     return;
