@@ -6673,6 +6673,8 @@ window.addEventListener('keydown', e=>{
   if(e.code==='KeyK' && locked && !isDead){ trySleep(); return; }
   if(e.code==='KeyZ' && locked){ player.crawlMode = !player.crawlMode; return; }
   if(e.code==='KeyH' && locked){ toggleHotkeyPanel(); return; }
+  if(e.code==='KeyP'){ useFirstAid(); return; }
+  if(e.code==='KeyO'){ useStopBear(); return; }
   const slotIdx = HOTBAR_KEYS.indexOf(e.code);
   if(slotIdx>=0 && slotIdx<HOTBAR.length){
     selectedSlot = slotIdx; updateHotbarUI(); updateHeldItemColor();
@@ -7527,33 +7529,35 @@ const FIRST_AID_HEAL_HP = 2 * HP_PER_HEART; // 2 hearts
 const FIRST_AID_COOLDOWN_S = 60;
 const STOP_BEAR_COOLDOWN_S = 20;
 let firstAidCooldown = 0, stopBearCooldown = 0;
-document.getElementById('btnQuickBackpack').addEventListener('click', ()=>{
+// Named so the keydown handler below and the on-screen icon's click both call the exact same logic
+// rather than duplicating it — Backpack and Camp Workbench already had B/E, these are the two new ones.
+function useQuickBackpack(){
   if(locked && !isDead) openBackpackStorage();
-});
-document.getElementById('btnQuickWorkbench').addEventListener('click', ()=>{
+}
+function useQuickWorkbench(){
   if(!locked || isDead) return;
   if(nearestCraftingTable(4)) openCrafting();
   else addChatMessage('Camp', '🛠️ You need to be near your Camp Workbench to craft.');
-});
-document.getElementById('btnQuickFirstAid').addEventListener('click', ()=>{
+}
+function useFirstAid(){
   if(!locked || isDead) return;
   if(firstAidCooldown>0){
-    addChatMessage('Camp', `🩹 First Aid is still resting — ${Math.ceil(firstAidCooldown)}s.`);
+    addChatMessage('Camp', `➕ First Aid is still resting — ${Math.ceil(firstAidCooldown)}s.`);
     return;
   }
   if(myHP >= PLAYER_MAX_HP){
-    addChatMessage('Camp', "🩹 You're already at full health.");
+    addChatMessage('Camp', "➕ You're already at full health.");
     return;
   }
   myHP = Math.min(PLAYER_MAX_HP, myHP + FIRST_AID_HEAL_HP);
   updateHeartsUI();
   firstAidCooldown = FIRST_AID_COOLDOWN_S;
   SFX.craft();
-  addChatMessage('Camp', '🩹 First Aid: patched up a couple hearts.');
-});
+  addChatMessage('Camp', '➕ First Aid: patched up a couple hearts.');
+}
 const stopBearBanner = document.getElementById('stopBearBanner');
 let stopBearBannerTimer = null;
-document.getElementById('btnStopBear').addEventListener('click', ()=>{
+function useStopBear(){
   if(!locked || isDead) return;
   if(stopBearCooldown>0){
     addChatMessage('Camp', `🐻🚫 Give it a moment — ${Math.ceil(stopBearCooldown)}s.`);
@@ -7568,7 +7572,11 @@ document.getElementById('btnStopBear').addEventListener('click', ()=>{
   addChatMessage('Camp', scared>0
     ? `🐻🚫 GO AWAY, BEAR! ${scared>1?'The bears run':'The bear runs'} off.`
     : "🐻🚫 GO AWAY, BEAR! ...no bear was close enough to hear you.");
-});
+}
+document.getElementById('btnQuickBackpack').addEventListener('click', useQuickBackpack);
+document.getElementById('btnQuickWorkbench').addEventListener('click', useQuickWorkbench);
+document.getElementById('btnQuickFirstAid').addEventListener('click', useFirstAid);
+document.getElementById('btnStopBear').addEventListener('click', useStopBear);
 
 // ---------- Camp log ----------
 // A small on-screen message log for local feedback (cooking hints, sleep, badge-adjacent tips) —

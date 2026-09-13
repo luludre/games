@@ -19,10 +19,11 @@
   #bottomBar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:10px;}
   #hotbar{display:flex;gap:6px;background:rgba(0,0,0,0.25);padding:6px;border-radius:8px;}
   #specialIcons{display:flex;gap:6px;background:rgba(0,0,0,0.25);padding:6px;border-radius:8px;}
-  #specialIcons button{width:48px;height:48px;border:2px solid #c8a44d;border-radius:6px;background:rgba(200,164,77,0.14);
+  #specialIcons button{position:relative;width:48px;height:48px;border:2px solid #c8a44d;border-radius:6px;background:rgba(200,164,77,0.14);
     color:#fff;font-size:20px;cursor:pointer;font-family:inherit;}
   #specialIcons button:hover{background:rgba(200,164,77,0.3);}
   #specialIcons button:disabled{opacity:0.4;cursor:default;background:rgba(255,255,255,0.06);}
+  #specialIcons .sKey{position:absolute;top:2px;left:4px;font-size:10px;color:#fff;text-shadow:0 0 3px #000;}
   .slot{width:48px;height:48px;border:2px solid rgba(255,255,255,0.4);border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;background:rgba(255,255,255,0.08);}
   .slot.active{border-color:#fff;box-shadow:0 0 8px rgba(255,255,255,0.8);}
   .slot.empty .swatch{opacity:0.3;}
@@ -230,10 +231,10 @@
 <div id="crosshair"></div>
 <div id="bottomBar">
   <div id="specialIcons">
-    <button id="btnQuickBackpack" title="Backpack">🎒</button>
-    <button id="btnQuickWorkbench" title="Camp Workbench">🛠️</button>
-    <button id="btnQuickFirstAid" title="First Aid">🩹</button>
-    <button id="btnStopBear" title="Scare off a nearby bear">🐻🚫</button>
+    <button id="btnQuickBackpack" title="Backpack (B)"><span class="sKey">B</span>🎒</button>
+    <button id="btnQuickWorkbench" title="Camp Workbench (E)"><span class="sKey">E</span>🛠️</button>
+    <button id="btnQuickFirstAid" title="First Aid (P)"><span class="sKey">P</span>➕</button>
+    <button id="btnStopBear" title="Scare off a nearby bear (O)"><span class="sKey">O</span>🐻🚫</button>
   </div>
   <div id="hotbar"></div>
 </div>
@@ -251,6 +252,8 @@
   <div class="hkRow"><span class="hkKey">Ctrl</span>hold to crawl</div>
   <div class="hkRow"><span class="hkKey">Z</span>toggle crawl</div>
   <div class="hkRow"><span class="hkKey">N</span>cycle day/night</div>
+  <div class="hkRow"><span class="hkKey">P</span>First Aid (quick heal)</div>
+  <div class="hkRow"><span class="hkKey">O</span>Stop Bear (scare it off)</div>
   <div class="hkRow"><span class="hkKey">H</span>toggle this panel</div>
   <div class="hkRow"><span class="hkKey">Esc</span>release mouse</div>
 </div>
