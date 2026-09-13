@@ -3237,8 +3237,8 @@ function updateAnimal(a, dt){
 
   let moving = false;
   if(fleeing){
-    // Scared off by the Stop Bear function (see scareBearsNear below) — run straight away from the
-    // player, overriding aggro/wander entirely until the fright wears off. Clearing aggroUntil too
+    // Scared off by the Stop Bear function (see scareHostileAnimalsNear below) — run straight away
+    // from the player, overriding aggro/wander entirely until the fright wears off. Clearing aggroUntil too
     // means it doesn't just spin around and resume the charge the instant the fright ends.
     a.aggroUntil = 0;
     if(distToPlayer > 0.05 && distToPlayer < DEAGGRO_RADIUS*2){
@@ -3334,12 +3334,15 @@ function updateAnimal(a, dt){
 function updateAnimals(dt){ animals.forEach(a=>updateAnimal(a,dt)); }
 const STOP_BEAR_RADIUS = 8;      // a bit past AGGRO_RADIUS, so it can interrupt one already charging
 const STOP_BEAR_FLEE_MS = 6000;
-// Shouting and clapping at any bear close enough to hear it — see the Stop Bear quick-access icon.
-// Returns how many bears actually got scared, so the caller can react if there weren't any nearby.
-function scareBearsNear(x, z, radius){
+// Shouting and clapping at anything nearby actually capable of hurting you — see the Stop Bear
+// quick-access icon. Filtered on dmg>0 rather than a hardcoded type list so it automatically covers
+// the bear AND the moose (moose is retaliate-only, not aggressive-on-sight like the bear, but it's
+// just as dangerous once it's charging) and keeps covering any future hostile species for free.
+// Returns how many animals actually got scared, so the caller can react if there weren't any nearby.
+function scareHostileAnimalsNear(x, z, radius){
   let scared = 0;
   for(const a of animals){
-    if(a.type!=='bear') continue;
+    if(!ANIMAL_STATS[a.type].dmg) continue;
     if(Math.hypot(a.x-x, a.z-z) > radius) continue;
     a.fleeUntil = performance.now() + STOP_BEAR_FLEE_MS;
     scared++;
@@ -3911,6 +3914,17 @@ function findAttackTarget(){
   });
   return best;
 }
+// Small songbirds are off-limits to the player entirely — unlike the ground animals' "nudge, not a
+// rule" warning (see damageAnimal), which still lets the hit land, this actually blocks the damage
+// and just explains why. Big Eagles still hunt them fine (see updateBigEagles/damageBirdOrFish) —
+// this only intercepts the player's own tryAttack, not predation between animals.
+let lastBirdWarningAt = 0;
+const BIRD_WARNING_COOLDOWN_MS = 5000;
+function warnBirdProtected(){
+  if(Date.now()-lastBirdWarningAt < BIRD_WARNING_COOLDOWN_MS) return;
+  lastBirdWarningAt = Date.now();
+  addChatMessage('Camp', "🐦 Birds can't be hurt — a real Scout studies wildlife, not hunts it.");
+}
 let lastPlayerAttack = 0;
 function tryAttack(){
   const target = findAttackTarget();
@@ -3920,13 +3934,16 @@ function tryAttack(){
     lastPlayerAttack = now;
     triggerSwing();
     SFX.swing();
-    SFX.hitAnimal();
-    if(target.type==='animal') damageAnimal(target.ref, PLAYER_ATTACK_DMG);
-    else if(target.type==='bird') damageBirdOrFish(target.ref, PLAYER_ATTACK_DMG, 'bird');
-    else if(target.type==='fish') damageBirdOrFish(target.ref, PLAYER_ATTACK_DMG, 'fish');
-    else if(target.type==='gopher') damageGopher(target.ref, PLAYER_ATTACK_DMG);
-    else if(target.type==='bigeagle') damageBigEagle(target.ref, PLAYER_ATTACK_DMG);
-    else if(target.type==='turtle') damageTurtle(target.ref, PLAYER_ATTACK_DMG);
+    if(target.type==='bird'){
+      warnBirdProtected();
+    } else {
+      SFX.hitAnimal();
+      if(target.type==='animal') damageAnimal(target.ref, PLAYER_ATTACK_DMG);
+      else if(target.type==='fish') damageBirdOrFish(target.ref, PLAYER_ATTACK_DMG, 'fish');
+      else if(target.type==='gopher') damageGopher(target.ref, PLAYER_ATTACK_DMG);
+      else if(target.type==='bigeagle') damageBigEagle(target.ref, PLAYER_ATTACK_DMG);
+      else if(target.type==='turtle') damageTurtle(target.ref, PLAYER_ATTACK_DMG);
+    }
   }
   return true;
 }
@@ -8629,10 +8646,10 @@ function useStopBear(){
   stopBearBanner.hidden = false;
   if(stopBearBannerTimer) clearTimeout(stopBearBannerTimer);
   stopBearBannerTimer = setTimeout(()=>{ stopBearBanner.hidden = true; }, 1600);
-  const scared = scareBearsNear(player.pos.x, player.pos.z, STOP_BEAR_RADIUS);
+  const scared = scareHostileAnimalsNear(player.pos.x, player.pos.z, STOP_BEAR_RADIUS);
   addChatMessage('Camp', scared>0
-    ? `🐻🚫 GO AWAY, BEAR! ${scared>1?'The bears run':'The bear runs'} off.`
-    : "🐻🚫 GO AWAY, BEAR! ...no bear was close enough to hear you.");
+    ? `🐻🚫 GO AWAY! ${scared>1?'They run':'It runs'} off.`
+    : "🐻🚫 GO AWAY! ...nothing dangerous was close enough to hear you.");
 }
 document.getElementById('btnQuickBackpack').addEventListener('click', useQuickBackpack);
 document.getElementById('btnQuickWorkbench').addEventListener('click', useQuickWorkbench);
