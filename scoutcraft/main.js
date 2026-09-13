@@ -379,6 +379,8 @@ const BADGES = [
   { id:'fishing',    emoji:'🎣', name:'Fishing',      hint:'Catch 5 fish.',                                test:()=> scoutStats.fishCaught >= 5 },
   { id:'kayaking',   emoji:'🛶', name:'Kayaking',     hint:'Paddle the lake for 30 seconds.',              test:()=> scoutStats.kayakSeconds >= 30 },
   { id:'horseback',  emoji:'🐴', name:'Horseback Riding', hint:'Ride 200 blocks on horseback.',            test:()=> scoutStats.horsebackBlocks >= HORSEBACK_BADGE_BLOCKS },
+  { id:'weather',    emoji:'🌦️', name:'Weather',      hint:'Experience 3 different weather conditions.',   test:()=> scoutStats.weatherSeen.length >= 3 },
+  { id:'scuba',      emoji:'🤿', name:'Scuba Diving', hint:'Spend 20 seconds fully underwater.',           test:()=> scoutStats.scubaSeconds >= 20 },
   { id:'scoutspirit',emoji:'🏅', name:'Scout Spirit', hint:'Find all 12 golden Scout Law boxes hidden around camp.', test:()=> scoutStats.lawsCollected.length >= SCOUT_LAW_POINTS.length },
 ];
 // Ranks are purely derived from how many badges you hold — no separate progression to track. A brand
@@ -415,7 +417,7 @@ const earnedBadges = new Set();
 const scoutStats = {
   wood:0, rope:0, campfires:0, tents:0, flags:0, compassUses:0,
   hiked:0, swam:0, highest:0, nightSeconds:0, species:[],
-  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, horsebackBlocks:0, lawsCollected:[], cookwareUsed:[],
+  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, horsebackBlocks:0, lawsCollected:[], cookwareUsed:[], weatherSeen:[], scubaSeconds:0,
 };
 function saveScoutProgress(){
   try{
@@ -433,6 +435,7 @@ function loadScoutProgress(){
       if(!Array.isArray(scoutStats.species)) scoutStats.species = [];
       if(!Array.isArray(scoutStats.lawsCollected)) scoutStats.lawsCollected = [];
       if(!Array.isArray(scoutStats.cookwareUsed)) scoutStats.cookwareUsed = [];
+      if(!Array.isArray(scoutStats.weatherSeen)) scoutStats.weatherSeen = [];
     }
   }catch(e){}
 }
@@ -524,6 +527,12 @@ const Scout = {
     saveScoutProgress();
     checkBadges();
   },
+  sawWeather(label){
+    if(!label || scoutStats.weatherSeen.includes(label)) return;
+    scoutStats.weatherSeen.push(label);
+    saveScoutProgress();
+    checkBadges();
+  },
   foundDipper(){
     if(scoutStats.dipperFound) return;
     scoutStats.dipperFound = true;
@@ -566,6 +575,7 @@ function updateScout(dt){
 
   if(isScoutNight()) scoutStats.nightSeconds += dt;
   if(player.inKayak) scoutStats.kayakSeconds += dt;
+  if(isHeadUnderwater()) scoutStats.scubaSeconds += dt;
 
   // Astronomy: keep the Big Dipper roughly in view, at night, for 10 seconds of attention. A brief
   // glance away (mouse drift, checking your footing) doesn't wipe the streak — only DIPPER_GAZE_GRACE_S
@@ -778,6 +788,8 @@ function badgeProgress(b){
     fishing:    ()=> [scoutStats.fishCaught, 5, 'fish'],
     kayaking:   ()=> [Math.floor(scoutStats.kayakSeconds), 30, 'seconds'],
     horseback:  ()=> [Math.floor(scoutStats.horsebackBlocks), HORSEBACK_BADGE_BLOCKS, 'blocks'],
+    weather:    ()=> [scoutStats.weatherSeen.length, 3, 'conditions'],
+    scuba:      ()=> [Math.floor(scoutStats.scubaSeconds), 20, 'seconds'],
     scoutspirit:()=> [scoutStats.lawsCollected.length, SCOUT_LAW_POINTS.length, 'boxes'],
   }[b.id];
   if(!p) return null;
@@ -2905,9 +2917,32 @@ function createCharacterMesh(shirtColor){
   hatCrown.position.set(0, 1.78, 0);
   const hatBrim = box(0.9,0.05,0.9, hatMat);
   hatBrim.position.set(0, 1.675, 0);
+  // Diving mask + snorkel — hidden unless actually head-underwater (see updateScubaGear), so it only
+  // shows up while genuinely scuba diving, not just standing waist-deep.
+  const scubaGear = new THREE.Group();
+  const maskMat = new THREE.MeshLambertMaterial({ color: 0x1a1a1a });
+  const lensMat = new THREE.MeshLambertMaterial({ color: 0x8fd0e8, transparent:true, opacity:0.6 });
+  const snorkelMat = new THREE.MeshLambertMaterial({ color: 0x2a6b4a });
+  const maskStrap = box(0.5, 0.05, 0.05, maskMat);
+  maskStrap.position.set(0, 1.58, 0);
+  scubaGear.add(maskStrap);
+  const maskBand = box(0.4, 0.15, 0.06, maskMat);
+  maskBand.position.set(0, 1.55, -0.26);
+  scubaGear.add(maskBand);
+  const maskLens = box(0.3, 0.09, 0.02, lensMat);
+  maskLens.position.set(0, 1.56, -0.29);
+  scubaGear.add(maskLens);
+  const snorkelTube = box(0.05, 0.4, 0.05, snorkelMat);
+  snorkelTube.position.set(0.24, 1.65, -0.05);
+  scubaGear.add(snorkelTube);
+  const snorkelMouthpiece = box(0.08, 0.05, 0.1, snorkelMat);
+  snorkelMouthpiece.position.set(0.16, 1.42, -0.24);
+  scubaGear.add(snorkelMouthpiece);
+  scubaGear.visible = false;
 
-  group.add(head, body, armL, armR, legL, legR, hatCrown, hatBrim, neckerchief, backpack, backpackFlap, belt, buckle);
+  group.add(head, body, armL, armR, legL, legR, hatCrown, hatBrim, neckerchief, backpack, backpackFlap, belt, buckle, scubaGear);
   group.userData.parts = { armL, armR, legL, legR };
+  group.userData.scubaGear = scubaGear;
   // Stashed so applyUniformCustomization can update the troop number / neckerchief color live, after
   // the front-page overlay is actually submitted, without rebuilding this whole mesh.
   group.userData.uniform = { troopPatchMat, neckerchief, backpack, shirtFrontMat, lastRankIndex: initialRankIndex };
@@ -4736,12 +4771,35 @@ function updateWeather(dt){
     lastWeatherLabel = label;
     const el = document.getElementById('weatherLabel');
     if(el) el.textContent = label;
+    Scout.sawWeather(label);
   }
   const windText = windLabel(wind.strength);
   if(windText !== lastWindLabel){
     lastWindLabel = windText;
     const el = document.getElementById('windLabel');
     if(el) el.textContent = windText;
+  }
+}
+// Scuba diving: mask+snorkel on the character model, a blue vignette over the first-person view, and
+// a murky close-in fog tint — called right after updateWeather every frame so the tint overrides
+// whatever weather just set rather than fighting it (updateWeather reassigns scene.fog/background
+// wholesale each frame, it doesn't blend incrementally, so overwriting again right after is safe).
+let wasHeadUnderwater = false;
+function updateScubaView(){
+  const underwater = locked && !isDead && isHeadUnderwater();
+  if(underwater !== wasHeadUnderwater){
+    wasHeadUnderwater = underwater;
+    if(characterMesh.userData.scubaGear) characterMesh.userData.scubaGear.visible = underwater;
+    const el = document.getElementById('scubaOverlay');
+    if(el) el.style.opacity = underwater ? '1' : '0';
+  }
+  if(underwater){
+    scene.fog.near = 0.4;
+    scene.fog.far = 10;
+    scene.fog.color.setHex(0x123c46);
+    scene.background.setHex(0x123c46);
+    hemiLight.intensity *= 0.5;
+    sunLight.intensity *= 0.35;
   }
 }
 function triggerLightning(){
@@ -7098,6 +7156,12 @@ function isTouchingLadder(){
 function isInWater(){
   return getBlock(Math.floor(player.pos.x), Math.floor(player.pos.y+player.height*0.5), Math.floor(player.pos.z))===WATER;
 }
+// Specifically the eye/camera cell, not body-center like isInWater above — this is what actually
+// decides whether you're "scuba diving" (mask on, blue first-person overlay) rather than just wading
+// or swimming with your head above the surface.
+function isHeadUnderwater(){
+  return getBlock(Math.floor(player.pos.x), Math.floor(player.pos.y+player.eye), Math.floor(player.pos.z))===WATER;
+}
 function updatePlayer(dt){
   // Riding a Giant Eagle overrides everything else — no gravity, no WASD, no jumping, just along for
   // the tour (see the beingRidden branch in updateBigEagles). Mouse-look still works normally, since
@@ -8849,6 +8913,7 @@ function animate(now){
   if(heldTorchLight.visible) heldTorchLight.intensity = 1.0 + Math.random()*0.3;
   updateDayNight();
   updateWeather(dt);
+  updateScubaView();
   updateTemperature(dt);
   updateHunger(dt);
 
