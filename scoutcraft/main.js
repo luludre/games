@@ -2424,6 +2424,96 @@ const faceMaterial = new THREE.MeshLambertMaterial({ map: buildFaceTexture() });
 // BoxGeometry material order is +x,-x,+y,-y,+z,-z; index 5 (-z) is the character's forward side,
 // matching yaw=0 facing -Z (same convention as getLookDir/the camera).
 const headMaterials = [skinMaterial, skinMaterial, skinMaterial, skinMaterial, skinMaterial, faceMaterial];
+// Same NearestFilter/no-mipmap pixel-art treatment as buildFaceTexture — these are all tiny, viewed
+// up close, and should read as blocky patches rather than blurry smears.
+function pixelTexture(canvas){
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  tex.generateMipmaps = false;
+  return tex;
+}
+// Two chest pockets and a row of buttons down the placket — drawn onto the torso box's front (-z)
+// face only, same face-array trick as the head's own faceMaterial above.
+const SHIRT_COLOR_HEX = '#a89272'; // must track the shirtMat default a few lines down
+function buildShirtFrontTexture(){
+  const w=32, h=48;
+  const canvas = document.createElement('canvas');
+  canvas.width=w; canvas.height=h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = SHIRT_COLOR_HEX;
+  ctx.fillRect(0,0,w,h);
+  ctx.fillStyle = '#8a7860';
+  ctx.fillRect(3,9,10,11);
+  ctx.fillRect(19,9,10,11);
+  ctx.fillStyle = '#6b5a45';
+  ctx.fillRect(3,9,10,3);
+  ctx.fillRect(19,9,10,3);
+  ctx.fillStyle = '#5a4a38';
+  for(let i=0;i<5;i++) ctx.fillRect(15,5+i*8,2,2);
+  return pixelTexture(canvas);
+}
+// A small US flag patch, sewn-on-sleeve style — just a striped rectangle with a canton block, since
+// individual stars would be unreadable at this size (the segment it sits on is 0.2x0.25 units).
+function buildFlagPatchTexture(){
+  const w=32, h=40;
+  const canvas = document.createElement('canvas');
+  canvas.width=w; canvas.height=h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = SHIRT_COLOR_HEX;
+  ctx.fillRect(0,0,w,h);
+  const px=4, py=6, pw=24, ph=28;
+  const stripeH = ph/7;
+  for(let i=0;i<7;i++){
+    ctx.fillStyle = i%2===0 ? '#b22234' : '#ffffff';
+    ctx.fillRect(px, py+i*stripeH, pw, stripeH+0.6);
+  }
+  ctx.fillStyle = '#3c3b6e';
+  ctx.fillRect(px, py, pw*0.45, ph*0.4);
+  return pixelTexture(canvas);
+}
+// Regenerable (the troop number isn't known until the front-page overlay is submitted) — the sleeve
+// patch just re-draws the text in army green over the same shirt-colored background each time.
+function buildTroopPatchTexture(troop){
+  const w=32, h=40;
+  const canvas = document.createElement('canvas');
+  canvas.width=w; canvas.height=h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = SHIRT_COLOR_HEX;
+  ctx.fillRect(0,0,w,h);
+  if(troop){
+    ctx.fillStyle = '#4b5320';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = troop.length>3 ? 'bold 11px monospace' : 'bold 14px monospace';
+    ctx.fillText(troop, w/2, h/2+1);
+  }
+  return pixelTexture(canvas);
+}
+// A rolled neckerchief: a band wrapping the collar, plus its two rolled tails hanging down the front
+// side by side rather than one solid triangle — each a thin shaft capped with a small diamond-rotated
+// tip (same "rotate a box 45deg to read as a point" trick as the Kayak's bow/stern caps) so it reads
+// as two long, sharp-ended strings. Color comes from the front-page picker, so the material is stashed
+// on userData for applyUniformCustomization to recolor live without rebuilding the mesh.
+function buildNeckerchiefMesh(colorHex){
+  const mat = new THREE.MeshLambertMaterial({ color: colorHex });
+  const g = new THREE.Group();
+  const band = new THREE.Mesh(new THREE.BoxGeometry(0.56,0.12,0.34), mat);
+  band.position.set(0, 1.38, 0);
+  g.add(band);
+  for(const side of [-1,1]){
+    const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.09,0.34,0.05), mat);
+    shaft.position.set(side*0.08, 1.14, -0.17);
+    shaft.rotation.z = side*0.12;
+    g.add(shaft);
+    const tip = new THREE.Mesh(new THREE.BoxGeometry(0.09,0.09,0.05), mat);
+    tip.position.set(side*0.095, 0.95, -0.17);
+    tip.rotation.z = Math.PI/4 + side*0.12;
+    g.add(tip);
+  }
+  g.userData.mat = mat;
+  return g;
+}
 
 function createCharacterMesh(shirtColor){
   const group = new THREE.Group();
@@ -2459,11 +2549,31 @@ function createCharacterMesh(shirtColor){
   head.position.set(0, 1.55, 0);
   const body = box(0.5,0.75,0.28, shirtMat);
   body.position.set(0, 1.05, 0);
+  // Front (-z) face only gets the pockets/buttons texture — same per-face-array trick as the head.
+  const shirtFrontMat = new THREE.MeshLambertMaterial({ map: buildShirtFrontTexture() });
+  body.material = [shirtMat, shirtMat, shirtMat, shirtMat, shirtMat, shirtFrontMat];
   // Short sleeve up top, bare arm (skin) the rest of the way down.
   const armL = makeLimb(0.2,0.2, [{h:0.25,mat:shirtMat},{h:0.45,mat:skinMaterial}]);
   armL.position.set(-0.35, 1.4, 0);
   const armR = makeLimb(0.2,0.2, [{h:0.25,mat:shirtMat},{h:0.45,mat:skinMaterial}]);
   armR.position.set(0.35, 1.4, 0);
+  // Flag patch on the right sleeve's outer face, troop number on the left's — the arms sit at
+  // x=+-0.35 with no rotation, so "outer" is +x for the right arm (material index 0) and -x for the
+  // left (index 1). Only the top (shirt-colored) segment of each sleeve carries a patch.
+  const flagPatchMat = new THREE.MeshLambertMaterial({ map: buildFlagPatchTexture() });
+  const troopPatchMat = new THREE.MeshLambertMaterial({ map: buildTroopPatchTexture(myTroop) });
+  const rightSleeveTop = armR.children[0], leftSleeveTop = armL.children[0];
+  rightSleeveTop.material = [flagPatchMat, shirtMat, shirtMat, shirtMat, shirtMat, shirtMat];
+  leftSleeveTop.material = [shirtMat, troopPatchMat, shirtMat, shirtMat, shirtMat, shirtMat];
+  const neckerchief = buildNeckerchiefMesh(myNeckerchiefColor);
+  // A blue backpack worn on the back — flush against the torso box's rear (+z) face, opposite the
+  // front-face pocket/button texture and the neckerchief hanging over the front.
+  const backpackMat = new THREE.MeshLambertMaterial({ color: 0x2a5ca8 });
+  const backpack = box(0.36, 0.48, 0.2, backpackMat);
+  backpack.position.set(0, 1.05, 0.24);
+  const backpackFlapMat = new THREE.MeshLambertMaterial({ color: 0x1f4783 });
+  const backpackFlap = box(0.3, 0.14, 0.03, backpackFlapMat);
+  backpackFlap.position.set(0, 1.22, 0.35);
   // Short pants up top, bare leg (skin) through the knee/shin, a short sock, then a hiking shoe.
   const legSegments = [{h:0.20,mat:pantsMat},{h:0.30,mat:skinMaterial},{h:0.10,mat:sockMat},{h:0.10,mat:shoeMat}];
   const legL = makeLimb(0.22,0.22, legSegments);
@@ -2480,10 +2590,24 @@ function createCharacterMesh(shirtColor){
   const hatBrim = box(0.9,0.05,0.9, hatMat);
   hatBrim.position.set(0, 1.675, 0);
 
-  group.add(head, body, armL, armR, legL, legR, hatCrown, hatBrim);
+  group.add(head, body, armL, armR, legL, legR, hatCrown, hatBrim, neckerchief, backpack, backpackFlap);
   group.userData.parts = { armL, armR, legL, legR };
+  // Stashed so applyUniformCustomization can update the troop number / neckerchief color live, after
+  // the front-page overlay is actually submitted, without rebuilding this whole mesh.
+  group.userData.uniform = { troopPatchMat, neckerchief, backpack };
   group.traverse(o => { if(o.isMesh){ o.castShadow = true; } });
   return group;
+}
+// Re-applies the troop number and neckerchief color chosen on the front-page overlay — called once,
+// right when the player actually clicks/taps to start, since createCharacterMesh() itself already ran
+// during init() using whatever was last saved (or the defaults, for a first-time player).
+function applyUniformCustomization(charGroup, troop, neckerchiefColorHex){
+  const u = charGroup && charGroup.userData.uniform;
+  if(!u) return;
+  const newTex = buildTroopPatchTexture(troop);
+  u.troopPatchMat.map = newTex;
+  u.troopPatchMat.needsUpdate = true;
+  u.neckerchief.userData.mat.color.set(neckerchiefColorHex);
 }
 function animateWalk(group, state, dt, moving, sprinting){
   state.amp += ((moving?1:0) - state.amp) * Math.min(1, dt*8);
@@ -3300,6 +3424,10 @@ let myHP = PLAYER_MAX_HP;
 let myHunger = PLAYER_MAX_HUNGER; // same as myHP — in-memory only, resets to full on reload/respawn
 let myName = 'Player';
 try{ const savedName = localStorage.getItem('scoutcraft_player_name'); if(savedName) myName = savedName; }catch(e){}
+let myTroop = '';
+try{ const savedTroop = localStorage.getItem('scoutcraft_player_troop'); if(savedTroop) myTroop = savedTroop; }catch(e){}
+let myNeckerchiefColor = '#c62828';
+try{ const savedNeck = localStorage.getItem('scoutcraft_player_neckerchief'); if(savedNeck) myNeckerchiefColor = savedNeck; }catch(e){}
 // Regen: standing still (no movement keys held) for a bit slowly heals a half-heart at a time.
 const REGEN_IDLE_DELAY = 2;   // seconds of standing still before regen starts
 const REGEN_INTERVAL = 1.5;   // seconds between each half-heart tick while idle
@@ -7195,6 +7323,17 @@ nameInput.value = myName==='Player' ? '' : myName;
 nameInput.addEventListener('click', e=> e.stopPropagation());
 nameInput.addEventListener('touchstart', e=> e.stopPropagation());
 nameInput.addEventListener('keydown', e=> e.stopPropagation());
+// Troop number and neckerchief color, same stopPropagation reasoning as the name field above —
+// otherwise a click here would bubble up into overlay's click-to-play handler.
+const troopInput = document.getElementById('troopInput');
+troopInput.value = myTroop;
+troopInput.addEventListener('click', e=> e.stopPropagation());
+troopInput.addEventListener('touchstart', e=> e.stopPropagation());
+troopInput.addEventListener('keydown', e=> e.stopPropagation());
+const neckerchiefColorInput = document.getElementById('neckerchiefColorInput');
+neckerchiefColorInput.value = myNeckerchiefColor;
+neckerchiefColorInput.addEventListener('click', e=> e.stopPropagation());
+neckerchiefColorInput.addEventListener('input', e=> e.stopPropagation());
 // Same reasoning as the name field above: without this, clicking the popcorn link would also bubble
 // up into overlay's own click-to-play handler and start the game right underneath the new tab.
 const overlayCreditsLink = document.querySelector('#overlay .credits a');
@@ -7225,6 +7364,13 @@ overlay.addEventListener('click', ()=>{
   const typedName = nameInput.value.trim().slice(0,16);
   if(typedName) myName = typedName;
   try{ localStorage.setItem('scoutcraft_player_name', myName); }catch(e){}
+  myTroop = troopInput.value.trim().slice(0,4);
+  myNeckerchiefColor = neckerchiefColorInput.value;
+  try{
+    localStorage.setItem('scoutcraft_player_troop', myTroop);
+    localStorage.setItem('scoutcraft_player_neckerchief', myNeckerchiefColor);
+  }catch(e){}
+  applyUniformCustomization(characterMesh, myTroop, myNeckerchiefColor);
   if(isTouchDevice){
     locked = true;
     overlay.hidden = true;

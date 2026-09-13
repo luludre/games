@@ -400,10 +400,15 @@ While you're playing, the game quietly checks every 5 minutes whether `main.js` 
 - Your current coordinates are shown live in the top-left HUD.
 - The camera starts in third person, showing your own blocky character in its scout uniform — a
   short-sleeve khaki shirt over bare arms, short army green pants over bare legs, army green socks,
-  hiking shoes, and a wide-brimmed army green hat. Moving the mouse turns your character freely
-  without moving the camera, so you can spin all the way around to see your own face; stop moving
-  the mouse for a second and a half and the camera eases back to its normal spot
-  behind you. `V` switches to the classic first-person view instead.
+  hiking shoes, a wide-brimmed army green hat, and a blue backpack worn on the back. The shirt front
+  has two chest pockets and a row of buttons down the placket, a small US flag patch sits on the
+  right sleeve, and your troop number (if you entered one) is stitched onto the left sleeve in army
+  green. Before you start, the front-page overlay asks for your troop number and lets you pick a
+  neckerchief color — it's tied around the collar with two long, sharp-tipped ends hanging down the
+  front, and both choices are remembered in this browser for next time. Moving the mouse turns your
+  character freely without moving the camera, so you can spin all the way around to see your own
+  face and uniform; stop moving the mouse for a second and a half and the camera eases back to its
+  normal spot behind you. `V` switches to the classic first-person view instead.
 - Your name tag floats over your head with your current rank underneath it (Scout, Tenderfoot, Second
   Class, and so on through Eagle Scout) instead of a health readout — your hearts are already shown
   in the HUD, so this doubles as a second place to glance at your standing.
