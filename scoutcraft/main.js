@@ -7959,6 +7959,16 @@ setInterval(checkForUpdate, UPDATE_CHECK_INTERVAL_MS);
 setInterval(savePosition, POSITION_SAVE_INTERVAL_MS);
 window.addEventListener('beforeunload', savePosition);
 window.addEventListener('pagehide', savePosition);
+// Browsers don't let a page show its own custom UI at the moment of leaving — the tab just tears
+// down — so there's no way to actually pop the thank-you screen open on a close/navigate-away the
+// way clicking Quit does. The closest real equivalent is the browser's own generic "Leave site?"
+// prompt, which at least gives a beat to reconsider before going. Skipped once they've already seen
+// the real thank-you screen (clicked Quit themselves) — no need to prompt twice on the way out.
+window.addEventListener('beforeunload', e=>{
+  if(!thankYouScreen.hidden) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
 
 init();
 })();
