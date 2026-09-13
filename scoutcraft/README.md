@@ -149,7 +149,7 @@ want and how far along you are ("14 / 25 wood").
 | 🐴 | Horseback Riding | Ride 200 blocks on horseback |
 | 🌦️ | Weather | Experience 3 different weather conditions |
 | 🤿 | Scuba Diving | Spend 20 seconds fully underwater |
-| 📜 | Camp Traditions | Recite the Pledge of Allegiance, the Scout Oath, and the Outdoor Code |
+| 📜 | Citizenship | Recite the Pledge of Allegiance, the Scout Oath, and the Outdoor Code |
 | 🏹 | Archery | Hit the target 5 times at the Archery Range |
 | 🦅 | Bird Study | Look at an eagle and 3 other kinds of birds |
 | 🏅 | Scout Spirit | Find all 12 golden Scout Law boxes hidden around camp |
@@ -381,7 +381,7 @@ ordinary reach applies, no special long-range check needed at this height — an
 recitation: the Scout Oath on the taller totem, the Outdoor Code on the other (see
 [`assets/README.md`](assets/README.md)), the same "one at a time, wait for it to finish" behavior as
 the flag's Pledge. Reciting all three — the flag's Pledge and both totems' recitations, each only
-needs to happen once — earns the Camp Traditions badge.
+needs to happen once — earns the Citizenship badge.
 
 A rustic wooden sign floats over the clearing naming the camp — "🏕️ Camp Merit Ridge" — the same
 canvas-texture billboard technique as the Scout Law boxes' word labels, just styled like carved wood
