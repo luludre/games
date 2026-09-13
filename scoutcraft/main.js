@@ -268,6 +268,7 @@ const BADGES = [
   { id:'astronomy',  emoji:'⭐', name:'Astronomy',    hint:'Find the Big Dipper and stare at it for 10 seconds.', test:()=> scoutStats.dipperFound },
   { id:'fishing',    emoji:'🎣', name:'Fishing',      hint:'Catch 5 fish.',                                test:()=> scoutStats.fishCaught >= 5 },
   { id:'kayaking',   emoji:'🛶', name:'Kayaking',     hint:'Paddle the lake for 30 seconds.',              test:()=> scoutStats.kayakSeconds >= 30 },
+  { id:'horseback',  emoji:'🐴', name:'Horseback Riding', hint:'Ride 200 blocks on horseback.',            test:()=> scoutStats.horsebackBlocks >= HORSEBACK_BADGE_BLOCKS },
   { id:'scoutspirit',emoji:'🏅', name:'Scout Spirit', hint:'Find all 12 golden Scout Law boxes hidden around camp.', test:()=> scoutStats.lawsCollected.length >= SCOUT_LAW_POINTS.length },
 ];
 // Ranks are purely derived from how many badges you hold — no separate progression to track.
@@ -295,7 +296,7 @@ const earnedBadges = new Set();
 const scoutStats = {
   wood:0, rope:0, campfires:0, tents:0, flags:0, meals:0, compassUses:0,
   hiked:0, swam:0, highest:0, nightSeconds:0, species:[],
-  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, lawsCollected:[],
+  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, horsebackBlocks:0, lawsCollected:[],
 };
 function saveScoutProgress(){
   try{
@@ -653,6 +654,7 @@ function badgeProgress(b){
     astronomy:  ()=> [scoutStats.dipperFound?1:0, 1, 'found'],
     fishing:    ()=> [scoutStats.fishCaught, 5, 'fish'],
     kayaking:   ()=> [Math.floor(scoutStats.kayakSeconds), 30, 'seconds'],
+    horseback:  ()=> [Math.floor(scoutStats.horsebackBlocks), HORSEBACK_BADGE_BLOCKS, 'blocks'],
     scoutspirit:()=> [scoutStats.lawsCollected.length, SCOUT_LAW_POINTS.length, 'boxes'],
   }[b.id];
   if(!p) return null;
@@ -2348,7 +2350,7 @@ const player = {
   pos: new THREE.Vector3(0,0,0),
   vel: new THREE.Vector3(0,0,0),
   yaw: 0, pitch: 0, onGround: false, crawling: false, inWater: false,
-  canDoubleJump: false, spaceWasDown: false, crawlMode: false, ridingEagle: null, inKayak: false,
+  canDoubleJump: false, spaceWasDown: false, crawlMode: false, ridingEagle: null, inKayak: false, ridingHorse: false,
   width: 0.6, height: PLAYER_HEIGHT, eye: PLAYER_EYE,
 };
 // 10 fixed spawn points spread across the map, as fractions of WORLD_SIZE so they scale with it.
@@ -5274,7 +5276,7 @@ function buildKayak(){
 // Walking (or swimming) up to the moored kayak hops you in automatically — no key needed, same as
 // stepping into the flow of a real dock. Checked every normal-movement frame from updatePlayer.
 function tryEnterKayak(){
-  if(player.inKayak || player.ridingEagle || isDead) return;
+  if(player.inKayak || player.ridingEagle || player.ridingHorse || isDead) return;
   const dock = kayakDockPos();
   const dx = player.pos.x-dock.x, dz = player.pos.z-dock.z;
   if(dx*dx+dz*dz > KAYAK_ENTER_RADIUS*KAYAK_ENTER_RADIUS) return;
@@ -5294,6 +5296,93 @@ function updateKayakRide(dt){
   const vx = -Math.sin(kayakAngle), vz = Math.cos(kayakAngle);
   kayakMesh.position.set(x, KAYAK_SIT_Y, z);
   kayakMesh.rotation.y = Math.atan2(-vx, -vz);
+}
+
+// ---------- Horse: tied up at camp — mount it and steer it yourself, unlike the hands-free Kayak
+// above or riding a Giant Eagle. Reuses the same box-composition makeQuadruped/animateQuadrupedWalk
+// helpers as the regular wildlife (see ANIMAL_BUILDERS) but isn't one of ANIMAL_TYPES — a single named
+// mount kept deliberately outside the wildlife roster, same precedent as the Big Eagles being their
+// own array rather than ordinary birds.
+const HORSE_MOUNT_RADIUS = 1.3;
+const HORSE_MOUNT_HEIGHT = 1.7; // eye-to-saddle offset above the ground the horse is standing on
+const HORSE_GALLOP_SPEED = 12;  // faster than SPRINT_SPEED (8.4)
+const HORSEBACK_BADGE_BLOCKS = 200;
+let horseMesh = null;
+const horseWalkState = { phase: 0, amp: 0 };
+function horseHomePos(){
+  const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
+  return { x: x0+2.5, z: z0+2.5 }; // a free corner of the clearing, clear of every cooking station
+}
+function buildHorseMesh(){
+  const bodyMat = new THREE.MeshLambertMaterial({ color: 0x6b4423 });
+  const maneMat = new THREE.MeshLambertMaterial({ color: 0x2a1a10 });
+  return makeQuadruped({
+    bodyW:0.8, bodyH:0.65, bodyD:1.35, bodyY:1.25, bodyMat,
+    legW:0.14,
+    headW:0.32, headH:0.4, headD:0.55, headY:1.62, headZ:-0.85,
+    extras(g){
+      const earL=animalBox(0.08,0.16,0.08,bodyMat); earL.position.set(-0.11,1.86,-0.7); earL.rotation.z=0.2; g.add(earL);
+      const earR=animalBox(0.08,0.16,0.08,bodyMat); earR.position.set(0.11,1.86,-0.7); earR.rotation.z=-0.2; g.add(earR);
+      // Mane: a row of dark segments along the top of the neck, tallest near the head.
+      for(let i=0;i<4;i++){
+        const seg = animalBox(0.1, 0.18-i*0.02, 0.14, maneMat);
+        seg.position.set(0, 1.66-i*0.03, -0.55+i*0.16);
+        g.add(seg);
+      }
+      // Tail: two hanging segments off the back, angled backward.
+      const t1=animalBox(0.12,0.35,0.12,maneMat); t1.position.set(0,1.05,0.68); t1.rotation.x=0.25; g.add(t1);
+      const t2=animalBox(0.1,0.3,0.1,maneMat); t2.position.set(0,0.78,0.8); t2.rotation.x=0.35; g.add(t2);
+    },
+  });
+}
+function buildHorse(){
+  horseMesh = buildHorseMesh();
+  const home = horseHomePos();
+  horseMesh.position.set(home.x, COOKING_AREA_Y+1, home.z);
+  scene.add(horseMesh);
+}
+// Walking (or swimming) up to the horse mounts it automatically — no key needed, same as the Kayak's
+// dock. Checked against wherever the horse actually currently stands (not its original tied-up spot),
+// since dismounting leaves it right where you left it rather than snapping back — a grounded animal
+// staying put is more natural than the Kayak paddling off without you.
+let horseRemountBlockedUntil = 0;
+function tryMountHorse(){
+  if(player.ridingHorse || player.ridingEagle || player.inKayak || isDead) return;
+  if(performance.now() < horseRemountBlockedUntil) return;
+  const dx = player.pos.x-horseMesh.position.x, dz = player.pos.z-horseMesh.position.z;
+  if(dx*dx+dz*dz > HORSE_MOUNT_RADIUS*HORSE_MOUNT_RADIUS) return;
+  player.ridingHorse = true;
+  player.vel.set(0,0,0);
+  addChatMessage('Camp', '🐴 You mount up!');
+}
+// Unlike the Kayak, this one you actually steer: same WASD-relative-to-look-direction convention as
+// ordinary walking, just faster, with no gravity/jump/collision — the horse always rides the ground
+// surface directly under it (see groundHeightAt, the same lookup regular land animals use).
+function updateHorseRide(dt){
+  const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw);
+  const rx =  Math.cos(player.yaw), rz = -Math.sin(player.yaw);
+  let mx=0, mz=0;
+  if(keys['KeyW']){ mx+=fx; mz+=fz; }
+  if(keys['KeyS']){ mx-=fx; mz-=fz; }
+  if(keys['KeyD']){ mx+=rx; mz+=rz; }
+  if(keys['KeyA']){ mx-=rx; mz-=rz; }
+  const len = Math.hypot(mx,mz);
+  const moving = len>0;
+  if(moving){ mx/=len; mz/=len; }
+  const dx = mx*HORSE_GALLOP_SPEED*dt, dz = mz*HORSE_GALLOP_SPEED*dt;
+  player.pos.x = Math.max(1, Math.min(WORLD_SIZE-1, player.pos.x+dx));
+  player.pos.z = Math.max(1, Math.min(WORLD_SIZE-1, player.pos.z+dz));
+  const groundY = groundHeightAt(player.pos.x, player.pos.z);
+  player.pos.y = groundY + HORSE_MOUNT_HEIGHT;
+  player.vel.set(0,0,0);
+  player.onGround = true;
+  if(moving){
+    scoutStats.horsebackBlocks += Math.hypot(dx,dz);
+    checkBadges();
+  }
+  horseMesh.position.set(player.pos.x, groundY, player.pos.z);
+  horseMesh.rotation.y = player.yaw;
+  animateQuadrupedWalk(horseMesh, horseWalkState, dt, moving, 2.2);
 }
 
 // ---------- Fish: swim in the water, ambient wildlife ----------
@@ -6554,10 +6643,35 @@ function updatePlayer(dt){
     if(exitPressed){
       player.inKayak = false;
       player.onGround = false;
+      // Snap the kayak itself straight back to the dock — otherwise it'd sit abandoned wherever you
+      // bailed, while tryEnterKayak keeps checking distance to the fixed dock spot, permanently
+      // desyncing the one visible boat from the one spot that can actually re-launch it.
+      const dock = kayakDockPos();
+      kayakMesh.position.set(dock.x, KAYAK_SIT_Y, dock.z);
+      kayakAngle = KAYAK_START_ANGLE;
       addChatMessage('Camp', '🛶 You climb out and swim clear of the kayak.');
       return;
     }
     updateKayakRide(dt);
+    return;
+  }
+
+  if(!player.ridingHorse) tryMountHorse();
+  if(player.ridingHorse){
+    const spaceDown = !!keys['Space'];
+    const dismountPressed = spaceDown && !player.spaceWasDown;
+    player.spaceWasDown = spaceDown;
+    if(dismountPressed){
+      player.ridingHorse = false;
+      player.onGround = false;
+      // Same reasoning as the Giant Eagle's remountBlockedUntil: without a brief cooldown, standing
+      // right next to the horse (there's no falling clear of it the way you fall clear of an eagle)
+      // means the very next frame's tryMountHorse just puts you straight back on.
+      horseRemountBlockedUntil = performance.now() + 1000;
+      addChatMessage('Camp', '🐴 You hop down off the horse.');
+      return;
+    }
+    updateHorseRide(dt);
     return;
   }
 
@@ -8001,6 +8115,7 @@ function init(){
   buildGiantFlag();
   buildCampSign();
   buildKayak();
+  buildHorse();
   restoreTorchLights();
   restoreScoutLawBoxes();
   updateScoutHUD();

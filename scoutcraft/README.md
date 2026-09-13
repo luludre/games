@@ -67,7 +67,7 @@ Then visit `http://localhost:8000`.
 - The **🚪 Quit** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
 - Closing the tab or navigating away without clicking Quit first triggers the browser's own "Leave site?" confirmation instead — a browser won't let a page show its own custom screen at that exact moment, so this is the closest real equivalent, just enough of a pause to reconsider. It only fires once; if you've already seen the actual thank-you screen, closing from there doesn't prompt twice.
 - That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you quit so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
-- The thank-you screen also draws a shareable badge picture on the spot — your current rank plus all 17 merit badges, earned ones lit up in gold and the rest dimmed, regenerated fresh every time you quit just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
+- The thank-you screen also draws a shareable badge picture on the spot — your current rank plus all 18 merit badges, earned ones lit up in gold and the rest dimmed, regenerated fresh every time you quit just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
 
 The front page says so directly, but worth repeating here too: ScoutCraft is designed for a desktop or laptop with a real keyboard and mouse — that's where every control above actually applies. On a phone or tablet (iPad included), the game automatically switches to touch controls instead — no setup needed, just open the page in Safari and tap to play — but that's a fallback, not the intended experience:
 
@@ -137,17 +137,18 @@ want and how far along you are ("14 / 25 wood").
 | 🥾 | Hiking | Hike 1,000 blocks on foot |
 | 🏊 | Swimming | Swim 60 blocks |
 | 🧗 | Climbing | Get 18 blocks above sea level |
-| 🦌 | Nature Study | Study all 6 animals up close — the bear and moose included |
+| 🦌 | Nature Study | Study all 5 animals up close — the bear and moose included |
 | 🦉 | Night Watch | Spend 5 minutes outdoors after dark |
 | ⛑️ | First Aid | Use your First Aid Kit |
 | 🚩 | Troop Flag | Raise your troop flag at camp |
 | ⭐ | Astronomy | Find the Big Dipper and stare at it for 10 seconds |
 | 🎣 | Fishing | Catch 5 fish |
 | 🛶 | Kayaking | Paddle the lake for 30 seconds |
+| 🐴 | Horseback Riding | Ride 200 blocks on horseback |
 | 🏅 | Scout Spirit | Find all 12 golden Scout Law boxes hidden around camp |
 
 Ranks follow from the count alone — **Scout** (0), **Tenderfoot** (1), **Second Class** (2),
-**First Class** (5), **Star Scout** (8), **Life Scout** (11), **Eagle Scout** (all 17) — and your current rank and badge
+**First Class** (5), **Star Scout** (8), **Life Scout** (11), **Eagle Scout** (all 18) — and your current rank and badge
 count sit in the HUD at the top of the screen. Earning one plays a short bugle call and drops a
 banner telling you what you got, and what rank it just made you.
 
@@ -217,14 +218,20 @@ single wall takes the whole shelter down and hands back just one Tent item, not 
   hanging straight down toward the water regardless of the rod's own tilt, swapping back once it
   isn't. A countdown reads out above the panel buttons the whole time it's cast, right-clicking again
   reels the line back in early if you change your mind, and 5 fish caught earns the Fishing badge —
-  the third-to-last one on the sash.
+  the fourth-to-last one on the sash.
 - **Kayak** — moored right at the water's edge on the lake near camp. Walk or swim up to it and
   you're in, no key needed, and it immediately starts paddling a slow loop around the lake entirely
   on its own — look around all you like, but WASD won't steer it, this one's hands-free. Press
   `Space` to hop out wherever you are on the loop; the kayak doesn't wait for you, it just carries on
   without you, so getting back to shore means swimming like any other lake crossing. A full loop
   takes about 31 seconds, and 30 seconds of actual paddling earns the Kayaking badge, the
-  second-to-last one on the sash.
+  third-to-last one on the sash.
+- **Horse** — tied up in a free corner of the cooking area. Walk up and you're mounted automatically,
+  same as the Kayak, but this one you actually steer: regular WASD-relative-to-your-look-direction
+  movement, just faster than sprinting, with no jump or fall damage while you're in the saddle. Press
+  `Space` to hop down wherever you are — the horse just stands there afterward rather than trotting
+  home, so walking back up to it (from wherever you left it) mounts it again. 200 blocks ridden earns
+  the Horseback Riding badge, the second-to-last one on the sash.
 
 **Sleep:** stand near your tent with your Sleeping Bag and Sleeping Pad out of your Backpack and in
 your own inventory, after dark, and press `K`. It can't actually fast-forward the real clock the world
