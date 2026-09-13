@@ -52,7 +52,7 @@ Then visit `http://localhost:8000`.
 - `Shift` — sprint
 - Mouse — look (click the page first to lock the pointer)
 - Left click — break block, or attack whatever animal/player you're looking at within range
-- Right click — place block. Or, depending on what you're holding and what you're aiming at: cook Raw Meat on a Campfire, take a bearing with the Compass, eat a meal, open the Camp Workbench or a placed Backpack, toggle a window/door open or closed, or light a fire with Flint aimed at wood or leaves
+- Right click — place block. Or, depending on what you're holding and what you're aiming at: take a bearing with the Compass, cast a Fishing Pole into water, collect a golden Scout Law box, open the Camp Workbench or a placed Backpack, toggle a window/door open or closed, or light a fire with Flint aimed at wood or leaves
 - `Q` `R` `F` `T` `G` `C` `X` `Z` `H` — select a hotbar slot directly (no number keys, no scroll-wheel cycling)
 - `I` (or click the currently-selected hotbar slot again, or the **📦 Inventory (I)** button) — open your inventory and choose what that slot holds
 - `B` (or the **🎒 Backpack (B)** button) — open your Backpack's own storage directly, without needing to find or place one first
@@ -86,26 +86,22 @@ Blocks you break go into your inventory (shown as counts on the hotbar), and pla
 - 1 Wood → 4 Planks
 - 2 Planks → 4 Sticks
 - 4 Planks → 1 Camp Workbench
-- 4 Stone → 4 Bricks
-- 2 Sand → 1 Window
-- 3 Planks → 1 Door
-- 2 Stone → 1 Flint
 - 1 Stick + 1 Flint → 2 Torches
-- 1 Wood → 4 Ladders
 
 **Camp gear**
 
 - 4 Leaves → 2 Rope
-- 4 Planks + 2 Rope → 1 Tent
 - 3 Wood + 1 Flint → 1 Campfire
-- 1 Stick + 1 Flint + 1 Window → 1 Lantern
-- 1 Flint + 2 Stone → 1 Compass
+- 1 Stick + 1 Flint → 1 Lantern
 - 2 Planks + 2 Sticks + 1 Rope → 1 Troop Flag
-- 2 Planks + 2 Rope → 1 Backpack
 - 2 Sticks + 1 Rope → 1 Fishing Pole
 
-Rope is the gateway: the Tent, the Troop Flag, the Backpack and the Fishing Pole all need it, and it
-comes from leaves — so a scout's first job is always finding a tree.
+Bricks, Windows, Doors, Ladders, Flint, Tents, Compasses and Backpacks are no longer craftable —
+Flint, Tents, Compasses and Rope come pre-packed in your Backpack instead (see
+[Camp gear](#camp-gear) below), Backpack storage itself is always one press of `B` away with no
+block needed, and the rest were generic building blocks with no real tie to scouting. Rope keeps
+its own recipe on top of the head start your Backpack gives you, since the Troop Flag and Fishing
+Pole still need a fresh supply — so finding a tree remains a scout's first real job.
 
 The Craft button lights up once you have enough materials. Your inventory (like your world edits) is saved to `localStorage`, so it persists across reloads.
 
@@ -123,7 +119,7 @@ want and how far along you are ("14 / 25 wood").
 | 🔥 | Firecraft | Light your first campfire |
 | ⛺ | Camping | Pitch a tent |
 | 🍳 | Cooking | Cook a meal on a campfire |
-| 🧭 | Navigation | Craft a compass and take a bearing |
+| 🧭 | Navigation | Take a bearing with your compass |
 | 🥾 | Hiking | Hike 1,000 blocks on foot |
 | 🏊 | Swimming | Swim 60 blocks |
 | 🧗 | Climbing | Get 18 blocks above sea level |
@@ -159,35 +155,40 @@ earns the badge.
 
 ## Camp gear
 
-Eight craftable things the badges are built around. Break any of them to pick it back up — for the
-tent, breaking any single wall takes the whole shelter down and hands back just one Tent item, not
-one per block.
+Eight things the badges are built around — some crafted at the workbench, some pre-packed in your
+Backpack from the start instead. Break a placed one to pick it back up — for the tent, breaking any
+single wall takes the whole shelter down and hands back just one Tent item, not one per block.
 
-- **Rope** — twisted from leaves. Pure crafting material; the Tent and Troop Flag both need it.
-- **Tent** — not just a block: placing one builds a real walk-in shelter — three canvas walls and a
-  flat roof around one tile of floor space, with a one-block gap left open at the front so you can
-  actually step inside. It's oriented by which way you're facing when you place it, the same way a
-  Door picks its width — the doorway always ends up facing back toward you.
+- **Rope** — twisted from leaves, and also one of the items your Backpack starts packed with (see
+  below), so you begin with a small head start on top of whatever you twist yourself. The Troop Flag
+  and Fishing Pole both need it.
+- **Tent** — no longer craftable; it comes pre-packed in your Backpack instead (see below). Placing
+  one builds a real walk-in shelter — three canvas walls and a flat roof around one tile of floor
+  space, with a one-block gap left open at the front so you can actually step inside. It's oriented
+  by which way you're facing when you place it, the same way a Door picks its width — the doorway
+  always ends up facing back toward you.
 - **Campfire** — the middle of camp. A permanent, harmless block (unlike wildfire `FIRE`, which
   burns out, spreads and hurts) that throws warm light over the whole clearing. Your **first**
   campfire is what the compass treats as camp from then on.
 - **Lantern** — a cooler, tighter light you can walk through and place anywhere. Brighter and
   steadier than a torch.
-- **Compass** — right-click it anywhere in the world and it tells you how far camp is and which
-  way, as a real bearing: *"🧭 Camp: 34 blocks NNE."* Before you've lit a campfire it points to the
-  middle of the map instead.
-- **Backpack** — its own personal storage, separate from your regular inventory: press `B` (or the
-  **🎒 Backpack (B)** button) anytime, or right-click a placed one, to open a two-column panel (Your
-  Pack / Backpack, same layout as the Bear Box) and click an item on either side to move it across.
-  The storage itself is shared and always available — placing an actual Backpack block is optional,
-  just a physical way to open the same panel while you're near it. It holds 20 slots — one per *distinct* item type,
-  each unlimited in quantity, the same way your own inventory never runs out of room for more of
-  something you're already carrying. It starts pre-packed, not empty: the real [Scout's 10
-  Essentials](https://scoutingmagazine.org/2013/02/the-10-essentials/) — pocketknife, first aid kit, extra
-  clothing, rain gear, water bottle, flashlight, trail food, a fire starter (Flint), sun protection,
-  and a map & compass (Compass) — plus a Scoutbook, 11 slots filled from the very first time you
-  open one, 9 left free for whatever you want to stash. These eleven are carried items like Rope —
-  no block form, nothing happens if you try to place one.
+- **Compass** — no longer craftable; it's one of the real Scout's 10 Essentials pre-packed in your
+  Backpack (see below). Right-click it anywhere in the world and it tells you how far camp is and
+  which way, as a real bearing: *"🧭 Camp: 34 blocks NNE."* Before you've lit a campfire it points to
+  the middle of the map instead.
+- **Backpack** — no longer craftable either, and it doesn't need to be: its own personal storage,
+  separate from your regular inventory, is always one press of `B` (or the **🎒 Backpack (B)**
+  button) away, no placed block required. Opens a two-column panel (Your Pack / Backpack, same
+  layout as the Bear Box) — click an item on either side to move it across. It holds 20 slots — one
+  per *distinct* item type, each unlimited in quantity, the same way your own inventory never runs
+  out of room for more of something you're already carrying. It starts pre-packed, not empty: the
+  real [Scout's 10 Essentials](https://scoutingmagazine.org/2013/02/the-10-essentials/) — pocketknife,
+  first aid kit, extra clothing, rain gear, water bottle, flashlight, trail food, a fire starter
+  (Flint), sun protection, and a map & compass (Compass) — plus the rest of a basic camp kit (Tent,
+  Sleeping Bag, Sleeping Pad, Rope) and a Scoutbook, 15 slots filled from the very first time you
+  open one, 5 left free for whatever you want to stash. All of these except Tent and Rope are purely
+  carried items like the essentials themselves — no block form, nothing happens if you try to place
+  one.
 - **Troop Flag** — a real 3-block-tall flagpole, not a single cube: two bare pole segments topped
   with a gold-capped finial and a red pennant flying up where a real flag actually would. Breaking
   any part of it takes the whole pole down and hands back one Troop Flag item, same as a tent.
@@ -204,8 +205,11 @@ morning rather than skipping the night outright, but it does fully restore your 
 Try it before dark, or too far from any tent, and it just tells you why not instead of doing
 anything.
 
-**Cooking:** hold Raw Meat, aim at a Campfire and right-click. A Cooked Meal restores twice the
-hunger raw meat does (8 points against 4), which is the practical payoff for earning Firecraft.
+**Cooking:** Raw Meat is disabled — it's been pulled from the inventory panel and can no longer be
+selected into a hotbar slot, so the old "hold Raw Meat, aim at a Campfire, right-click" flow (and the
+double-hunger Cooked Meal it made) isn't reachable through normal play anymore. The Cooking badge
+still exists on the sash but currently has no path to earning it — let us know if you'd like it
+retired, pointed at Fish instead, or something else.
 
 Campfires, lanterns and torches render *unlit* — at full texture brightness, day or night. This is
 deliberate: a block that gives off light shouldn't be shaded by light, and with the normal material
@@ -227,8 +231,9 @@ one in the box to take it back. It's a second, larger stash, not a bottomless on
 
 Every one of these ten fixtures (five campfires, four pieces of cookware, one Bear Box) is
 permanently indestructible — breaking has no effect on them at all, unlike everything else you place
-yourself. All five campfires there work exactly like any other campfire (aim Raw Meat at one and
-right-click to cook), the cookware on top is purely decorative.
+yourself. All five campfires there work exactly like any other campfire — see
+[Cooking](#camp-gear) for why cooking on one currently has nothing to cook — the cookware on top is
+purely decorative.
 
 ## Fire & torches
 
@@ -250,7 +255,8 @@ Fireworks are purely a visual/audio flourish — never saved, never limited — 
 
 ## Ladders
 
-Craft Ladders from Wood (1 Wood → 4 Ladders). Right-click a wall to place one — a single Ladder item fills in a run of up to 5 rungs going straight up from wherever you clicked (stopping early if something's in the way), so one item is usually enough to scale a small cliff or the inside of a tower. Ladders aren't solid — walk into one and holding `W` (or `Space`) climbs you straight up along it, `S` climbs back down, and letting go just holds you in place instead of falling. Climbing down never counts as a fall, so you can descend as far as you like without taking fall damage.
+No longer craftable (see [Crafting](#crafting)) — this describes how an existing Ladder still
+behaves if you already have one. Right-click a wall to place one — a single Ladder item fills in a run of up to 5 rungs going straight up from wherever you clicked (stopping early if something's in the way), so one item is usually enough to scale a small cliff or the inside of a tower. Ladders aren't solid — walk into one and holding `W` (or `Space`) climbs you straight up along it, `S` climbs back down, and letting go just holds you in place instead of falling. Climbing down never counts as a fall, so you can descend as far as you like without taking fall damage.
 
 ## Crawling
 
@@ -258,7 +264,8 @@ Hold `Ctrl` (or the CRAWL button on touch) to crawl. It drops you to a much shor
 
 ## Windows & doors
 
-Windows and doors are placeable blocks with an open and a closed state. They're placed closed; right-click a placed one to toggle it — closed blocks movement and (for windows) is a translucent glass texture, open is passable and renders more faded so it's visually obvious you can walk through it. Each has its own creak/slide sound effect for opening vs. closing. Breaking either state always gives you back the closed (placeable) item, never the open one. Toggling is a normal world edit, so it's saved like any other block change.
+Also no longer craftable (see [Crafting](#crafting)) — kept here for the same reason as Ladders
+above. Windows and doors are placeable blocks with an open and a closed state. They're placed closed; right-click a placed one to toggle it — closed blocks movement and (for windows) is a translucent glass texture, open is passable and renders more faded so it's visually obvious you can walk through it. Each has its own creak/slide sound effect for opening vs. closing. Breaking either state always gives you back the closed (placeable) item, never the open one. Toggling is a normal world edit, so it's saved like any other block change.
 
 Doors are person-sized: placing one fills a 2-wide × 3-tall opening (windows stay a single block). Right-click, break, or toggle any one of those six cells and the whole door responds together — breaking it anywhere refunds exactly one Door item, and toggling anywhere opens or closes the full frame. A door's orientation always matches the way you're facing when you place it, regardless of the exact spot your crosshair lands on, so it's predictable rather than depending on which face you happened to hit.
 
@@ -289,18 +296,12 @@ The world starts out with 10 rabbits, 10 squirrels, 5 deer, 2 wolves, 1 black be
 
 You also have a hunger bar (10 drumsticks, right under your hearts) that empties slowly over time — about 19 real minutes from full to empty — regardless of what you're doing. While it's above empty, standing still for a couple of seconds regenerates health the same as always; once it hits zero, regen stops and you'll start taking slow damage until you eat something.
 
-Killing an animal always drops Meat — bigger animals drop more:
-
-| Animal   | Meat dropped |
-|----------|--------------|
-| Rabbit   | 1            |
-| Squirrel | 1            |
-| Deer     | 2            |
-| Wolf     | 2            |
-| Bear     | 3            |
-| Moose    | 5            |
-
-Select Meat in your hotbar and right-click (or the place/interact button on touch) to eat a piece — each one refills 2 drumsticks, up to the max. Meat is eat-only; it can't be placed as a block. You don't need to free up a hotbar slot for it, either — open your inventory (`I`, or the Inventory (I) button on touch) and click Meat directly to eat a piece on the spot.
+Killing an animal still drops Meat internally — bigger animals drop more (1 for a rabbit or
+squirrel, 2 for a deer or wolf, 3 for a bear, 5 for a moose) — but Raw Meat itself is disabled: it's
+gone from the Inventory panel, so there's no way left to select it into a hotbar slot, eat it, or
+cook it into a Cooked Meal. **This currently leaves hunger with no way to be restored at all once it
+empties** — worth flagging if you want that revisited (Fish or Trail Food becoming edible are the
+two obvious candidates).
 
 Every animal is modeled at real-world scale — world units are ~1 unit = 1 meter throughout, the same scale the 1.8-unit-tall player uses. That means a moose, at a good 2.1 blocks at the shoulder before you even count its antlers, towers well over you. Bigger animals also get a proportionally longer attack reach so their size isn't just cosmetic — a moose's kick reaches out a full block.
 
@@ -338,6 +339,9 @@ While you're playing, the game quietly checks every 5 minutes whether `main.js` 
 
 - The world is a fixed 128×128 block area (4x the original map) with procedurally generated hills, a beach/water line, and scattered trees — regenerated from a fixed seed, so it's the same every time you load it. The world is flooded three blocks higher than its original sea level, so some ground that used to be shoreline is underwater now.
 - Your current coordinates are shown live in the top-left HUD.
+- Your right hand holds a small drawn paper map — a fold crease, a few contour-line squiggles, a
+  dashed trail and a north arrow — instead of a plain colored cube. It's a fixed prop, not a
+  per-item indicator; it looks the same no matter what's actually selected in your hotbar.
 - A minimap in the top-left corner shows the whole (fixed-size) world from above — terrain colored the same as its blocks, so lakes read as blue and beaches as sand — with you shown as a triangle pointing whichever way you're actually facing, outlined in black-and-white so it stays visible over any terrain color, and labeled with your name. It updates live and reflects any block you build or dig, not just the original generated terrain.
 - There are 4 seasons (Spring, Summer, Fall, Winter), each 3 real hours long (a full year is 12 hours), also derived from the system clock so everyone's on the same one. Each season has an average temperature — Spring 50°F, Summer 90°F, Fall 50°F, Winter 20°F — shown in the HUD, which then swings warmer at noon and colder at midnight and wobbles a little on its own, so it's never exactly the same twice. Wetter weather also runs colder on top of that — Cloudy knocks a couple degrees off, working up to a full 14°F colder in a Heavy Thunderstorm — so a rainy or stormy stretch can tip a merely-chilly day into a genuinely dangerous one. Standing outside (no roof, cave ceiling, or tree canopy overhead) above 105°F or below 20°F drains HP slowly, and rapidly (both a bigger hit and more often) once it's above 110°F or below 0°F — a pulsing red HUD warning tells you which ("Overheating!"/"Freezing!" for the slow tier, "Heatstroke!"/"Severe Frostbite!" once it's severe). A winter night or a summer noon are the stretches to watch for, especially with bad weather layered on top. Find shade, a cave, or a building and you're completely safe regardless of how extreme it gets outside.
 - New little saplings sprout randomly on open grass over time and slowly grow — visibly taller every so often — into a full tree (or, about 40% of the time, a low trunk-less bush instead, so the world isn't wall-to-wall tall trees) after about 50 real-world minutes. Break a sapling early and it's gone for good; cut a tree's trunk and whatever's left disconnected from the ground (the rest of the trunk, still holding its canopy) actually falls — real accelerating gravity, not a teleport — landing wherever it hits solid ground below. The original generated forest has the same tree/bush mix baked in from the start. About 5% of trees are giants, growing to 5x their normal trunk height — towering landmarks visible from well outside the canopy line — and unlike a normal tree's single top canopy, a giant also grows branches at regular intervals up its trunk, each a short limb jutting outward with its own small leaf clump, so the height actually reads as a tree rather than a bare pole with a hat.
