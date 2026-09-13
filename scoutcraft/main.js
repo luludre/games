@@ -272,7 +272,8 @@ const BADGES = [
 // Eagle Scout always means "every badge earned," so it's tied to BADGES.length rather than a number
 // that would need updating by hand every time a badge is added.
 const RANKS = [
-  { min:0,  name:'Tenderfoot' },
+  { min:0,  name:'Scout' },
+  { min:1,  name:'Tenderfoot' },
   { min:2,  name:'Second Class' },
   { min:5,  name:'First Class' },
   { min:8,  name:'Star Scout' },
