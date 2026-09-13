@@ -77,6 +77,7 @@
   #stopBearBanner{position:fixed;top:28%;left:50%;transform:translate(-50%,-50%);color:#ffcc33;font-size:2.4em;font-weight:800;
     text-shadow:0 0 10px rgba(0,0,0,0.9),0 0 20px rgba(0,0,0,0.6);z-index:16;pointer-events:none;text-align:center;letter-spacing:0.02em;}
   #hurtOverlay{position:fixed;inset:0;z-index:14;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center, rgba(180,0,0,0) 35%, rgba(180,0,0,0.55) 100%);}
+  #scubaOverlay{position:fixed;inset:0;z-index:13;pointer-events:none;opacity:0;transition:opacity 0.4s ease;background:radial-gradient(ellipse at center, rgba(10,50,60,0.12) 40%, rgba(4,22,32,0.8) 100%);}
   #sleepOverlay{position:fixed;inset:0;z-index:15;pointer-events:none;opacity:0;background:#000;}
   #lightningFlash{position:fixed;inset:0;z-index:13;pointer-events:none;opacity:0;background:#fff;}
   #hotkeyPanel{position:fixed;top:50%;right:14px;transform:translateY(-50%);z-index:10;background:rgba(0,0,0,0.55);
@@ -252,6 +253,7 @@
 <div id="deathMessage" hidden>You died</div>
 <div id="stopBearBanner" hidden>GO AWAY! BEAR! GO AWAY!</div>
 <div id="hurtOverlay"></div>
+<div id="scubaOverlay"></div>
 <div id="sleepOverlay"></div>
 <div id="lightningFlash"></div>
 <div id="badgeToast" hidden></div>

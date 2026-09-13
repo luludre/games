@@ -6,7 +6,7 @@ Welcome to **Camp Merit Ridge** — set up camp in the wilderness and earn your 
 entirely in the browser — procedurally generated terrain, block breaking/placing, crafting — built
 with [three.js](https://threejs.org/) — with a scouting layer on top: rope you twist from leaves, a
 walk-in tent you pitch, campfires you cook on, a compass that finds its way back to camp, and
-eighteen merit badges that promote you from Scout to Eagle Scout.
+twenty merit badges that promote you from Scout to Eagle Scout.
 
 No build step, no server-side code, no dependencies to install, no account to make. Everything —
 your world, your inventory, your progress — lives in this browser's `localStorage`.
@@ -69,7 +69,7 @@ Then visit `http://localhost:8000`.
 - The **🏅 Share My Achievements** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
 - Closing the tab or navigating away without clicking it first triggers the browser's own "Leave site?" confirmation instead — a browser won't let a page show its own custom screen at that exact moment, so this is the closest real equivalent, just enough of a pause to reconsider. It only fires once; if you've already seen the actual thank-you screen, closing from there doesn't prompt twice.
 - That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you open it so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
-- The thank-you screen also draws a shareable badge picture on the spot — your current rank plus all 18 merit badges, earned ones lit up in gold and the rest dimmed, regenerated fresh every time you open it just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
+- The thank-you screen also draws a shareable badge picture on the spot — your current rank plus all 20 merit badges, earned ones lit up in gold and the rest dimmed, regenerated fresh every time you open it just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
 
 The front page says so directly, but worth repeating here too: ScoutCraft is designed for a desktop or laptop with a real keyboard and mouse — that's where every control above actually applies. On a phone or tablet (iPad included), the game automatically switches to touch controls instead — no setup needed, just open the page in Safari and tap to play — but that's a fallback, not the intended experience:
 
@@ -147,11 +147,13 @@ want and how far along you are ("14 / 25 wood").
 | 🎣 | Fishing | Catch 5 fish |
 | 🛶 | Kayaking | Paddle the lake for 30 seconds |
 | 🐴 | Horseback Riding | Ride 200 blocks on horseback |
+| 🌦️ | Weather | Experience 3 different weather conditions |
+| 🤿 | Scuba Diving | Spend 20 seconds fully underwater |
 | 🏅 | Scout Spirit | Find all 12 golden Scout Law boxes hidden around camp |
 
 Ranks follow from the count alone — **None** (0, nothing earned yet), **Scout** (1), **Tenderfoot**
 (2), **Second Class** (3), **First Class** (6), **Star Scout** (9), **Life Scout** (12), **Eagle
-Scout** (14 — just over 3/4 of all 18, not literally every one of them) — and your current rank and
+Scout** (15 — just over 3/4 of all 20, not literally every one of them) — and your current rank and
 badge count sit in the HUD at the top of the screen. Earning one plays a short bugle call and drops a
 banner telling you what you got, and what rank it just made you.
 
@@ -226,20 +228,26 @@ single wall takes the whole shelter down and hands back just one Tent item, not 
   hanging straight down toward the water regardless of the rod's own tilt, swapping back once it
   isn't. A countdown reads out above the panel buttons the whole time it's cast, right-clicking again
   reels the line back in early if you change your mind, and 5 fish caught earns the Fishing badge —
-  the fourth-to-last one on the sash.
+  the sixth-to-last one on the sash.
 - **Kayak** — moored right at the water's edge on the lake near camp. Walk or swim up to it and
   you're in, no key needed, and it immediately starts paddling a slow loop around the lake entirely
   on its own — look around all you like, but WASD won't steer it, this one's hands-free. Press
   `Space` to hop out wherever you are on the loop; the kayak doesn't wait for you, it just carries on
   without you, so getting back to shore means swimming like any other lake crossing. A full loop
   takes about 31 seconds, and 30 seconds of actual paddling earns the Kayaking badge, the
-  third-to-last one on the sash.
+  fifth-to-last one on the sash.
 - **Horse** — tied up in a free corner of the cooking area. Walk up and you're mounted automatically,
   same as the Kayak, but this one you actually steer: regular WASD-relative-to-your-look-direction
   movement, just faster than sprinting, with no jump or fall damage while you're in the saddle. Press
   `Space` to hop down wherever you are — the horse just stands there afterward rather than trotting
   home, so walking back up to it (from wherever you left it) mounts it again. 200 blocks ridden earns
-  the Horseback Riding badge, the second-to-last one on the sash.
+  the Horseback Riding badge, the fourth-to-last one on the sash.
+- **Diving mask & snorkel** — no crafting needed, they just show up on your character the moment your
+  head actually goes under the surface of any water (not just wading waist-deep) and vanish the
+  instant you come back up, along with a murky blue-green tint over the whole view and a soft vignette
+  overlay so being underwater actually looks and feels different from being on dry land. 20 seconds of
+  real head-underwater time (it adds up across dives, it doesn't need to be one continuous breath)
+  earns the Scuba Diving badge, the second-to-last one on the sash.
 
 **Sleep:** stand near your tent with your Sleeping Bag and Sleeping Pad out of your Backpack and in
 your own inventory, after dark, and press `K`. It can't actually fast-forward the real clock the world
@@ -346,13 +354,15 @@ something, so aiming at it uses its own much longer line-of-sight check instead 
 but you do still have to actually be there: within about 10 blocks of the pole, the same as standing
 in front of it, not clear across the clearing looking up.
 
-Two more fixed monuments sit in the clearing's other free corners: a 4-tall **Scout Totem** and a
-3-tall one, each a stack of carved wooden rings — a compass, a star, a flame, a tent, cycling top to
-bottom so no two adjacent rings repeat (original geometric art, not a reproduction of any real
-totem-pole tradition). Right-click either one — ordinary reach applies, no special long-range check
-needed at this height — and it plays a full recitation: the Scout Oath on the taller one, the Outdoor
-Code on the shorter one (see [`assets/README.md`](assets/README.md)), the same "one at a time, wait
-for it to finish" behavior as the flag's Pledge.
+Two more fixed monuments sit in the clearing's other free corners, styled after the wooden totems
+real troops carve as camp/Eagle projects rather than any real Indigenous totem-pole tradition: a
+4-tall **Scout Totem** and a 3-tall one, each a stack of carved wooden rings — complete with faint
+growth-ring grain — cycling through a fleur-de-lis, a star, a compass, a flame, and a tent so no two
+adjacent rings repeat, and each one topped with a perched eagle, wings spread (the same model the
+ambient Giant Eagles use, just posed still). Right-click either one — ordinary reach applies, no
+special long-range check needed at this height — and it plays a full recitation: the Scout Oath on
+the taller one, the Outdoor Code on the shorter one (see [`assets/README.md`](assets/README.md)), the
+same "one at a time, wait for it to finish" behavior as the flag's Pledge.
 
 A rustic wooden sign floats over the clearing naming the camp — "🏕️ Camp Merit Ridge" — the same
 canvas-texture billboard technique as the Scout Law boxes' word labels, just styled like carved wood
@@ -511,7 +521,7 @@ chat reminds you why: *"Birds can't be hurt — a real Scout studies wildlife, n
 - A visible sun rises due east, climbs straight overhead, and sets due west (real compass directions — +X is east, -X is west) — not just a light getting brighter/dimmer — and terrain, trees, and animals all cast real shadows that swing around to match — the shadow "camera" quietly follows you rather than trying to cover the whole world, so it stays sharp wherever you are. At night a moon takes its place on the opposite side of the sky, also crossing east to west on that same track, waxing and waning through real lunar phases (new → first quarter → full → last quarter → new) on the actual ~29.5-day lunar cycle — anchored so 2026-09-06, 8:00 AM Pacific is exactly a full moon — rather than the game's own sped-up clock, so it changes at the same pace the real moon does.
 - A field of stars fades in overhead as it gets dark, including one real, findable constellation: the Big Dipper, sitting due north and well up in the sky, its seven stars connected by faint lines so the ladle shape actually reads as a shape rather than random dots. It's fixed in the sky (no real star-chart rotation, just consistently there every night, same compass direction) — look north and up after dark and it's there to find, which is exactly what the Astronomy badge asks you to do. Earning it just takes roughly keeping it in view for a continuous 10 seconds — a brief glance away (checking your footing, ordinary mouse drift) doesn't reset your progress, only actually looking somewhere else for a second and a half or more does.
 - There's also a full 12-month calendar shown live in the HUD next to World Time (e.g. "Feb 22, Y2"), independent from the season/temperature system above. It's anchored so that 2026-09-06, 8:00 AM Pacific is exactly Year 0, January 1 — every real hour after that is one calendar month (a nominal 30-day month, so the day-of-month ticks forward every 2 real minutes), and every 12 months rolls the year over. Since it's purely derived from the system clock like everything else here, it's automatically consistent across a reload with nothing to save.
-- Weather rolls a new pattern roughly every 20 minutes and blends into it gradually over about a minute and a half (shown in the top-left HUD), also derived from the system clock. The 20-minute roll picks from: Sunny (50% of the time), Cloudy (15%), Rainy (20%), Rainstorm (10%), or a Heavy Thunderstorm (5%) with lightning flashes and thunder. Worse weather dims the lighting and shortens how far you can see.
+- Weather rolls a new pattern roughly every 20 minutes and blends into it gradually over about a minute and a half (shown in the top-left HUD), also derived from the system clock. The 20-minute roll picks from: Sunny (50% of the time), Cloudy (15%), Rainy (20%), Rainstorm (10%), or a Heavy Thunderstorm (5%) with lightning flashes and thunder. Worse weather dims the lighting and shortens how far you can see. Simply being outside when the label changes counts toward it — living through 3 different conditions (in any combination, no particular order, and they don't have to be consecutive) earns the Weather badge.
 - Wind is layered on top, also shown in the HUD (Calm, Light breeze, Breezy, Strong wind, Very strong wind). It drifts randomly and continuously rather than switching with the weather pattern, though storms tend to be windier than a clear sky on average. You'll notice it most in the rain — it visibly blows sideways, harder as the wind picks up — and hear it as a gusting sound that gets stronger and higher-pitched the harder it blows.
 - Anywhere without a clear vertical path up to open sky — inside a building with a roof, a tunnel you've dug, under a dense tree canopy — is noticeably darker than the surface, independent of however bright it is outside. Light a torch if you're building somewhere enclosed.
 - Fireflies drift and blink softly near you after dark (fading in around dusk, out around dawn, same clock as everything else) — a scattering of small glowing lights over open ground, gone again once the sun's up.
