@@ -569,6 +569,11 @@ function updateFishing(dt){
   if(!fishingSpot) return;
   if(!locked || isDead){ fishingSpot = null; fishingTimer = 0; return; }
   if(HOTBAR[selectedSlot] !== FISHING_POLE){ fishingSpot = null; fishingTimer = 0; return; }
+  if(keys['KeyW']||keys['KeyA']||keys['KeyS']||keys['KeyD']){
+    addChatMessage('Camp', '🎣 You moved and lost your line.');
+    fishingSpot = null; fishingTimer = 0;
+    return;
+  }
   const moved = Math.hypot(player.pos.x-fishingSpot.startX, player.pos.z-fishingSpot.startZ);
   if(moved > FISHING_MAX_DRIFT){
     addChatMessage('Camp', '🎣 You wandered off and lost your line.');
@@ -626,6 +631,8 @@ function badgeProgress(b){
     firstaid:   ()=> [scoutStats.recoveries, 1, 'recoveries'],
     troopflag:  ()=> [scoutStats.flags, 1, 'flags'],
     astronomy:  ()=> [scoutStats.dipperFound?1:0, 1, 'found'],
+    fishing:    ()=> [scoutStats.fishCaught, 5, 'fish'],
+    scoutspirit:()=> [scoutStats.lawsCollected.length, SCOUT_LAW_POINTS.length, 'boxes'],
   }[b.id];
   if(!p) return null;
   const [have, need, unit] = p();
@@ -2300,8 +2307,8 @@ function createCharacterMesh(shirtColor){
   // tag floating above), and the brim extends evenly on every side, not just a front bill. Both are
   // wider than the head itself (0.5) — a worn hat should read as bigger than the head under it, not
   // smaller — while keeping the same heights/vertical position that clear the eyes and name tag.
-  const hatCrown = box(0.58,0.10,0.58, hatMat);
-  hatCrown.position.set(0, 1.75, 0);
+  const hatCrown = box(0.58,0.16,0.58, hatMat);
+  hatCrown.position.set(0, 1.78, 0);
   const hatBrim = box(0.9,0.05,0.9, hatMat);
   hatBrim.position.set(0, 1.675, 0);
 
@@ -5946,11 +5953,14 @@ function buildMapTexture(){
   ctx.fillText('N', cx, cy-16);
   return new THREE.CanvasTexture(canvas);
 }
+// The whole rod tilts up and out from the grip at this fixed angle; the line (below) cancels it
+// out with the inverse rotation so it still hangs straight down toward the water.
+const FISHING_ROD_TILT = new THREE.Euler(-0.3, 0.3, 0.5, 'XYZ');
 // A simple rod-and-line prop shown instead of the map while a line is actually cast (see fishingSpot
-// in the Fishing module above) — the base pivots at the grip so the whole rod tilts as one piece,
-// and the line hangs off the tip at a downward-forward angle toward the water.
+// in the Fishing module above) — the base pivots at the grip so the whole rod tilts as one piece.
 function buildFishingPoleMesh(){
   const g = new THREE.Group();
+  g.rotation.copy(FISHING_ROD_TILT);
   const rodMat = new THREE.MeshLambertMaterial({ color: 0x6b4a2b });
   const reelMat = new THREE.MeshLambertMaterial({ color: 0x2a2a2a });
   const lineMat = new THREE.MeshLambertMaterial({ color: 0xd8d8d8 });
@@ -5966,7 +5976,8 @@ function buildFishingPoleMesh(){
   const line = new THREE.Mesh(new THREE.BoxGeometry(0.012,0.9,0.012), lineMat);
   line.geometry.translate(0,-0.45,0);
   line.position.set(0,1.0,0);
-  line.rotation.z = 0.5;
+  // Cancel the group's own tilt so the line hangs straight down in world space, not at the rod's angle.
+  line.quaternion.copy(new THREE.Quaternion().setFromEuler(FISHING_ROD_TILT).invert());
   g.add(line);
 
   return g;
@@ -6002,7 +6013,6 @@ function buildHandModel(){
 
   fishingPoleMesh = buildFishingPoleMesh();
   fishingPoleMesh.position.set(0.30,-0.45,-0.55);
-  fishingPoleMesh.rotation.set(-0.3, 0.3, 0.5);
   fishingPoleMesh.visible = false;
   handGroup.add(fishingPoleMesh);
 
@@ -7025,6 +7035,76 @@ function shareBadgeSummary(){
   const emojis = BADGES.filter(b=>earnedBadges.has(b.id)).map(b=>b.emoji).join('');
   return `🏕️ I'm a ${rankFor(count)} in ScoutCraft with ${count}/${total} merit badges: ${emojis}`;
 }
+// Draws a small rounded-rect path (canvas has no cross-browser roundRect yet) reused by every tile
+// in the achievement card below.
+function roundRectPath(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+// A shareable "trading card" of the player's rank and every merit badge, earned ones lit up and the
+// rest dimmed — same visual language as the in-game sash (see renderSash) so it feels like a snapshot
+// of that screen rather than a separate design.
+function buildAchievementCanvas(){
+  const cols = 4, rows = Math.ceil(BADGES.length/cols);
+  const margin = 40, tileW = 210, tileH = 140, gap = 14;
+  const headerH = 210, footerH = 50;
+  const width = margin*2 + cols*tileW + (cols-1)*gap;
+  const height = headerH + rows*tileH + (rows-1)*gap + footerH;
+  const canvas = document.createElement('canvas');
+  canvas.width = width; canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  const bg = ctx.createLinearGradient(0,0,0,height);
+  bg.addColorStop(0,'#24402a'); bg.addColorStop(1,'#0e1a0e');
+  ctx.fillStyle = bg; ctx.fillRect(0,0,width,height);
+  ctx.strokeStyle = '#c8a44d'; ctx.lineWidth = 6;
+  ctx.strokeRect(3,3,width-6,height-6);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#f2e9d8';
+  ctx.font = 'bold 40px sans-serif';
+  ctx.fillText('🏕️ ScoutCraft', width/2, 62);
+
+  const count = earnedBadges.size, total = BADGES.length;
+  ctx.fillStyle = '#e8c46a';
+  ctx.font = 'bold 56px sans-serif';
+  ctx.fillText(rankFor(count), width/2, 128);
+
+  ctx.fillStyle = '#c8e0a8';
+  ctx.font = '26px sans-serif';
+  ctx.fillText(`${count} of ${total} Merit Badges Earned`, width/2, 168);
+
+  BADGES.forEach((b,i)=>{
+    const col = i%cols, row = Math.floor(i/cols);
+    const x = margin + col*(tileW+gap), y = headerH + row*(tileH+gap);
+    const got = earnedBadges.has(b.id);
+    roundRectPath(ctx, x, y, tileW, tileH, 12);
+    ctx.fillStyle = got ? 'rgba(200,164,77,0.18)' : 'rgba(255,255,255,0.05)';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = got ? '#c8a44d' : 'rgba(255,255,255,0.12)';
+    ctx.stroke();
+    ctx.globalAlpha = got ? 1 : 0.35;
+    ctx.font = '40px sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.fillText(b.emoji, x+tileW/2, y+56);
+    ctx.globalAlpha = 1;
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillStyle = got ? '#f0dfa8' : 'rgba(240,223,168,0.55)';
+    ctx.fillText(b.name, x+tileW/2, y+90);
+  });
+
+  ctx.fillStyle = 'rgba(242,233,216,0.75)';
+  ctx.font = '18px sans-serif';
+  ctx.fillText(shareGameUrl(), width/2, height-22);
+
+  return canvas;
+}
 const shareNativeBtn = document.getElementById('shareNative');
 const shareFacebookLink = document.getElementById('shareFacebook');
 const shareXLink = document.getElementById('shareX');
@@ -7032,6 +7112,24 @@ const shareInstagramBtn = document.getElementById('shareInstagram');
 const shareMessageLink = document.getElementById('shareMessage');
 const shareEmailLink = document.getElementById('shareEmail');
 const shareCopiedNote = document.getElementById('shareCopiedNote');
+const achievementImg = document.getElementById('achievementImg');
+const downloadAchievementLink = document.getElementById('downloadAchievement');
+let achievementBlob = null, achievementObjectUrl = null;
+// Regenerated fresh each time the quit screen opens (see refreshShareLinks) so the picture always
+// reflects whatever badges are actually earned by the moment the player quits, not a stale snapshot.
+function refreshAchievementImage(){
+  buildAchievementCanvas().toBlob(blob=>{
+    if(!blob) return;
+    if(achievementObjectUrl) URL.revokeObjectURL(achievementObjectUrl);
+    achievementBlob = blob;
+    achievementObjectUrl = URL.createObjectURL(blob);
+    achievementImg.src = achievementObjectUrl;
+    downloadAchievementLink.href = achievementObjectUrl;
+  }, 'image/png');
+}
+function achievementFile(){
+  return achievementBlob ? new File([achievementBlob], 'scoutcraft-badges.png', { type:'image/png' }) : null;
+}
 // Refreshed every time the quit screen opens, not just once at load, so the badge count in every
 // link is always whatever's actually been earned by the moment the player quits.
 function refreshShareLinks(){
@@ -7043,16 +7141,27 @@ function refreshShareLinks(){
   // Web Share API isn't available on every browser (mainly a mobile/HTTPS thing) — the button only
   // shows up where it'll actually work, since the explicit per-platform links above always work.
   shareNativeBtn.hidden = !navigator.share;
+  refreshAchievementImage();
 }
 shareNativeBtn.addEventListener('click', ()=>{
-  navigator.share({ title:'ScoutCraft', text:shareBadgeSummary(), url:shareGameUrl() }).catch(()=>{});
+  const text = shareBadgeSummary(), url = shareGameUrl(), file = achievementFile();
+  if(file && navigator.canShare && navigator.canShare({ files:[file] })){
+    navigator.share({ title:'ScoutCraft', text:text+' '+url, files:[file] }).catch(()=>{});
+  } else {
+    navigator.share({ title:'ScoutCraft', text, url }).catch(()=>{});
+  }
 });
 // Instagram has no web "share to Instagram" link the way Facebook/X do — on a phone with Instagram
-// installed, the native share sheet (which lists Instagram as one of its targets) is the real way in,
-// so this defers to that when it's available; otherwise it copies the text so it can be pasted into a
-// post or story by hand.
+// installed, the native share sheet (which lists Instagram as one of its targets, and can carry the
+// badge picture as an attached file) is the real way in, so this defers to that when it's available;
+// otherwise it just copies the caption text, and the player attaches the already-downloadable image
+// by hand.
 shareInstagramBtn.addEventListener('click', async ()=>{
-  const text = shareBadgeSummary(), url = shareGameUrl();
+  const text = shareBadgeSummary(), url = shareGameUrl(), file = achievementFile();
+  if(file && navigator.canShare && navigator.canShare({ files:[file] })){
+    navigator.share({ title:'ScoutCraft', text:text+' '+url, files:[file] }).catch(()=>{});
+    return;
+  }
   if(navigator.share){ navigator.share({ title:'ScoutCraft', text, url }).catch(()=>{}); return; }
   try{
     await navigator.clipboard.writeText(text+' '+url);

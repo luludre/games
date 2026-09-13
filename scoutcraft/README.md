@@ -63,6 +63,7 @@ Then visit `http://localhost:8000`.
 - The **❓ How to play** button on the start screen reveals the full tutorial paragraph (chopping trees, crafting, badges) — collapsed by default so the front page stays short; click it again (now **✕ Hide help**) to put it away.
 - The **🚪 Quit** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
 - That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you quit so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
+- The thank-you screen also draws a shareable badge picture on the spot — your current rank plus all 16 merit badges, earned ones lit up in gold and the rest dimmed, regenerated fresh every time you quit just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
 
 On a phone or tablet (iPad included), the game automatically switches to touch controls — no setup needed, just open the page in Safari and tap to play:
 
@@ -195,11 +196,13 @@ single wall takes the whole shelter down and hands back just one Tent item, not 
   any part of it takes the whole pole down and hands back one Troop Flag item, same as a tent.
   Purely yours to plant.
 - **Fishing Pole** — right-click it into any water with a fish nearby to cast your line, then hold
-  still (don't switch what you're holding, and don't wander more than a block and a half off) for 20
-  seconds to reel one in. In first person, the floating map swaps out for a rod-and-line while a
-  line is actually cast, swapping back once it isn't. A countdown reads out above the panel buttons
-  the whole time it's cast, right-clicking again reels the line back in early if you change your
-  mind, and 5 fish caught earns the Fishing badge — the last one on the sash.
+  completely still (don't switch what you're holding, and don't press a movement key) for 20 seconds
+  to reel one in — taking even a single step loses the line immediately, same as switching away from
+  the pole. In first person, the floating map swaps out for a rod-and-line while a line is actually
+  cast, the line hanging straight down toward the water regardless of the rod's own tilt, swapping
+  back once it isn't. A countdown reads out above the panel buttons the whole time it's cast,
+  right-clicking again reels the line back in early if you change your mind, and 5 fish caught earns
+  the Fishing badge — the second-to-last one on the sash.
 
 **Sleep:** stand near your tent after dark and press `K`. It can't actually fast-forward the real
 clock the world runs on, so — like the `N` key's day/night override — it jumps your own view to
