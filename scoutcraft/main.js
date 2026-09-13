@@ -1235,7 +1235,7 @@ function drawBackpack(ctx,x0,y0){
   ctx.fillRect(x0+TILE*0.7,y0,TILE*0.1,TILE*0.22);
 }
 function drawDutchOven(ctx,x0,y0){
-  // near-black base + transparency: a squat cast-iron pot with legs and a bail handle, not a cube.
+  // Near-black base, opaque: a squat cast-iron pot with legs and a bail handle.
   fillTile(ctx,x0,y0,0x0a0a0a);
   const cx = TILE*0.5;
   ctx.fillStyle = shadeStr(0x1c1c1c,1,6);
@@ -1259,7 +1259,7 @@ function drawDutchOven(ctx,x0,y0){
   ctx.stroke();
 }
 function drawPot(ctx,x0,y0){
-  // near-black base + transparency: a tall metal pot with side handles and a lid, not a cube.
+  // Near-black base, opaque: a tall metal pot with side handles and a lid.
   fillTile(ctx,x0,y0,0x0a0a0a);
   const cx = TILE*0.5;
   ctx.fillStyle = shadeStr(0x9aa0a6,1,6);
@@ -1275,7 +1275,7 @@ function drawPot(ctx,x0,y0){
   ctx.fillRect(x0+cx-2, y0+TILE*0.16, 4, 6);
 }
 function drawPan(ctx,x0,y0){
-  // near-black base + transparency: a round pan seen from above with a long handle, not a cube.
+  // Near-black base, opaque: a round pan seen from above with a long handle.
   fillTile(ctx,x0,y0,0x0a0a0a);
   const cx = TILE*0.42, cy = TILE*0.56, r = TILE*0.28;
   for(let py=-r;py<=r;py++){
@@ -1293,7 +1293,7 @@ function drawPan(ctx,x0,y0){
   ctx.fillRect(x0+cx+r*0.6, y0+cy-TILE*0.045, TILE*0.34, TILE*0.09);
 }
 function drawGriddle(ctx,x0,y0){
-  // near-black base + transparency: a flat plate with grill marks, not a cube.
+  // Near-black base, opaque: a flat plate with grill marks.
   fillTile(ctx,x0,y0,0x0a0a0a);
   ctx.fillStyle = shadeStr(0x3a3a3a,1,6);
   ctx.fillRect(x0+TILE*0.1, y0+TILE*0.32, TILE*0.8, TILE*0.5);
@@ -2001,7 +2001,7 @@ const glassMaterial = new THREE.MeshLambertMaterial({ vertexColors: true, side: 
 // Any block that isn't fully opaque. A face between two blocks of the SAME transparent type is
 // skipped (no point rendering the seam between two adjacent water, window, or leaf blocks); a face
 // against a *different* transparent type, or against AIR, still draws.
-const TRANSPARENT_BLOCKS = new Set([WATER, WINDOW, WINDOW_OPEN, DOOR_OPEN, SAPLING, FIRE, TORCH, LADDER, LEAVES, LANTERN, FLAG, FLAG_POLE, DUTCH_OVEN, POT, PAN, GRIDDLE]);
+const TRANSPARENT_BLOCKS = new Set([WATER, WINDOW, WINDOW_OPEN, DOOR_OPEN, SAPLING, FIRE, TORCH, LADDER, LEAVES, LANTERN, FLAG, FLAG_POLE]);
 // Mostly the subset of the above that a "is this column covered by a roof" check treats as passing
 // sky/light straight through. Leaves are deliberately left out — a tree's canopy still counts as real
 // shelter/shade (indoor darkening, temperature danger) even though it now renders sparse and
@@ -3535,9 +3535,11 @@ function updateTorchLight(x,y,z,val){
       scene.add(light);
       torchLights.set(key, light);
     }
+    if(val===CAMPFIRE) ensureCampfireFlame(key,x,y,z);
   } else if(torchLights.has(key)){
     scene.remove(torchLights.get(key));
     torchLights.delete(key);
+    removeCampfireFlame(key);
   }
 }
 function restoreTorchLights(){
@@ -5913,6 +5915,42 @@ function removeFireFx(key){
   const fx = fireFx.get(key);
   if(fx){ scene.remove(fx.light); scene.remove(fx.flame); fireFx.delete(key); }
 }
+// A campfire block's own flame — same crossed-billboard sprite as wildfire above, just smaller and
+// perched right at the top of the stone ring, poking up out of it, rather than filling the whole
+// block. A campfire already has its own point light (see LIGHT_BLOCKS/updateTorchLight); without an
+// actual flame to look at, that light just seemed to come from nowhere — an invisible glow floating
+// inside an otherwise flat painted block instead of visibly radiating from a real fire.
+const campfireFlames = new Map(); // "x,y,z" -> { flame, phase }
+function ensureCampfireFlame(key,x,y,z){
+  let cf = campfireFlames.get(key);
+  if(!cf){
+    const flame = new THREE.Group();
+    const p1 = new THREE.Mesh(fireFlameGeo, fireFlameMaterial);
+    const p2 = new THREE.Mesh(fireFlameGeo, fireFlameMaterial);
+    p2.rotation.y = Math.PI/2;
+    flame.add(p1, p2);
+    flame.scale.set(0.5, 0.42, 0.5);
+    // Anchored so roughly the bottom half sits inside the solid block (hidden, harmless) and the top
+    // half actually pokes up above it into open air, where it's visible instead of fully occluded.
+    flame.position.set(x+0.5, y+1.13, z+0.5);
+    scene.add(flame);
+    cf = { flame, phase: Math.random()*Math.PI*2 };
+    campfireFlames.set(key, cf);
+  }
+  return cf;
+}
+function removeCampfireFlame(key){
+  const cf = campfireFlames.get(key);
+  if(cf){ scene.remove(cf.flame); campfireFlames.delete(key); }
+}
+function updateCampfireFlames(){
+  const t = performance.now()/1000;
+  for(const cf of campfireFlames.values()){
+    const wob = Math.sin(t*9 + cf.phase);
+    cf.flame.scale.set(0.5*(1+wob*0.08), 0.42*(1+Math.sin(t*6+cf.phase*1.3)*0.12), 0.5*(1+wob*0.08));
+    cf.flame.rotation.y = Math.sin(t*3 + cf.phase)*0.3;
+  }
+}
 
 // ---------- Water flow: water spreads into adjacent empty gaps/holes over time ----------
 // Not a full per-tick fluid simulation across the whole world (way too expensive at this world size,
@@ -7895,6 +7933,7 @@ function animate(now){
   updateSaplings(dt);
   updateTreeRegrowth(dt);
   updateFires(dt);
+  updateCampfireFlames();
   updateWaterFlow(dt);
   updateFireworks(dt);
   updateFireflies(dt);
