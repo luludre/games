@@ -54,6 +54,14 @@ const SLEEPING_BAG=50, SLEEPING_PAD=51;
 // like DUTCH_OVEN/BEAR_BOX/SCOUT_LAW_BOX above: never craftable or held, just placed once at world-gen.
 const US_FLAG_TL=52, US_FLAG_TC=53, US_FLAG_TR=54, US_FLAG_BL=55, US_FLAG_BC=56, US_FLAG_BR=57;
 const US_FLAG_BLOCKS = new Set([US_FLAG_TL, US_FLAG_TC, US_FLAG_TR, US_FLAG_BL, US_FLAG_BC, US_FLAG_BR]);
+// A pair of carved camp totems (see buildTotem) — a 4-tall one playing the Scout Oath, a 3-tall one
+// playing the Outdoor Code, each built from these 4 symbol segments cycled top to bottom so no two
+// adjacent rings repeat. World fixtures like DUTCH_OVEN/BEAR_BOX/SCOUT_LAW_BOX above: never craftable
+// or held, just placed once at world-gen. Numbered from 115 (well past the ~57 cooking-item ids that
+// get assigned programmatically starting at US_FLAG_BR+1 — see COOK_ID below) so the two ranges can
+// never collide regardless of how many ingredients/dishes that table grows to.
+const TOTEM_COMPASS=115, TOTEM_STAR=116, TOTEM_FLAME=117, TOTEM_TENT=118;
+const TOTEM_BLOCKS = [TOTEM_COMPASS, TOTEM_STAR, TOTEM_FLAME, TOTEM_TENT];
 // Items with no block form at all (see doInteract) — right-clicking one does nothing, or whatever
 // its own special case above already handles (Flint ignites, Compass takes a bearing).
 const CARRY_ONLY_ITEMS = new Set([ROPE, POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR,
@@ -112,6 +120,7 @@ const BLOCK_COLOR = {
   [SLEEPING_PAD]: 0x8a9a7a,
   [US_FLAG_TL]: 0x3c3b6e, [US_FLAG_TC]: 0xb22234, [US_FLAG_TR]: 0xb22234,
   [US_FLAG_BL]: 0xb22234, [US_FLAG_BC]: 0xffffff, [US_FLAG_BR]: 0xb22234,
+  [TOTEM_COMPASS]: 0x6b4226, [TOTEM_STAR]: 0x6b4226, [TOTEM_FLAME]: 0x6b4226, [TOTEM_TENT]: 0x6b4226,
 };
 const BLOCK_NAME = {
   [GRASS]:'Grass', [DIRT]:'Dirt', [STONE]:'Stone', [SAND]:'Sand', [WOOD]:'Wood',
@@ -132,6 +141,7 @@ const BLOCK_NAME = {
   [SLEEPING_BAG]:'Sleeping Bag', [SLEEPING_PAD]:'Sleeping Pad',
   [US_FLAG_TL]:'US Flag', [US_FLAG_TC]:'US Flag', [US_FLAG_TR]:'US Flag',
   [US_FLAG_BL]:'US Flag', [US_FLAG_BC]:'US Flag', [US_FLAG_BR]:'US Flag',
+  [TOTEM_COMPASS]:'Scout Totem', [TOTEM_STAR]:'Scout Totem', [TOTEM_FLAME]:'Scout Totem', [TOTEM_TENT]:'Scout Totem',
 };
 // Every item the player can ever select. The hotbar only shows HOTBAR_SIZE of these at a time —
 // the rest are reachable through the Items panel (the palette button, or the "I" key), which lets
@@ -872,7 +882,7 @@ const PROTECTED_CELLS = new Set();
 // ---------- Texture atlas (procedurally drawn pixel-art, no external image assets) ----------
 // TILE=32 (was 16) gives 4x the pixel budget per block face — enough room for real structure
 // (cracks, grain, brick-by-brick variation, ripples) rather than flat color + noise.
-const TILE = 32, ATLAS_COLS = 4, ATLAS_ROWS = 11;
+const TILE = 32, ATLAS_COLS = 4, ATLAS_ROWS = 12;
 const T_GRASS_TOP=0, T_GRASS_SIDE=1, T_DIRT=2, T_STONE=3, T_SAND=4, T_LOG_SIDE=5, T_LOG_TOP=6,
       T_LEAVES=7, T_PLANKS=8, T_BEDROCK=9, T_CRAFT_TOP=10, T_CRAFT_SIDE=11, T_BRICKS=12, T_WATER=13,
       T_WINDOW=14, T_WINDOW_OPEN=15, T_DOOR=16, T_DOOR_OPEN=17, T_SAPLING=18, T_FLINT=19, T_FIRE=20,
