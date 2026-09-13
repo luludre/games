@@ -2281,10 +2281,12 @@ function createCharacterMesh(shirtColor){
   legR.position.set(0.14, 0.7, 0);
   // A wide-brimmed scout hat rather than a baseball cap — the crown sinks down over the top of the
   // head instead of stacking a full extra block above it (so it sits low enough to clear the name
-  // tag floating above), and the brim extends evenly on every side, not just a front bill.
-  const hatCrown = box(0.42,0.10,0.42, hatMat);
+  // tag floating above), and the brim extends evenly on every side, not just a front bill. Both are
+  // wider than the head itself (0.5) — a worn hat should read as bigger than the head under it, not
+  // smaller — while keeping the same heights/vertical position that clear the eyes and name tag.
+  const hatCrown = box(0.58,0.10,0.58, hatMat);
   hatCrown.position.set(0, 1.75, 0);
-  const hatBrim = box(0.76,0.05,0.76, hatMat);
+  const hatBrim = box(0.9,0.05,0.9, hatMat);
   hatBrim.position.set(0, 1.675, 0);
 
   group.add(head, body, armL, armR, legL, legR, hatCrown, hatBrim);
