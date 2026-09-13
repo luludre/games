@@ -59,7 +59,7 @@ const BLOCK_COLOR = {
   [DIRT]:   0x7a5230,
   [STONE]:  0x8a8a8a,
   [SAND]:   0xe0d18f,
-  [WOOD]:   0x6b4a2b,
+  [WOOD]:   0xa8825a,
   [LEAVES]: 0x3f7d34,
   [PLANKS]: 0xb8894f,
   [WATER]:  0x3a6fd8,
@@ -79,7 +79,7 @@ const BLOCK_COLOR = {
   [LADDER]: 0x8a6a3a,
   [MEAT]: 0xc9695a,
   [ROPE]: 0xc8a366,
-  [TENT]: 0x3f6f4a,
+  [TENT]: 0xff0000,
   [CAMPFIRE]: 0xff7a1a,
   [LANTERN]: 0xffd36b,
   [FLAG]: 0xc23b28,
@@ -837,8 +837,8 @@ function drawSand(ctx,x0,y0){
   }
 }
 function drawLogSide(ctx,x0,y0){
-  fillTile(ctx,x0,y0,0x6b4a2b);
-  speckle(ctx,x0,y0,0x6b4a2b,Math.round(TILE*TILE*0.12),8);
+  fillTile(ctx,x0,y0,0xa8825a);
+  speckle(ctx,x0,y0,0xa8825a,Math.round(TILE*TILE*0.12),8);
   let x=0;
   while(x<TILE){
     const w = 2+Math.floor(Math.random()*3);
@@ -846,7 +846,7 @@ function drawLogSide(ctx,x0,y0){
     for(let dx=0;dx<w && x+dx<TILE;dx++){
       for(let y=0;y<TILE;y++){
         if(Math.random()<0.85){
-          ctx.fillStyle = shadeStr(0x6b4a2b,f+(Math.random()*0.1-0.05),6);
+          ctx.fillStyle = shadeStr(0xa8825a,f+(Math.random()*0.1-0.05),6);
           ctx.fillRect(x0+x+dx,y0+y,1,1);
         }
       }
@@ -1097,33 +1097,19 @@ function drawLadder(ctx,x0,y0){
   }
 }
 function drawTent(ctx,x0,y0){
-  // A canvas A-frame seen side-on: orange canvas sloping down from a ridge, a dark door flap in the
-  // middle, and guy lines pegged out at the corners.
-  fillTile(ctx,x0,y0,0x8a3a0a);
-  speckle(ctx,x0,y0,0x8a3a0a,Math.round(TILE*TILE*0.16),10);
-  // canvas panels — brighter on the left slope, shaded on the right, so the ridge reads as a fold
+  // A canvas A-frame seen side-on, pure red with no other markings — no ridge pole, door flap or
+  // guy lines — just the sloped canvas panels, shaded so the ridge still reads as a fold.
+  fillTile(ctx,x0,y0,0xff0000);
+  speckle(ctx,x0,y0,0xff0000,Math.round(TILE*TILE*0.16),10);
   for(let py=0;py<TILE;py++){
     const spread = (py/TILE)*0.5; // how far the tent has opened out at this height
     const left = Math.round(TILE*(0.5-spread)), right = Math.round(TILE*(0.5+spread));
     for(let px=left;px<right;px++){
       const lit = px < TILE*0.5 ? 1.12 : 0.86;
-      ctx.fillStyle = shadeStr(0xd9701a, lit, 8);
+      ctx.fillStyle = shadeStr(0xff0000, lit, 8);
       ctx.fillRect(x0+px,y0+py,1,1);
     }
   }
-  // ridge pole along the top
-  ctx.fillStyle = shadeStr(0x6b4a2b,1,6);
-  ctx.fillRect(x0+TILE*0.44,y0,TILE*0.12,TILE*0.16);
-  // door flap
-  ctx.fillStyle = shadeStr(0x2a1608,1,8);
-  for(let py=Math.round(TILE*0.45);py<TILE;py++){
-    const w = Math.round(TILE*0.07*((py-TILE*0.45)/(TILE*0.55))+1);
-    ctx.fillRect(x0+TILE*0.5-w,y0+py,w*2,1);
-  }
-  // guy lines
-  ctx.fillStyle = shadeStr(0xc8a366,1,10);
-  ctx.fillRect(x0+TILE*0.06,y0+TILE*0.78,TILE*0.2,1);
-  ctx.fillRect(x0+TILE*0.74,y0+TILE*0.78,TILE*0.2,1);
 }
 function drawCampfire(ctx,x0,y0){
   // A ring of stones, two crossed logs, and a flame — the scout's whole world revolves around this,
@@ -1478,6 +1464,35 @@ function idx(x,y,z){ return (x*WORLD_SIZE+z)*WORLD_HEIGHT + y; }
 function getBlock(x,y,z){ return inBounds(x,y,z) ? world[idx(x,y,z)] : AIR; }
 function setBlock(x,y,z,v){ if(inBounds(x,y,z)) world[idx(x,y,z)] = v; }
 
+// A scattering of fallen dead logs lying on open ground — plain WOOD blocks laid out in a short
+// straight line at ground level instead of standing up, so they read as a downed trunk rather than
+// another sapling. Deterministic per starting column (same hash2 approach as trees/bushes), so they
+// stay put across reloads and breaking one for wood is a real, persistent world edit like any tree.
+const FALLEN_LOG_CHANCE = 0.003;
+const FALLEN_LOG_MIN_LEN = 2, FALLEN_LOG_MAX_LEN = 4;
+function placeFallenLogs(){
+  for(let x=2;x<WORLD_SIZE-2;x++){
+    for(let z=2;z<WORLD_SIZE-2;z++){
+      const h = heightAt(x,z);
+      if(h<=SEA_LEVEL || getBlock(x,h,z)!==GRASS) continue;
+      if(hash2(x+91,z+37) >= FALLEN_LOG_CHANCE) continue;
+      const len = FALLEN_LOG_MIN_LEN + Math.floor(hash2(x+13,z+29)*(FALLEN_LOG_MAX_LEN-FALLEN_LOG_MIN_LEN+1));
+      const axisX = hash2(x+5,z+61) < 0.5;
+      const dir = hash2(x+77,z+3) < 0.5 ? 1 : -1;
+      const cells = [];
+      let ok = true;
+      for(let i=0;i<len;i++){
+        const cx = axisX ? x+i*dir : x;
+        const cz = axisX ? z : z+i*dir;
+        const ch = heightAt(cx,cz);
+        if(ch!==h || getBlock(cx,ch,cz)!==GRASS || getBlock(cx,ch+1,cz)!==AIR){ ok=false; break; }
+        cells.push({x:cx, y:ch+1, z:cz});
+      }
+      if(!ok) continue;
+      for(const c of cells) setBlock(c.x, c.y, c.z, WOOD);
+    }
+  }
+}
 function generateWorld(){
   for(let x=0;x<WORLD_SIZE;x++){
     for(let z=0;z<WORLD_SIZE;z++){
@@ -1504,6 +1519,7 @@ function generateWorld(){
       }
     }
   }
+  placeFallenLogs();
   buildCookingArea();
   placeScoutLawBoxes();
 }
@@ -1898,9 +1914,9 @@ const DEAD_LEAF_TINT = { leafMul:[0.62,0.42,0.22], leafTile:T_LEAVES_SPARSE };
 // Weathered grey for a dead tree's bark — applied on top of the ordinary wood texture, same trick as
 // every species tint, so a dead trunk reads as grey even when (being bare) it has no canopy at all
 // to give it away otherwise. Uneven per-channel multipliers, not a flat darken: the base wood texture
-// is a warm brown (0x6b4a2b, R>G>B), so evening out R/G against B is what actually desaturates it
+// is a warm brown (0xa8825a, R>G>B), so scaling R/G down to match B is what actually desaturates it
 // toward neutral grey instead of just producing a darker brown.
-const DEAD_WOOD_TINT = [0.42, 0.61, 1.0];
+const DEAD_WOOD_TINT = [0.54, 0.69, 1.0];
 function speciesIndexForRoot(x,z){ return Math.floor(hash2(x+41,z+67)*TREE_SPECIES.length) % TREE_SPECIES.length; }
 // Bounded look for canopy near a wood run's top — gates tinting to things that actually look like a
 // tree (a trunk with leaves overhead) so ordinary player-built wood walls/floors stay untinted.
@@ -5930,7 +5946,32 @@ function buildMapTexture(){
   ctx.fillText('N', cx, cy-16);
   return new THREE.CanvasTexture(canvas);
 }
-let handScene, handCamera, handGroup, armMesh, heldItemMesh;
+// A simple rod-and-line prop shown instead of the map while a line is actually cast (see fishingSpot
+// in the Fishing module above) — the base pivots at the grip so the whole rod tilts as one piece,
+// and the line hangs off the tip at a downward-forward angle toward the water.
+function buildFishingPoleMesh(){
+  const g = new THREE.Group();
+  const rodMat = new THREE.MeshLambertMaterial({ color: 0x6b4a2b });
+  const reelMat = new THREE.MeshLambertMaterial({ color: 0x2a2a2a });
+  const lineMat = new THREE.MeshLambertMaterial({ color: 0xd8d8d8 });
+
+  const rod = new THREE.Mesh(new THREE.BoxGeometry(0.035,1.0,0.035), rodMat);
+  rod.geometry.translate(0,0.5,0);
+  g.add(rod);
+
+  const reel = new THREE.Mesh(new THREE.BoxGeometry(0.08,0.1,0.08), reelMat);
+  reel.position.set(0,0.08,0);
+  g.add(reel);
+
+  const line = new THREE.Mesh(new THREE.BoxGeometry(0.012,0.9,0.012), lineMat);
+  line.geometry.translate(0,-0.45,0);
+  line.position.set(0,1.0,0);
+  line.rotation.z = 0.5;
+  g.add(line);
+
+  return g;
+}
+let handScene, handCamera, handGroup, armMesh, heldItemMesh, fishingPoleMesh;
 let handBobPhase = 0, handBobAmp = 0, swingT = 0;
 function buildHandModel(){
   handScene = new THREE.Scene();
@@ -5959,6 +6000,12 @@ function buildHandModel(){
   heldItemMesh.rotation.set(-0.2, 0.25, 0.15);
   handGroup.add(heldItemMesh);
 
+  fishingPoleMesh = buildFishingPoleMesh();
+  fishingPoleMesh.position.set(0.30,-0.45,-0.55);
+  fishingPoleMesh.rotation.set(-0.3, 0.3, 0.5);
+  fishingPoleMesh.visible = false;
+  handGroup.add(fishingPoleMesh);
+
   handScene.add(handGroup);
 }
 // The map is a fixed prop now, not a color-coded stand-in for the held item — kept as a no-op
@@ -5974,6 +6021,9 @@ function updateHandView(dt, moving, sprinting){
   const swing = Math.sin(swingT*Math.PI) * 0.9;
   handGroup.position.set(bobX, -bobY, 0);
   armMesh.rotation.x = 0.15 - swing;
+  // Swap the map out for the rod whenever a line is actually cast, and back once it isn't.
+  heldItemMesh.visible = !fishingSpot;
+  fishingPoleMesh.visible = !!fishingSpot;
 }
 
 function blockSolid(bx,by,bz){
