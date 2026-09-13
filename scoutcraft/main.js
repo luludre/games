@@ -2236,8 +2236,10 @@ const headMaterials = [skinMaterial, skinMaterial, skinMaterial, skinMaterial, s
 
 function createCharacterMesh(shirtColor){
   const group = new THREE.Group();
-  const shirtMat = new THREE.MeshLambertMaterial({ color: shirtColor!==undefined ? shirtColor : 0x3b6ea5 });
-  const pantsMat = new THREE.MeshLambertMaterial({ color: 0x3a3a3a });
+  // A scout's uniform: khaki shirt, army green pants and cap.
+  const shirtMat = new THREE.MeshLambertMaterial({ color: shirtColor!==undefined ? shirtColor : 0xc3b091 });
+  const pantsMat = new THREE.MeshLambertMaterial({ color: 0x4b5320 });
+  const capMat = new THREE.MeshLambertMaterial({ color: 0x4b5320 });
 
   function box(w,h,d,mat,pivotTop){
     const geo = new THREE.BoxGeometry(w,h,d);
@@ -2257,8 +2259,14 @@ function createCharacterMesh(shirtColor){
   legL.position.set(-0.14, 0.7, 0);
   const legR = box(0.22,0.7,0.22, pantsMat, true);
   legR.position.set(0.14, 0.7, 0);
+  // Cap: a crown sitting right on top of the head plus a brim jutting forward (-Z, same "forward"
+  // convention as the face texture) from its lower front edge.
+  const capCrown = box(0.54,0.18,0.54, capMat);
+  capCrown.position.set(0, 1.89, 0);
+  const capBrim = box(0.5,0.05,0.2, capMat);
+  capBrim.position.set(0, 1.805, -0.36);
 
-  group.add(head, body, armL, armR, legL, legR);
+  group.add(head, body, armL, armR, legL, legR, capCrown, capBrim);
   group.userData.parts = { armL, armR, legL, legR };
   group.traverse(o => { if(o.isMesh){ o.castShadow = true; } });
   return group;
