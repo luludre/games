@@ -1652,8 +1652,8 @@ function buildCookingArea(){
 // A giant American flag towering over the cooking area's far corner, clear of every station above —
 // a flagpole (12 stacked segments, topped with the same gold-finial block the little Troop Flag
 // already uses) with a 3-wide x 2-tall mural mounted flush against its hoist side, raised all the way
-// to the top — its top row level with the pole's own topmost segment, right under the finial — rather
-// than partway up. See buildUSFlagMaster for how the mural's 50 stars actually get drawn.
+// up so its top row is level with the finial itself, not just the topmost bare pole segment below it.
+// See buildUSFlagMaster for how the mural's 50 stars actually get drawn.
 const GIANT_FLAG_POLE_HEIGHT = 12;
 function buildGiantFlag(){
   const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
@@ -1662,7 +1662,7 @@ function buildGiantFlag(){
   const protect = (x,y,z,block) => { setBlock(x,y,z,block); PROTECTED_CELLS.add(x+','+y+','+z); };
   for(let i=0;i<GIANT_FLAG_POLE_HEIGHT;i++) protect(poleX, baseY+i, poleZ, FLAG_POLE);
   protect(poleX, baseY+GIANT_FLAG_POLE_HEIGHT, poleZ, FLAG);
-  const flagTopY = baseY + GIANT_FLAG_POLE_HEIGHT - 1;
+  const flagTopY = baseY + GIANT_FLAG_POLE_HEIGHT;
   const grid = [
     [US_FLAG_TL, US_FLAG_TC, US_FLAG_TR],
     [US_FLAG_BL, US_FLAG_BC, US_FLAG_BR],

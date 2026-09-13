@@ -254,8 +254,8 @@ purely decorative.
 A giant American flag towers over the clearing's far corner, clear of every station above — a
 12-block flagpole (the same thin pole the little Troop Flag uses, just stacked taller, capped with
 its usual gold finial) flying a mural 3 blocks wide and 2 tall, mounted flush against the pole and
-raised all the way up — its top row level with the pole's own topmost segment, right under the
-finial. Each of those 6 blocks is really just its own slice of one shared, high-resolution flag
+raised all the way up — its top row level with the finial itself, not just the bare pole segment
+below it. Each of those 6 blocks is really just its own slice of one shared, high-resolution flag
 image — 13 stripes, a blue canton, and all 50 stars individually drawn and actually countable up
 close — cropped and downscaled into that block's texture, so the six line up into one seamless image
 rather than six separately-drawn tiles. Like the cooking fixtures, it's permanently indestructible.
