@@ -890,7 +890,8 @@ const T_GRASS_TOP=0, T_GRASS_SIDE=1, T_DIRT=2, T_STONE=3, T_SAND=4, T_LOG_SIDE=5
       T_TENT=25, T_CAMPFIRE=26, T_LANTERN=27, T_FLAG=28, T_BACKPACK=29,
       T_DUTCH_OVEN=30, T_POT=31, T_PAN=32, T_GRIDDLE=33, T_BEAR_BOX=34, T_FLAG_POLE=35,
       T_SCOUT_LAW_BOX=36,
-      T_US_FLAG_TL=37, T_US_FLAG_TC=38, T_US_FLAG_TR=39, T_US_FLAG_BL=40, T_US_FLAG_BC=41, T_US_FLAG_BR=42;
+      T_US_FLAG_TL=37, T_US_FLAG_TC=38, T_US_FLAG_TR=39, T_US_FLAG_BL=40, T_US_FLAG_BC=41, T_US_FLAG_BR=42,
+      T_TOTEM_COMPASS=43, T_TOTEM_STAR=44, T_TOTEM_FLAME=45, T_TOTEM_TENT=46;
 
 function hexRGB(hex){ return [(hex>>16)&255, (hex>>8)&255, hex&255]; }
 function rgbStr(r,g,b){ return `rgb(${r|0},${g|0},${b|0})`; }
@@ -1486,6 +1487,54 @@ function drawScoutLawBox(ctx,x0,y0){
   ctx.closePath();
   ctx.fill();
 }
+// ---------- Scout totems (see buildTotem) ----------
+// Four carved-wood symbol segments, cycled top to bottom so two camp totems (Scout Oath, Outdoor
+// Code) each read as a real stack of distinct rings rather than one texture repeated. Kept deliberately
+// generic/geometric — a compass, a star, a flame, a tent — rather than any specific real-world totem
+// pole tradition, since this is meant to read as camp craft, not a reproduction of anyone's culture.
+function drawTotemRing(ctx,x0,y0){
+  fillTile(ctx,x0,y0,0x6b4226);
+  speckle(ctx,x0,y0,0x6b4226,Math.round(TILE*TILE*0.14),10);
+  // Dark grooves top and bottom suggest each ring is its own carved segment, stacked rather than one
+  // continuous pole.
+  ctx.fillStyle = shadeStr(0x2e1c0e,1,4);
+  ctx.fillRect(x0, y0, TILE, TILE*0.07);
+  ctx.fillRect(x0, y0+TILE*0.93, TILE, TILE*0.07);
+}
+function drawTotemCompass(ctx,x0,y0){
+  drawTotemRing(ctx,x0,y0);
+  const cx=x0+TILE*0.5, cy=y0+TILE*0.5, r=TILE*0.32;
+  ctx.fillStyle = shadeStr(0xe8d9a0,1,4);
+  ctx.beginPath();
+  ctx.moveTo(cx, cy-r); ctx.lineTo(cx+r*0.28, cy-r*0.28); ctx.lineTo(cx+r, cy); ctx.lineTo(cx+r*0.28, cy+r*0.28);
+  ctx.lineTo(cx, cy+r); ctx.lineTo(cx-r*0.28, cy+r*0.28); ctx.lineTo(cx-r, cy); ctx.lineTo(cx-r*0.28, cy-r*0.28);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = shadeStr(0x8a1f1f,1,4);
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.18,0,Math.PI*2); ctx.fill();
+}
+function drawTotemStar(ctx,x0,y0){
+  drawTotemRing(ctx,x0,y0);
+  ctx.fillStyle = shadeStr(0xe8d9a0,1,4);
+  drawStar(ctx, x0+TILE*0.5, y0+TILE*0.5, TILE*0.34, TILE*0.14);
+}
+function drawTotemFlame(ctx,x0,y0){
+  drawTotemRing(ctx,x0,y0);
+  const cx = x0+TILE*0.5;
+  blob(ctx, cx, y0+TILE*0.62, TILE*0.22, 0xc62b0e, 14);
+  blob(ctx, cx, y0+TILE*0.46, TILE*0.16, 0xff7a1a, 16);
+  blob(ctx, cx, y0+TILE*0.33, TILE*0.1, 0xffce4d, 14);
+}
+function drawTotemTent(ctx,x0,y0){
+  drawTotemRing(ctx,x0,y0);
+  ctx.fillStyle = shadeStr(0xe8d9a0,1,4);
+  ctx.beginPath();
+  ctx.moveTo(x0+TILE*0.5, y0+TILE*0.22);
+  ctx.lineTo(x0+TILE*0.8, y0+TILE*0.74);
+  ctx.lineTo(x0+TILE*0.2, y0+TILE*0.74);
+  ctx.closePath();
+  ctx.fill();
+}
 // ---------- Giant US flag (see buildGiantFlag) ----------
 // Drawn once at real detail on an offscreen canvas well above tile resolution, then each of the 6
 // mural blocks just crops+downscales its own slice out of it into the atlas — that's what lets 50
@@ -1598,7 +1647,8 @@ function buildAtlas(){
                 drawLadder, drawLeavesSparse, drawLeavesDense,
                 drawTent, drawCampfire, drawLantern, drawFlag, drawBackpack,
                 drawDutchOven, drawPot, drawPan, drawGriddle, drawBearBox, drawFlagPole, drawScoutLawBox,
-                drawUSFlagTL, drawUSFlagTC, drawUSFlagTR, drawUSFlagBL, drawUSFlagBC, drawUSFlagBR];
+                drawUSFlagTL, drawUSFlagTC, drawUSFlagTR, drawUSFlagBL, drawUSFlagBC, drawUSFlagBR,
+                drawTotemCompass, drawTotemStar, drawTotemFlame, drawTotemTent];
   draw.forEach((fn, i)=> fn(ctx, (i%ATLAS_COLS)*TILE, Math.floor(i/ATLAS_COLS)*TILE));
   const tex = new THREE.CanvasTexture(canvas);
   tex.magFilter = THREE.NearestFilter;
@@ -1654,6 +1704,10 @@ const BLOCK_TILES = {
   [US_FLAG_BL]: {top:T_US_FLAG_BL, side:T_US_FLAG_BL, bottom:T_US_FLAG_BL},
   [US_FLAG_BC]: {top:T_US_FLAG_BC, side:T_US_FLAG_BC, bottom:T_US_FLAG_BC},
   [US_FLAG_BR]: {top:T_US_FLAG_BR, side:T_US_FLAG_BR, bottom:T_US_FLAG_BR},
+  [TOTEM_COMPASS]: {top:T_TOTEM_COMPASS, side:T_TOTEM_COMPASS, bottom:T_TOTEM_COMPASS},
+  [TOTEM_STAR]: {top:T_TOTEM_STAR, side:T_TOTEM_STAR, bottom:T_TOTEM_STAR},
+  [TOTEM_FLAME]: {top:T_TOTEM_FLAME, side:T_TOTEM_FLAME, bottom:T_TOTEM_FLAME},
+  [TOTEM_TENT]: {top:T_TOTEM_TENT, side:T_TOTEM_TENT, bottom:T_TOTEM_TENT},
 };
 // per-face-direction UV winding (0/1 flags select u0/u1 and vBottom/vTop), aligned to FACES order below
 const UV_PATTERNS = [
@@ -1787,6 +1841,7 @@ function generateWorld(){
   placeFallenLogs();
   buildCookingArea();
   buildGiantFlag();
+  buildTotems();
   placeScoutLawBoxes();
 }
 // ---------- Cooking area: a flat, permanent 20x20 camp-cooking clearing ----------
@@ -1855,6 +1910,29 @@ function buildGiantFlag(){
       protect(poleX-1-col, flagTopY-row, poleZ, grid[row][col]);
     }
   }
+}
+// ---------- Scout totems: two more fixed camp monuments, tucked into free corners of the cooking
+// clearing clear of every station/the horse/the flag — a 4-tall one reciting the Scout Oath, a
+// 3-tall one reciting the Outdoor Code. Segments cycle through TOTEM_BLOCKS bottom to top so no two
+// adjacent rings repeat. `totems` is read by doInteract to find which one a click actually landed on
+// (same block ids are reused across both, so position is what tells them apart) and rebuilt fresh
+// every load rather than appended to, same reasoning as buildGiantFlag being re-asserted after
+// loadEdits below — a stale saved edit on one of these two cells shouldn't be able to erase it.
+const totems = []; // {x, z, play}
+function totemAt(x,z){ return totems.find(t => t.x===x && t.z===z); }
+function buildTotem(x, z, height, play){
+  const baseY = COOKING_AREA_Y + 1;
+  for(let i=0;i<height;i++){
+    setBlock(x, baseY+i, z, TOTEM_BLOCKS[i % TOTEM_BLOCKS.length]);
+    PROTECTED_CELLS.add(x+','+(baseY+i)+','+z);
+  }
+  totems.push({ x, z, play });
+}
+function buildTotems(){
+  totems.length = 0;
+  const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
+  buildTotem(x0+COOKING_AREA_SIZE-2, z0+2, 4, playScoutOath);   // NE corner
+  buildTotem(x0+2, z0+COOKING_AREA_SIZE-2, 3, playOutdoorCode); // SW corner
 }
 // ---------- Scout Law boxes: 12 golden keepsakes, one per point of the Scout Law ----------
 // Scattered once at world-gen with their own seeded RNG (not Math.random()) so every fresh load
@@ -3423,6 +3501,29 @@ function playPledge(){
   pledgePlaying = true;
   setTimeout(()=>{ pledgePlaying = false; }, PLEDGE_CLIP_DURATION_S*1000);
 }
+// Same full-recitation-not-trimmed approach as the Pledge above, one clip per camp totem (see
+// buildTotem/doInteract) — a bit of buffer past each file's real length (14.03s/11.44s) so the
+// "still playing" guard clears a beat after the audio itself actually finishes.
+const SCOUT_OATH_CLIP_DURATION_S = 15;
+const scoutOathClip = makeClipPlayer('assets/scout-oath.m4a', SCOUT_OATH_CLIP_DURATION_S, 0.3);
+let scoutOathPlaying = false;
+function playScoutOath(){
+  if(scoutOathPlaying) return;
+  const started = scoutOathClip.play();
+  if(!started) return;
+  scoutOathPlaying = true;
+  setTimeout(()=>{ scoutOathPlaying = false; }, SCOUT_OATH_CLIP_DURATION_S*1000);
+}
+const OUTDOOR_CODE_CLIP_DURATION_S = 12;
+const outdoorCodeClip = makeClipPlayer('assets/outdoor-code.m4a', OUTDOOR_CODE_CLIP_DURATION_S, 0.3);
+let outdoorCodePlaying = false;
+function playOutdoorCode(){
+  if(outdoorCodePlaying) return;
+  const started = outdoorCodeClip.play();
+  if(!started) return;
+  outdoorCodePlaying = true;
+  setTimeout(()=>{ outdoorCodePlaying = false; }, OUTDOOR_CODE_CLIP_DURATION_S*1000);
+}
 function playRoar(){
   if(lionRoarClip.play()) return;
   const ctx = ensureAudio();
@@ -3590,6 +3691,8 @@ const SFX = {
 lionRoarClip.load();
 fireworkBurstClip.load();
 pledgeClip.load();
+scoutOathClip.load();
+outdoorCodeClip.load();
 
 // ---------- Combat ----------
 let myHP = PLAYER_MAX_HP;
@@ -7472,6 +7575,11 @@ function doInteract(){
   // fixed or player-placed — opens its recipe window regardless of what's in hand, same priority a
   // Crafting Table or the Bear Box already gets below.
   if(hitBlock in BLOCK_TO_WARE_KEY){ openCookware(BLOCK_TO_WARE_KEY[hitBlock]); return; }
+  if(hit && TOTEM_BLOCKS.includes(hitBlock)){
+    const totem = totemAt(hit.x, hit.z);
+    if(totem) totem.play();
+    return;
+  }
   if(held===FLINT){ tryIgniteFire(hit); return; }
   if(held===FIREWORK){ launchFirework(); return; }
   if(FOOD_RESTORE[held]!=null){ tryEatFood(held); return; }
@@ -8574,6 +8682,7 @@ function init(){
   // they'd silently punch through it. Unlike a Scout Law box, there's no legitimate way for this to be
   // missing, so it just gets placed again rather than accepting the loss.
   buildGiantFlag();
+  buildTotems();
   buildCampSign();
   buildKayak();
   buildHorse();

@@ -346,6 +346,14 @@ something, so aiming at it uses its own much longer line-of-sight check instead 
 but you do still have to actually be there: within about 10 blocks of the pole, the same as standing
 in front of it, not clear across the clearing looking up.
 
+Two more fixed monuments sit in the clearing's other free corners: a 4-tall **Scout Totem** and a
+3-tall one, each a stack of carved wooden rings — a compass, a star, a flame, a tent, cycling top to
+bottom so no two adjacent rings repeat (original geometric art, not a reproduction of any real
+totem-pole tradition). Right-click either one — ordinary reach applies, no special long-range check
+needed at this height — and it plays a full recitation: the Scout Oath on the taller one, the Outdoor
+Code on the shorter one (see [`assets/README.md`](assets/README.md)), the same "one at a time, wait
+for it to finish" behavior as the flag's Pledge.
+
 A rustic wooden sign floats over the clearing naming the camp — "🏕️ Camp Merit Ridge" — the same
 canvas-texture billboard technique as the Scout Law boxes' word labels, just styled like carved wood
 instead of a gold plaque.

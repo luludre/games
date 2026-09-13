@@ -32,4 +32,18 @@ A recitation of the Pledge of Allegiance, provided directly by Andre's family fo
 - Source: supplied as a WAV/AIFF recording, converted to AAC (`.m4a`) for browser compatibility with `afconvert` (no re-encoding of the actual audio, just a container/codec change).
 - Played in full (not trimmed) when the player left-clicks the giant flag at the cooking area.
 
-Everything else in the game (textures, other sound effects) is generated procedurally at runtime — these are the only four real asset files.
+## scout-oath.m4a
+
+A recitation of the Scout Oath, provided directly by Andre's family for this game.
+
+- Source: supplied as a WAV/AIFF recording, converted to AAC (`.m4a`) with `afconvert`, same as the Pledge above.
+- Played in full (~14s) when the player right-clicks the 4-tall Scout Totem at the cooking area.
+
+## outdoor-code.m4a
+
+A recitation of the Outdoor Code, provided directly by Andre's family for this game.
+
+- Source: supplied as a WAV/AIFF recording, converted to AAC (`.m4a`) with `afconvert`, same as the two clips above.
+- Played in full (~11.5s) when the player right-clicks the 3-tall Scout Totem at the cooking area.
+
+Everything else in the game (textures, other sound effects) is generated procedurally at runtime — these are the only six real asset files.
