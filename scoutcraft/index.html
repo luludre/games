@@ -19,10 +19,11 @@
   #bottomBar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:10px;}
   #hotbar{display:flex;gap:6px;background:rgba(0,0,0,0.25);padding:6px;border-radius:8px;}
   #specialIcons{display:flex;gap:6px;background:rgba(0,0,0,0.25);padding:6px;border-radius:8px;}
-  #specialIcons button{width:48px;height:48px;border:2px solid #c8a44d;border-radius:6px;background:rgba(200,164,77,0.14);
+  #specialIcons button{position:relative;width:48px;height:48px;border:2px solid #c8a44d;border-radius:6px;background:rgba(200,164,77,0.14);
     color:#fff;font-size:20px;cursor:pointer;font-family:inherit;}
   #specialIcons button:hover{background:rgba(200,164,77,0.3);}
   #specialIcons button:disabled{opacity:0.4;cursor:default;background:rgba(255,255,255,0.06);}
+  #specialIcons .sKey{position:absolute;top:2px;left:4px;font-size:10px;color:#fff;text-shadow:0 0 3px #000;}
   .slot{width:48px;height:48px;border:2px solid rgba(255,255,255,0.4);border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;background:rgba(255,255,255,0.08);}
   .slot.active{border-color:#fff;box-shadow:0 0 8px rgba(255,255,255,0.8);}
   .slot.empty .swatch{opacity:0.3;}
@@ -230,10 +231,10 @@
 <div id="crosshair"></div>
 <div id="bottomBar">
   <div id="specialIcons">
-    <button id="btnQuickBackpack" title="Backpack">🎒</button>
-    <button id="btnQuickWorkbench" title="Camp Workbench">🛠️</button>
-    <button id="btnQuickFirstAid" title="First Aid">🩹</button>
-    <button id="btnStopBear" title="Scare off a nearby bear">🐻🚫</button>
+    <button id="btnQuickBackpack" title="Backpack (B)"><span class="sKey">B</span>🎒</button>
+    <button id="btnQuickWorkbench" title="Camp Workbench (E)"><span class="sKey">E</span>🛠️</button>
+    <button id="btnQuickFirstAid" title="First Aid (P)"><span class="sKey">P</span>➕</button>
+    <button id="btnStopBear" title="Scare off a nearby bear (O)"><span class="sKey">O</span>🐻🚫</button>
   </div>
   <div id="hotbar"></div>
 </div>
@@ -251,6 +252,8 @@
   <div class="hkRow"><span class="hkKey">Ctrl</span>hold to crawl</div>
   <div class="hkRow"><span class="hkKey">Z</span>toggle crawl</div>
   <div class="hkRow"><span class="hkKey">N</span>cycle day/night</div>
+  <div class="hkRow"><span class="hkKey">P</span>First Aid (quick heal)</div>
+  <div class="hkRow"><span class="hkKey">O</span>Stop Bear (scare it off)</div>
   <div class="hkRow"><span class="hkKey">H</span>toggle this panel</div>
   <div class="hkRow"><span class="hkKey">Esc</span>release mouse</div>
 </div>
@@ -387,7 +390,7 @@
   <button id="btnHelp">❓ How to play</button>
   <p id="playHint" class="small" hidden>Press <span class="key">B</span> to open your Backpack — it starts already packed with the real Scout's 10 Essentials plus a tent, sleeping bag, sleeping pad and rope. Pitch your tent (a real shelter you can walk into) and take a bearing with your compass to earn merit badges right away. Chop a tree for wood and leaves, put down your Camp Workbench, and press E beside it to craft — twist leaves into <b>rope</b>, then set up a <b>campfire</b>, a <b>lantern</b> and your <b>troop flag</b> — each one earns a merit badge too, and badges promote you from Tenderfoot all the way to Eagle Scout. Press <span class="key">M</span> to see your sash, <span class="key">K</span> near your tent after dark to sleep through the night, or <span class="key">H</span> any time for the full hotkey list. Rabbits and deer are harmless — the moose fights back if provoked, and the black bear attacks on sight. Progress saves automatically in this browser.</p>
   <p class="credits">Built by Andre Wu, his dad, and an AI to help others discover scouting! Andre scouts
-  with Troop 904 out of Dublin, CA. If you had fun, please consider supporting his scouting adventures
+  with Troop 904 out of Dublin, CA, USA. If you had fun, please consider supporting his scouting adventures
   and our heroes: <a href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">🍿 Andre's Popcorn Sale</a></p>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>

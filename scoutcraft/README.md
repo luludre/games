@@ -14,7 +14,7 @@ terrain generation, chunked meshing, day/night cycle, seasons and weather, anima
 wildlife. What's new is everything in [Merit badges](#merit-badges) and [Camp gear](#camp-gear).
 
 Built by Andre Wu, his dad, and an AI to help others discover scouting! Andre scouts with Troop 904
-out of Dublin, CA. If you had fun, please consider supporting his scouting adventures and our
+out of Dublin, CA, USA. If you had fun, please consider supporting his scouting adventures and our
 heroes: [🍿 Andre's Popcorn Sale](https://trails-end.com/store/scout/HQ9SW6MR).
 
 ## Play locally
@@ -60,6 +60,8 @@ Then visit `http://localhost:8000`.
 - `M` (or the **🎖️ Badges (M)** button) — open your merit badge sash
 - `K` — sleep through the night, if you're near your tent and it's after dark
 - `V` — toggle first-person view (third-person, seeing your own blocky character, is the default)
+- `P` (or the fixed **➕** quick-access icon) — First Aid: an instant 2-heart heal, once every 60 seconds
+- `O` (or the fixed **🐻🚫** quick-access icon) — Stop Bear: see [Health & combat](#health--combat)
 - `H` — toggle the hotkey list, a panel on the right edge of the screen listing every key above (and this one). Hidden by default so it doesn't clutter the screen; the front-page tutorial still covers the basics before you even start playing.
 - The **❓ How to play** button on the start screen reveals the full tutorial paragraph (chopping trees, crafting, badges) — collapsed by default so the front page stays short; click it again (now **✕ Hide help**) to put it away.
 - The **🚪 Quit** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
@@ -81,10 +83,12 @@ The hotbar itself only shows 9 slots (keys `Q` `R` `F` `T` `G` `C` `X` `L` `J`, 
 
 Four more icons sit fixed to the hotbar's left — Backpack, Camp Workbench, First Aid, and Stop Bear — always the same four actions rather than slots you can put items into:
 
-- **🎒 Backpack** — same as pressing `B`
-- **🛠️ Camp Workbench** — same as pressing `E`: opens crafting if you're within 4 blocks of a placed Camp Workbench, otherwise just says so
-- **🩹 First Aid** — an instant heal of 2 hearts, once every 60 seconds — an active option alongside the passive stand-still regen, not a replacement for it
-- **🐻🚫 Stop Bear** — see [Health & combat](#health--combat) below
+- **🎒 Backpack** (`B`)
+- **🛠️ Camp Workbench** (`E`) — opens crafting if you're within 4 blocks of a placed Camp Workbench, otherwise just says so
+- **➕ First Aid** (`P`) — an instant heal of 2 hearts, once every 60 seconds — an active option alongside the passive stand-still regen, not a replacement for it
+- **🐻🚫 Stop Bear** (`O`) — see [Health & combat](#health--combat) below
+
+Every one of the four also has a keyboard shortcut, shown as a small letter in its corner — they work identically whether you click the icon or press the key.
 
 ## Crafting
 
@@ -246,6 +250,14 @@ permanently indestructible — breaking has no effect on them at all, unlike eve
 yourself. All five campfires there work exactly like any other campfire — see
 [Cooking](#camp-gear) for why cooking on one currently has nothing to cook — the cookware on top is
 purely decorative.
+
+A giant American flag towers over the clearing's far corner, clear of every station above — a
+17-block flagpole (the same thin pole the little Troop Flag uses, just stacked a lot taller, capped
+with its usual gold finial) flying a mural 3 blocks wide and 2 tall, mounted flush against the pole
+partway up. Each of those 6 blocks is really just its own slice of one shared, high-resolution flag
+image — 13 stripes, a blue canton, and all 50 stars individually drawn and actually countable up
+close — cropped and downscaled into that block's texture, so the six line up into one seamless image
+rather than six separately-drawn tiles. Like the cooking fixtures, it's permanently indestructible.
 
 ## Fire & torches
 
