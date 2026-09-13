@@ -7753,6 +7753,11 @@ function init(){
 
   generateWorld();
   loadEdits();
+  // A returning player's own saved edits replay on top of world-gen above — if any of them happen to
+  // land on the flag's footprint (mining or building nearby in an earlier session, before this existed),
+  // they'd silently punch through it. Unlike a Scout Law box, there's no legitimate way for this to be
+  // missing, so it just gets placed again rather than accepting the loss.
+  buildGiantFlag();
   restoreTorchLights();
   restoreScoutLawBoxes();
   updateScoutHUD();
