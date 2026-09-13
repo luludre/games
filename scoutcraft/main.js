@@ -5845,7 +5845,7 @@ function toggleOpenable(x,y,z,current){
   applyWorldEdit(x, y, z, TOGGLE_MAP[current]);
   SFX.windowToggle(opening);
 }
-// ---------- First-person view-model (arm + held block, rendered as a separate overlay pass) ----------
+// ---------- First-person view-model (a floating map, rendered as a separate overlay pass) ----------
 // A small drawn paper-map texture (aged cream background, a fold crease, a few contour-line
 // squiggles, a dashed trail and a north arrow) — same canvas-texture technique as the name tag and
 // the Scout Law box labels, just standing in for a scout's map rather than any specific held item.
@@ -5899,13 +5899,14 @@ function buildHandModel(){
   handCamera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.01, 10);
 
   handGroup = new THREE.Group();
-  const skinMat = new THREE.MeshLambertMaterial({ color: 0xd9a066 });
+  // The arm/hand block itself is gone now — just the map floats in view. armMesh still exists
+  // (unattached, never rendered) purely so updateHandView below has something harmless to keep
+  // setting rotation on, rather than needing a null check on every frame.
   const armGeo = new THREE.BoxGeometry(0.22,0.6,0.22);
   armGeo.translate(0,-0.3,0);
-  armMesh = new THREE.Mesh(armGeo, skinMat);
+  armMesh = new THREE.Mesh(armGeo, new THREE.MeshLambertMaterial({ color: 0xd9a066 }));
   armMesh.position.set(0.32,-0.05,-0.55);
   armMesh.rotation.set(0.15, 0, -0.25);
-  handGroup.add(armMesh);
 
   // A folded paper map instead of a held-block cube — a thin box so it reads as a flat sheet, with
   // the map texture on its front/back faces (the two facing the camera) and a plain paper-edge
