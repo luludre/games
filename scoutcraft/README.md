@@ -285,8 +285,9 @@ rather than six separately-drawn tiles. Like the cooking fixtures, it's permanen
 Left-click it and it plays a full recitation of the Pledge of Allegiance (see
 [`assets/README.md`](assets/README.md)) — one at a time, a second click while it's still playing does
 nothing until it finishes. It sits well above the ordinary ~6-block reach you'd use to break or attack
-something, so this uses its own much longer line-of-sight check instead — stand back in the clearing,
-look up at it, and click, no need to get anywhere near it.
+something, so aiming at it uses its own much longer line-of-sight check instead of that short reach —
+but you do still have to actually be there: within about 10 blocks of the pole, the same as standing
+in front of it, not clear across the clearing looking up.
 
 A rustic wooden sign floats over the clearing naming the camp — "🏕️ Camp Merit Ridge" — the same
 canvas-texture billboard technique as the Scout Law boxes' word labels, just styled like carved wood

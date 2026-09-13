@@ -1677,9 +1677,14 @@ function buildCookingArea(){
 // up so its top row is level with the finial itself, not just the topmost bare pole segment below it.
 // See buildUSFlagMaster for how the mural's 50 stars actually get drawn.
 const GIANT_FLAG_POLE_HEIGHT = 12;
-function buildGiantFlag(){
+// Single source of truth for where the pole actually stands — buildGiantFlag uses it to place the
+// thing, and raycastUSFlag's proximity check (see below) uses it to know how close counts as "close".
+function giantFlagPolePos(){
   const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
-  const poleX = x0 + COOKING_AREA_SIZE - 2, poleZ = z0 + COOKING_AREA_SIZE - 2;
+  return { x: x0 + COOKING_AREA_SIZE - 2, z: z0 + COOKING_AREA_SIZE - 2 };
+}
+function buildGiantFlag(){
+  const { x: poleX, z: poleZ } = giantFlagPolePos();
   const baseY = COOKING_AREA_Y + 1;
   const protect = (x,y,z,block) => { setBlock(x,y,z,block); PROTECTED_CELLS.add(x+','+y+','+z); };
   for(let i=0;i<GIANT_FLAG_POLE_HEIGHT;i++) protect(poleX, baseY+i, poleZ, FLAG_POLE);
@@ -6805,8 +6810,14 @@ function raycastBlock(maxDist=6, step=0.02){
 // which is deliberately short for ordinary mining/attacking. Reciting the Pledge in front of it isn't
 // that kind of interaction, so it gets its own much longer raycast instead of widening reach for
 // everything else. A coarser 0.1 step is fine here since it only needs to catch a chunky 3x2 target.
+// The long reach is just to handle looking steeply up at the mural from nearby — FLAG_PLEDGE_PROXIMITY
+// below is what actually stops it firing from clear across camp.
 const FLAG_PLEDGE_MAX_DIST = 40;
+const FLAG_PLEDGE_PROXIMITY = 10; // horizontal blocks from the pole — has to be standing in front of it
 function raycastUSFlag(){
+  const pole = giantFlagPolePos();
+  const dx = player.pos.x-(pole.x+0.5), dz = player.pos.z-(pole.z+0.5);
+  if(dx*dx+dz*dz > FLAG_PLEDGE_PROXIMITY*FLAG_PLEDGE_PROXIMITY) return false;
   const dir = getLookDir(player.yaw, player.pitch);
   const origin = camera.position;
   for(let t=0; t<FLAG_PLEDGE_MAX_DIST; t+=0.1){
