@@ -71,6 +71,11 @@ const OUTDOOR_CODE_TOTEM_BLOCKS = [TOTEM_CODE_BASE, TOTEM_CODE_CONSERVATION, TOT
 // What doInteract checks a hit block against to decide "was this any totem at all" before looking up
 // which specific one via totemAt.
 const ALL_TOTEM_BLOCKS = [...SCOUT_OATH_TOTEM_BLOCKS, ...OUTDOOR_CODE_TOTEM_BLOCKS];
+// BOW is a carried tool like the Fishing Pole — right-clicking it does something special (see
+// tryShootBow) rather than either placing a block or being a no-op, so it's deliberately left out of
+// CARRY_ONLY_ITEMS below. ARCHERY_TARGET is a world fixture like DUTCH_OVEN/BEAR_BOX above — never
+// craftable or held, just placed once at world-gen (see buildArcheryRange).
+const BOW=124, ARCHERY_TARGET=125;
 // Items with no block form at all (see doInteract) — right-clicking one does nothing, or whatever
 // its own special case above already handles (Flint ignites, Compass takes a bearing).
 const CARRY_ONLY_ITEMS = new Set([ROPE, POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR,
@@ -131,6 +136,7 @@ const BLOCK_COLOR = {
   [US_FLAG_BL]: 0xb22234, [US_FLAG_BC]: 0xffffff, [US_FLAG_BR]: 0xb22234,
   [TOTEM_OATH_BASE]: 0x6b4226, [TOTEM_OATH_CREED]: 0x6b4226, [TOTEM_OATH_LAW]: 0x6b4226, [TOTEM_OATH_DUTY]: 0x6b4226,
   [TOTEM_CODE_BASE]: 0x6b4226, [TOTEM_CODE_CONSERVATION]: 0x6b4226, [TOTEM_CODE_CONSIDERATE]: 0x6b4226, [TOTEM_CODE_FIRE]: 0x6b4226, [TOTEM_CODE_CLEAN]: 0x6b4226,
+  [BOW]: 0x8a6a3a, [ARCHERY_TARGET]: 0xd9c9a0,
 };
 const BLOCK_NAME = {
   [GRASS]:'Grass', [DIRT]:'Dirt', [STONE]:'Stone', [SAND]:'Sand', [WOOD]:'Wood',
@@ -153,6 +159,7 @@ const BLOCK_NAME = {
   [US_FLAG_BL]:'US Flag', [US_FLAG_BC]:'US Flag', [US_FLAG_BR]:'US Flag',
   [TOTEM_OATH_BASE]:'Scout Oath Totem', [TOTEM_OATH_CREED]:'Scout Oath Totem', [TOTEM_OATH_LAW]:'Scout Oath Totem', [TOTEM_OATH_DUTY]:'Scout Oath Totem',
   [TOTEM_CODE_BASE]:'Outdoor Code Totem', [TOTEM_CODE_CONSERVATION]:'Outdoor Code Totem', [TOTEM_CODE_CONSIDERATE]:'Outdoor Code Totem', [TOTEM_CODE_FIRE]:'Outdoor Code Totem', [TOTEM_CODE_CLEAN]:'Outdoor Code Totem',
+  [BOW]:'Bow', [ARCHERY_TARGET]:'Archery Target',
 };
 // Every item the player can ever select. The hotbar only shows HOTBAR_SIZE of these at a time —
 // the rest are reachable through the Items panel (the palette button, or the "I" key), which lets
@@ -162,7 +169,7 @@ const BLOCK_NAME = {
 const ALL_ITEMS = [GRASS, DIRT, STONE, SAND, WOOD, LEAVES, PLANKS, WATER, CRAFTING_TABLE, BRICKS, STICK, WINDOW, DOOR, FLINT, TORCH, FIREWORK, LADDER,
   ROPE, TENT, CAMPFIRE, LANTERN, FLAG, COMPASS, COOKED_MEAT, BACKPACK,
   POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR, WATER_BOTTLE, FLASHLIGHT, TRAIL_FOOD, SUN_PROTECTION, SCOUTBOOK,
-  FISHING_POLE, FISH, SLEEPING_BAG, SLEEPING_PAD];
+  FISHING_POLE, FISH, SLEEPING_BAG, SLEEPING_PAD, BOW];
 const HOTBAR_SIZE = 9;
 // A scout's starting kit: building materials first, then the camp gear you earn badges with.
 const DEFAULT_HOTBAR = [WOOD, PLANKS, STONE, CRAFTING_TABLE, CAMPFIRE, TENT, FLAG, FLINT, COMPASS];
@@ -184,7 +191,7 @@ const HOTBAR_ICON = { [CRAFTING_TABLE]: '🛠️', [WINDOW]: '🪟', [DOOR]: '�
   [ROPE]: '🪢', [TENT]: '⛺', [CAMPFIRE]: '🔥', [LANTERN]: '🏮', [FLAG]: '🚩', [COMPASS]: '🧭', [COOKED_MEAT]: '🍖', [BACKPACK]: '🎒',
   [POCKETKNIFE]: '🔪', [FIRST_AID_KIT]: '🩹', [EXTRA_CLOTHING]: '🧥', [RAIN_GEAR]: '☂️', [WATER_BOTTLE]: '🥤',
   [FLASHLIGHT]: '🔦', [TRAIL_FOOD]: '🥜', [SUN_PROTECTION]: '🧴', [SCOUTBOOK]: '📘',
-  [FISHING_POLE]: '🎣', [FISH]: '🐟', [SLEEPING_BAG]: '🛌', [SLEEPING_PAD]: '🛏️' };
+  [FISHING_POLE]: '🎣', [FISH]: '🐟', [SLEEPING_BAG]: '🛌', [SLEEPING_PAD]: '🛏️', [BOW]: '🏹' };
 
 // ---------- Cooking ingredients & dishes ----------
 // 57 more items (31 raw ingredients + 26 finished dishes) generated from one data table instead of
@@ -393,6 +400,8 @@ const BADGES = [
   { id:'weather',    emoji:'🌦️', name:'Weather',      hint:'Experience 3 different weather conditions.',   test:()=> scoutStats.weatherSeen.length >= 3 },
   { id:'scuba',      emoji:'🤿', name:'Scuba Diving', hint:'Spend 20 seconds fully underwater.',           test:()=> scoutStats.scubaSeconds >= 20 },
   { id:'camptraditions', emoji:'📜', name:'Camp Traditions', hint:'Recite the Pledge of Allegiance, the Scout Oath, and the Outdoor Code.', test:()=> scoutStats.recitations.length >= 3 },
+  { id:'archery',    emoji:'🏹', name:'Archery',       hint:'Hit the target 5 times at the Archery Range.', test:()=> scoutStats.archeryHits >= ARCHERY_HITS_NEEDED },
+  { id:'birdstudy',  emoji:'🦅', name:'Bird Study',    hint:'Look at an eagle and 3 other kinds of birds.', test:()=> (scoutStats.birdsSeen.includes('eagle')||scoutStats.birdsSeen.includes('bigeagle')) && scoutStats.birdsSeen.filter(id=>id!=='eagle'&&id!=='bigeagle').length>=3 },
   { id:'scoutspirit',emoji:'🏅', name:'Scout Spirit', hint:'Find all 12 golden Scout Law boxes hidden around camp.', test:()=> scoutStats.lawsCollected.length >= SCOUT_LAW_POINTS.length },
 ];
 // Ranks are purely derived from how many badges you hold — no separate progression to track. A brand
@@ -429,7 +438,7 @@ const earnedBadges = new Set();
 const scoutStats = {
   wood:0, rope:0, campfires:0, tents:0, flags:0, compassUses:0,
   hiked:0, swam:0, highest:0, nightSeconds:0, species:[],
-  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, horsebackBlocks:0, lawsCollected:[], cookwareUsed:[], weatherSeen:[], scubaSeconds:0, recitations:[],
+  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, horsebackBlocks:0, lawsCollected:[], cookwareUsed:[], weatherSeen:[], scubaSeconds:0, recitations:[], archeryHits:0, birdsSeen:[],
 };
 function saveScoutProgress(){
   try{
@@ -449,6 +458,7 @@ function loadScoutProgress(){
       if(!Array.isArray(scoutStats.cookwareUsed)) scoutStats.cookwareUsed = [];
       if(!Array.isArray(scoutStats.weatherSeen)) scoutStats.weatherSeen = [];
       if(!Array.isArray(scoutStats.recitations)) scoutStats.recitations = [];
+      if(!Array.isArray(scoutStats.birdsSeen)) scoutStats.birdsSeen = [];
     }
   }catch(e){}
 }
@@ -558,6 +568,12 @@ const Scout = {
     saveScoutProgress();
     checkBadges();
   },
+  sawBird(speciesId){
+    if(!speciesId || scoutStats.birdsSeen.includes(speciesId)) return;
+    scoutStats.birdsSeen.push(speciesId);
+    saveScoutProgress();
+    checkBadges();
+  },
 };
 
 // ---- Continuous tracking (distance, altitude, night time, wildlife) ----
@@ -573,6 +589,11 @@ function isScoutNight(){
 }
 // How close you have to get to an animal for it to count as studied.
 const SPOT_RANGE = 9;
+// Bird Study: how far away, and how tightly centered in view, a bird has to be to count as "looked
+// at" — birds are small and constantly moving, so this cone is deliberately more forgiving than a
+// precise aim would need.
+const BIRD_SIGHT_RANGE = 40;
+const BIRD_SIGHT_COS = Math.cos(20 * Math.PI/180);
 function updateScout(dt){
   pumpBadgeToast(dt);
   // Nothing counts while you're sitting on the start screen or a panel — badges are for playing.
@@ -620,6 +641,19 @@ function updateScout(dt){
         if(Math.hypot(a.x-px, a.y-py, a.z-pz) <= SPOT_RANGE) Scout.sawSpecies(a.type);
       }
     }
+    // Bird Study: unlike Nature Study above, this needs the player actually looking toward the bird
+    // (a generous ~40-degree cone, since they're small and constantly moving), not just anywhere
+    // within earshot — unlike Astronomy's Big Dipper gaze, one glance is enough, no held timer.
+    const lookDir = getLookDir(player.yaw, player.pitch);
+    const scanFlock = (flock) => {
+      for(const b of flock){
+        const dx=b.mesh.position.x-px, dy=b.mesh.position.y-py, dz=b.mesh.position.z-pz;
+        const dist = Math.hypot(dx,dy,dz);
+        if(dist>0.5 && dist<=BIRD_SIGHT_RANGE && (dx*lookDir.x+dy*lookDir.y+dz*lookDir.z)/dist > BIRD_SIGHT_COS) Scout.sawBird(b.species.id);
+      }
+    };
+    if(typeof birds !== 'undefined') scanFlock(birds);
+    if(typeof bigEagles !== 'undefined') scanFlock(bigEagles);
     checkBadges();
   }
 
@@ -766,6 +800,78 @@ function updateFishing(dt){
   }
 }
 
+// ---- Archery: right-click a Bow to loose an arrow, but only from inside the Archery Range (see
+// inArcheryRange/buildArcheryRange) — anywhere else it's just a chat reminder, no arrow fired. ----
+const ARROW_SPEED = 26;
+const ARROW_GRAVITY = -2.5; // gentle enough that a level shot at the range's real distances still lands on a 2-tall target
+const ARROW_MAX_LIFE_S = 2.5; // fizzles out on its own if it somehow never hits anything
+const ARCHERY_HITS_NEEDED = 5;
+const arrows = []; // {mesh, x,y,z, vx,vy,vz, life}
+// Box-composition build like the rest of this file's props: a thin shaft, a dark tip, and two
+// crossed fletching vanes at the tail so it reads as an arrow from any angle, not just side-on.
+function buildArrowMesh(){
+  const g = new THREE.Group();
+  const shaftMat = new THREE.MeshLambertMaterial({ color: 0x8a6a3a });
+  const tipMat = new THREE.MeshLambertMaterial({ color: 0x5c5f66 });
+  const fletchMat = new THREE.MeshLambertMaterial({ color: 0xe8e4d8 });
+  g.add(animalBox(0.04, 0.04, 0.6, shaftMat));
+  const tip = animalBox(0.06, 0.06, 0.12, tipMat);
+  tip.position.z = -0.36;
+  g.add(tip);
+  for(const rot of [0, Math.PI/2]){
+    const fletch = animalBox(0.14, 0.02, 0.12, fletchMat);
+    fletch.position.z = 0.26;
+    fletch.rotation.z = rot;
+    g.add(fletch);
+  }
+  return g;
+}
+function tryShootBow(){
+  if(!inArcheryRange(Math.floor(player.pos.x), Math.floor(player.pos.z))){
+    addChatMessage('Camp', '🏹 You can only shoot at the Archery Range.');
+    return;
+  }
+  const dir = getLookDir(player.yaw, player.pitch);
+  const mesh = buildArrowMesh();
+  mesh.position.copy(camera.position);
+  scene.add(mesh);
+  arrows.push({
+    mesh, x:camera.position.x, y:camera.position.y, z:camera.position.z,
+    vx: dir.x*ARROW_SPEED, vy: dir.y*ARROW_SPEED, vz: dir.z*ARROW_SPEED,
+    life: 0,
+  });
+  SFX.bowShoot();
+}
+function updateArrows(dt){
+  for(let i=arrows.length-1; i>=0; i--){
+    const ar = arrows[i];
+    ar.life += dt;
+    ar.vy += ARROW_GRAVITY*dt;
+    ar.x += ar.vx*dt; ar.y += ar.vy*dt; ar.z += ar.vz*dt;
+    ar.mesh.position.set(ar.x, ar.y, ar.z);
+    const speed = Math.hypot(ar.vx, ar.vy, ar.vz);
+    if(speed>0.01){
+      ar.mesh.rotation.y = Math.atan2(-ar.vx, -ar.vz);
+      ar.mesh.rotation.x = Math.asin(Math.max(-1, Math.min(1, ar.vy/speed)));
+    }
+    const blockHit = getBlock(Math.floor(ar.x), Math.floor(ar.y), Math.floor(ar.z));
+    if(blockHit===ARCHERY_TARGET){
+      scene.remove(ar.mesh);
+      arrows.splice(i,1);
+      Scout.bump('archeryHits');
+      saveScoutProgress();
+      SFX.bowHit();
+      addChatMessage('Camp', `🎯 Bullseye! (${Math.min(scoutStats.archeryHits,ARCHERY_HITS_NEEDED)}/${ARCHERY_HITS_NEEDED})`);
+    } else if(blockHit!==AIR && blockHit!==WATER){
+      scene.remove(ar.mesh);
+      arrows.splice(i,1);
+    } else if(ar.life > ARROW_MAX_LIFE_S){
+      scene.remove(ar.mesh);
+      arrows.splice(i,1);
+    }
+  }
+}
+
 // ---- The sash: every badge, earned and still to earn ----
 let sashOpen = false;
 function openSash(){
@@ -810,6 +916,10 @@ function badgeProgress(b){
     weather:    ()=> [scoutStats.weatherSeen.length, 3, 'conditions'],
     scuba:      ()=> [Math.floor(scoutStats.scubaSeconds), 20, 'seconds'],
     camptraditions: ()=> [scoutStats.recitations.length, 3, 'recitations'],
+    archery:    ()=> [scoutStats.archeryHits, ARCHERY_HITS_NEEDED, 'hits'],
+    // Simplified to just the "3 other kinds" half of the requirement — the eagle sighting itself is
+    // one-time/binary and already spelled out in the hint text above.
+    birdstudy:  ()=> [scoutStats.birdsSeen.filter(id=>id!=='eagle'&&id!=='bigeagle').length, 3, 'other birds'],
     scoutspirit:()=> [scoutStats.lawsCollected.length, SCOUT_LAW_POINTS.length, 'boxes'],
   }[b.id];
   if(!p) return null;
@@ -865,6 +975,7 @@ const RECIPES = [
   { name:'Lantern',        out:{id:LANTERN, qty:1},         in:[{id:STICK, qty:1}, {id:FLINT, qty:1}] },
   { name:'Troop Flag',     out:{id:FLAG, qty:1},            in:[{id:PLANKS, qty:2}, {id:STICK, qty:2}, {id:ROPE, qty:1}] },
   { name:'Fishing Pole',   out:{id:FISHING_POLE, qty:1},    in:[{id:STICK, qty:2}, {id:ROPE, qty:1}] },
+  { name:'Bow',            out:{id:BOW, qty:1},             in:[{id:STICK, qty:3}, {id:ROPE, qty:1}] },
 ];
 const inventory = {};
 // Fireworks are unlimited — no recipe, never consumed, always available regardless of what's saved.
@@ -924,7 +1035,8 @@ const T_GRASS_TOP=0, T_GRASS_SIDE=1, T_DIRT=2, T_STONE=3, T_SAND=4, T_LOG_SIDE=5
       T_SCOUT_LAW_BOX=36,
       T_US_FLAG_TL=37, T_US_FLAG_TC=38, T_US_FLAG_TR=39, T_US_FLAG_BL=40, T_US_FLAG_BC=41, T_US_FLAG_BR=42,
       T_TOTEM_OATH_BASE=43, T_TOTEM_OATH_CREED=44, T_TOTEM_OATH_LAW=45, T_TOTEM_OATH_DUTY=46,
-      T_TOTEM_CODE_CLEAN=47, T_TOTEM_CODE_FIRE=48, T_TOTEM_CODE_CONSIDERATE=49, T_TOTEM_CODE_CONSERVATION=50;
+      T_TOTEM_CODE_CLEAN=47, T_TOTEM_CODE_FIRE=48, T_TOTEM_CODE_CONSIDERATE=49, T_TOTEM_CODE_CONSERVATION=50,
+      T_ARCHERY_TARGET=51;
 
 function hexRGB(hex){ return [(hex>>16)&255, (hex>>8)&255, hex&255]; }
 function rgbStr(r,g,b){ return `rgb(${r|0},${g|0},${b|0})`; }
@@ -1546,10 +1658,8 @@ function drawTotemRing(ctx,x0,y0){
   ctx.fillRect(x0, y0, TILE, TILE*0.07);
   ctx.fillRect(x0, y0+TILE*0.93, TILE, TILE*0.07);
 }
-// ---------- The 4 purpose-built rings of the Scout Oath totem (see buildScoutOathTotem) — the
-// actual wording lives on floating plaque sprites built alongside each ring (buildTotemPlaqueSprite);
-// these tile drawings are the carved icon underneath each one, same gold-on-wood technique as the
-// generic totem symbols above.
+// ---------- The 4 purpose-built rings of the Scout Oath totem (see buildScoutOathTotem) — one
+// carved icon per ring, same gold-on-wood technique as the generic totem symbols above.
 function drawTotemOathBase(ctx,x0,y0){
   drawTotemRing(ctx,x0,y0);
   const cx=x0+TILE*0.5, cy=y0+TILE*0.5;
@@ -1626,9 +1736,8 @@ function drawTotemOathDuty(ctx,x0,y0){
   for(let i=0;i<3;i++) ctx.fillRect(sx, sy+i*sh*0.7/3, sw, sh*0.7/9);
 }
 // ---------- The 4 code-point rings of the Outdoor Code totem (see buildOutdoorCodeTotem), same
-// gold-on-wood icon technique, actual wording on the plaque sprites beside each one. Its base ring
-// reuses T_TOTEM_OATH_BASE (see BLOCK_TILES) — the same blank engraved-plaque look, carrying its own
-// recap text on its own sprite instead of a distinct tile.
+// gold-on-wood icon technique. Its base ring reuses T_TOTEM_OATH_BASE (see BLOCK_TILES) — the same
+// blank engraved-plaque look — rather than a distinct tile of its own.
 function drawTotemCodeClean(ctx,x0,y0){
   drawTotemRing(ctx,x0,y0);
   const cx=x0+TILE*0.5;
@@ -1683,6 +1792,26 @@ function drawTotemCodeConservation(ctx,x0,y0){
   }
   ctx.fillStyle = shadeStr(0x5a3d22,1,4);
   ctx.fillRect(cx-TILE*0.03, cy+TILE*0.16, TILE*0.06, TILE*0.1);
+}
+// A straw-bale archery target — concentric rings same on every face, same reasoning as the totems'
+// icons: it reads fine from any angle at this scale, so one tile does for top/side/bottom alike.
+function drawArcheryTarget(ctx,x0,y0){
+  fillTile(ctx,x0,y0,0xd9c9a0);
+  speckle(ctx,x0,y0,0xd9c9a0,Math.round(TILE*TILE*0.12),12);
+  const cx=x0+TILE*0.5, cy=y0+TILE*0.5;
+  const rings = [
+    { r: TILE*0.46, color: 0xf5f2e8 },
+    { r: TILE*0.36, color: 0x1a1a1a },
+    { r: TILE*0.27, color: 0xf5f2e8 },
+    { r: TILE*0.18, color: 0xc62b0e },
+    { r: TILE*0.09, color: 0xf5c93a },
+  ];
+  for(const ring of rings){
+    ctx.fillStyle = shadeStr(ring.color,1,4);
+    ctx.beginPath();
+    ctx.arc(cx,cy,ring.r,0,Math.PI*2);
+    ctx.fill();
+  }
 }
 // ---------- Giant US flag (see buildGiantFlag) ----------
 // Drawn once at real detail on an offscreen canvas well above tile resolution, then each of the 6
@@ -1798,7 +1927,8 @@ function buildAtlas(){
                 drawDutchOven, drawPot, drawPan, drawGriddle, drawBearBox, drawFlagPole, drawScoutLawBox,
                 drawUSFlagTL, drawUSFlagTC, drawUSFlagTR, drawUSFlagBL, drawUSFlagBC, drawUSFlagBR,
                 drawTotemOathBase, drawTotemOathCreed, drawTotemOathLaw, drawTotemOathDuty,
-                drawTotemCodeClean, drawTotemCodeFire, drawTotemCodeConsiderate, drawTotemCodeConservation];
+                drawTotemCodeClean, drawTotemCodeFire, drawTotemCodeConsiderate, drawTotemCodeConservation,
+                drawArcheryTarget];
   draw.forEach((fn, i)=> fn(ctx, (i%ATLAS_COLS)*TILE, Math.floor(i/ATLAS_COLS)*TILE));
   const tex = new THREE.CanvasTexture(canvas);
   tex.magFilter = THREE.NearestFilter;
@@ -1863,6 +1993,7 @@ const BLOCK_TILES = {
   [TOTEM_CODE_FIRE]: {top:T_TOTEM_CODE_FIRE, side:T_TOTEM_CODE_FIRE, bottom:T_TOTEM_CODE_FIRE},
   [TOTEM_CODE_CONSIDERATE]: {top:T_TOTEM_CODE_CONSIDERATE, side:T_TOTEM_CODE_CONSIDERATE, bottom:T_TOTEM_CODE_CONSIDERATE},
   [TOTEM_CODE_CONSERVATION]: {top:T_TOTEM_CODE_CONSERVATION, side:T_TOTEM_CODE_CONSERVATION, bottom:T_TOTEM_CODE_CONSERVATION},
+  [ARCHERY_TARGET]: {top:T_ARCHERY_TARGET, side:T_ARCHERY_TARGET, bottom:T_ARCHERY_TARGET},
 };
 // per-face-direction UV winding (0/1 flags select u0/u1 and vBottom/vTop), aligned to FACES order below
 const UV_PATTERNS = [
@@ -1997,6 +2128,7 @@ function generateWorld(){
   buildCookingArea();
   buildGiantFlag();
   buildTotems();
+  buildArcheryRange();
   placeScoutLawBoxes();
 }
 // ---------- Cooking area: a flat, permanent 20x20 camp-cooking clearing ----------
@@ -2139,35 +2271,16 @@ function buildTotemLantern(){
   g.add(light);
   return g;
 }
-// An owl, the same box-composition bird model as the ambient wildlife (see BIRD_SPECIES' own 'owl'
-// entry) but under its own species id so it gets its own material cache slot for a lighter, more
-// owl-like facial disc than the plain ambient bird uses.
-const TOTEM_OWL_SPECIES = { id:'totemowl', name:'Owl', body:0x7a5a3a, accent:0xc9a86a, head:0xe0d0a0, size:1.25, pitch:0.55 };
-function buildTotemOwlMesh(){
-  const owl = buildBirdMesh(TOTEM_OWL_SPECIES);
-  owl.scale.setScalar(2.0);
-  return owl;
-}
 // The Scout Oath totem: 4 purpose-built rings instead of the generic cycling symbols (see
-// TOTEM_OATH_BASE etc.), each paired with a floating plaque sprite carrying the Oath's own words,
-// an eagle topper reused from the generic totem, and a small hanging lantern for the warm glow real
-// hand-carved camp totems are often lit with at night.
+// TOTEM_OATH_BASE etc.), an eagle topper reused from the generic totem, and a small hanging lantern
+// for the warm glow real hand-carved camp totems are often lit with at night.
 function buildScoutOathTotem(x, z){
   const baseY = COOKING_AREA_Y + 1;
-  const rings = [
-    { block: TOTEM_OATH_BASE,  title: 'ON MY HONOR', subtitle: 'I will do my best to do my duty' },
-    { block: TOTEM_OATH_CREED, title: 'PHYSICALLY STRONG • MENTALLY AWAKE • MORALLY STRAIGHT' },
-    { block: TOTEM_OATH_LAW,   title: 'TO OBEY THE SCOUT LAW' },
-    { block: TOTEM_OATH_DUTY,  title: 'DUTY TO GOD AND COUNTRY' },
-  ];
+  const rings = [TOTEM_OATH_BASE, TOTEM_OATH_CREED, TOTEM_OATH_LAW, TOTEM_OATH_DUTY];
   const meshes = [];
-  rings.forEach((ring, i) => {
-    setBlock(x, baseY+i, z, ring.block);
+  rings.forEach((block, i) => {
+    setBlock(x, baseY+i, z, block);
     PROTECTED_CELLS.add(x+','+(baseY+i)+','+z);
-    const plaque = buildTotemPlaqueSprite(ring.title, ring.subtitle);
-    plaque.position.set(x+0.5, baseY+i+0.5, z+0.82);
-    scene.add(plaque);
-    meshes.push(plaque);
   });
   const height = rings.length;
   const eagleMesh = buildTotemEagleMesh();
@@ -2180,36 +2293,22 @@ function buildScoutOathTotem(x, z){
   meshes.push(lantern);
   totems.push({ x, z, play: playScoutOath, meshes });
 }
-// The Outdoor Code totem: an owl topper (instead of the Oath totem's eagle) over a title plaque and
-// 5 purpose-built rings — an "As an American..." recap at the base, then the Code's own 4 points in
-// recitation order, tallest of the two totems since the Code has one more line than the Oath's creed.
+// The Outdoor Code totem: the same eagle topper as the Oath totem, over 5 purpose-built rings — an
+// "As an American..." recap at the base, then the Code's own 4 points in recitation order, tallest
+// of the two totems since the Code has one more line than the Oath's creed.
 function buildOutdoorCodeTotem(x, z){
   const baseY = COOKING_AREA_Y + 1;
-  const rings = [
-    { block: TOTEM_CODE_BASE, title: 'AS AN AMERICAN', subtitle: 'I will do my best to be clean in my outdoor manners, be careful with fire, be considerate in the outdoors, and be conservation-minded' },
-    { block: TOTEM_CODE_CONSERVATION, title: 'BE CONSERVATION MINDED' },
-    { block: TOTEM_CODE_CONSIDERATE,  title: 'BE CONSIDERATE IN THE OUTDOORS' },
-    { block: TOTEM_CODE_FIRE,         title: 'BE CAREFUL WITH FIRE' },
-    { block: TOTEM_CODE_CLEAN,        title: 'BE CLEAN IN MY OUTDOOR MANNERS' },
-  ];
+  const rings = [TOTEM_CODE_BASE, TOTEM_CODE_CONSERVATION, TOTEM_CODE_CONSIDERATE, TOTEM_CODE_FIRE, TOTEM_CODE_CLEAN];
   const meshes = [];
-  rings.forEach((ring, i) => {
-    setBlock(x, baseY+i, z, ring.block);
+  rings.forEach((block, i) => {
+    setBlock(x, baseY+i, z, block);
     PROTECTED_CELLS.add(x+','+(baseY+i)+','+z);
-    const plaque = buildTotemPlaqueSprite(ring.title, ring.subtitle);
-    plaque.position.set(x+0.5, baseY+i+0.5, z+0.82);
-    scene.add(plaque);
-    meshes.push(plaque);
   });
   const height = rings.length;
-  const titlePlaque = buildTotemPlaqueSprite('THE OUTDOOR CODE');
-  titlePlaque.position.set(x+0.5, baseY+height+0.45, z+0.82);
-  scene.add(titlePlaque);
-  meshes.push(titlePlaque);
-  const owlMesh = buildTotemOwlMesh();
-  owlMesh.position.set(x+0.5, baseY+height, z+0.5);
-  scene.add(owlMesh);
-  meshes.push(owlMesh);
+  const eagleMesh = buildTotemEagleMesh();
+  eagleMesh.position.set(x+0.5, baseY+height, z+0.5);
+  scene.add(eagleMesh);
+  meshes.push(eagleMesh);
   const lantern = buildTotemLantern();
   lantern.position.set(x+0.5+0.8, baseY+height-0.2, z+0.5);
   scene.add(lantern);
@@ -2224,6 +2323,47 @@ function buildTotems(){
   const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
   buildScoutOathTotem(x0+COOKING_AREA_SIZE-2, z0+2);      // NE corner
   buildOutdoorCodeTotem(x0+2, z0+COOKING_AREA_SIZE-2);    // SW corner
+}
+// ---------- Archery Range: a fixed shooting lane just south of the cooking area ----------
+// A flattened lane at the same elevation as the rest of camp, framed by four short corner posts, with
+// 3 straw targets at the far end. Shooting only works while standing somewhere inside these bounds
+// (see tryShootBow) — the whole point of a range is that you don't loose arrows just anywhere. Pure
+// voxel blocks, no THREE objects of its own, so — unlike buildGiantFlag/buildTotems above — the
+// second call after loadEdits (see init()) needs no old-instance cleanup first, just a re-assert.
+const ARCHERY_RANGE_ORIGIN = { x: 57, z: 74 }; // flush against the cooking area's south edge
+const ARCHERY_RANGE_WIDTH = 10;
+const ARCHERY_RANGE_LENGTH = 16;
+const ARCHERY_RANGE_Y = COOKING_AREA_Y; // same fixed elevation as the rest of camp
+function inArcheryRange(x,z){
+  const { x: x0, z: z0 } = ARCHERY_RANGE_ORIGIN;
+  return x>=x0 && x<x0+ARCHERY_RANGE_WIDTH && z>=z0 && z<z0+ARCHERY_RANGE_LENGTH;
+}
+function buildArcheryRange(){
+  const { x: x0, z: z0 } = ARCHERY_RANGE_ORIGIN;
+  for(let dx=0; dx<ARCHERY_RANGE_WIDTH; dx++){
+    for(let dz=0; dz<ARCHERY_RANGE_LENGTH; dz++){
+      const x=x0+dx, z=z0+dz;
+      for(let y=1; y<ARCHERY_RANGE_Y-1; y++) setBlock(x,y,z,STONE);
+      setBlock(x,ARCHERY_RANGE_Y-1,z,DIRT);
+      setBlock(x,ARCHERY_RANGE_Y,z,GRASS);
+      for(let y=ARCHERY_RANGE_Y+1; y<WORLD_HEIGHT; y++) setBlock(x,y,z,AIR);
+    }
+  }
+  const groundY = ARCHERY_RANGE_Y + 1;
+  const protect = (x,y,z,block) => { setBlock(x,y,z,block); PROTECTED_CELLS.add(x+','+y+','+z); };
+  // Four corner posts, just tall enough to visually frame the lane without blocking a shot.
+  for(const [cx,cz] of [[0,0],[ARCHERY_RANGE_WIDTH-1,0],[0,ARCHERY_RANGE_LENGTH-1],[ARCHERY_RANGE_WIDTH-1,ARCHERY_RANGE_LENGTH-1]]){
+    protect(x0+cx, groundY, z0+cz, WOOD);
+    protect(x0+cx, groundY+1, z0+cz, WOOD);
+  }
+  // 3 targets side by side at the far end, each 2 tall on a short post — a forgiving enough vertical
+  // window that a level shot's natural gravity drop over the lane's length still lands on it.
+  const targetZ = z0 + ARCHERY_RANGE_LENGTH - 3;
+  for(const tx of [x0+2, Math.round(x0+ARCHERY_RANGE_WIDTH/2), x0+ARCHERY_RANGE_WIDTH-3]){
+    protect(tx, groundY, targetZ, WOOD);
+    protect(tx, groundY+1, targetZ, ARCHERY_TARGET);
+    protect(tx, groundY+2, targetZ, ARCHERY_TARGET);
+  }
 }
 // ---------- Scout Law boxes: 12 golden keepsakes, one per point of the Scout Law ----------
 // Scattered once at world-gen with their own seeded RNG (not Math.random()) so every fresh load
@@ -2260,7 +2400,7 @@ function placeScoutLawBoxes(){
     for(let tries=0; tries<300 && !spot; tries++){
       const x = 6 + Math.floor(rng()*(WORLD_SIZE-12));
       const z = 6 + Math.floor(rng()*(WORLD_SIZE-12));
-      if(inCookingArea(x,z)) continue;
+      if(inCookingArea(x,z) || inArcheryRange(x,z)) continue;
       const h = heightAt(x,z);
       if(h<=SEA_LEVEL+1) continue; // dry land only
       if(getBlock(x,h+1,z)!==AIR) continue; // not already occupied by a tree or other structure
@@ -4001,6 +4141,10 @@ const SFX = {
     playTone(320, 0.35, 'sine', 0.1, 420, 0.06);
     setTimeout(()=>playTone(440, 0.4, 'sine', 0.1, 560, 0.06), 220);
   },
+  // A bow shooting: a quick string-release noise burst plus a low thump for the draw weight.
+  bowShoot(){ playNoise(0.05, 0.16, 2000); playTone(140, 0.09, 'triangle', 0.11, 90); },
+  // Thwocking into the target's straw backing: a short, dull knock, nothing musical about it.
+  bowHit(){ playNoise(0.07, 0.2, 800); playTone(180, 0.07, 'square', 0.14, 110); },
   doorToggle(opening){ playDoorCreak(opening); },
   windowToggle(opening){ playWindowSlide(opening); },
   // A soft attack rounds the transient off into a light "patter" instead of a percussive tap, and
@@ -8142,6 +8286,7 @@ function doInteract(){
   if(FOOD_RESTORE[held]!=null){ tryEatFood(held); return; }
   if(held===COMPASS){ useCompass(); return; }
   if(held===FISHING_POLE){ tryFish(); return; }
+  if(held===BOW){ tryShootBow(); return; }
   // Carried items with no block form at all — without this they'd place as an untextured cube,
   // since none of them has a BLOCK_TILES entry.
   if(CARRY_ONLY_ITEMS.has(held)) return;
@@ -9240,6 +9385,7 @@ function init(){
   // missing, so it just gets placed again rather than accepting the loss.
   buildGiantFlag();
   buildTotems();
+  buildArcheryRange();
   buildCampSign();
   buildKayak();
   buildHorse();
@@ -9301,6 +9447,7 @@ function animate(now){
   updateCampfireFlames();
   updateWaterFlow(dt);
   updateFireworks(dt);
+  updateArrows(dt);
   updateFireflies(dt);
   updateWorms(dt);
   updateButterflies(dt);
