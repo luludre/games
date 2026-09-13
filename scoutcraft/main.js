@@ -7666,8 +7666,8 @@ document.getElementById('btnBackpack').addEventListener('click', ()=>{ if(locked
 // A small fixed cluster to the left of the hotbar — always the same four actions, never swapped out
 // for an item the way an ordinary hotbar slot can be.
 const FIRST_AID_HEAL_HP = 2 * HP_PER_HEART; // 2 hearts
-const FIRST_AID_COOLDOWN_S = 60;
-const STOP_BEAR_COOLDOWN_S = 20;
+const FIRST_AID_COOLDOWN_S = 10;
+const STOP_BEAR_COOLDOWN_S = 3;
 let firstAidCooldown = 0, stopBearCooldown = 0;
 // Named so the keydown handler below and the on-screen icon's click both call the exact same logic
 // rather than duplicating it — Backpack and Camp Workbench already had B/E, these are the two new ones.

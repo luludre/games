@@ -60,7 +60,7 @@ Then visit `http://localhost:8000`.
 - `M` (or the **🎖️ Badges (M)** button) — open your merit badge sash
 - `K` — sleep through the night, if you're near your tent and it's after dark
 - `V` — toggle first-person view (third-person, seeing your own blocky character, is the default)
-- `P` (or the fixed **➕** quick-access icon) — First Aid: an instant 2-heart heal, once every 60 seconds
+- `P` (or the fixed **➕** quick-access icon) — First Aid: an instant 2-heart heal, once every 10 seconds
 - `O` (or the fixed **🐻🚫** quick-access icon) — Stop Bear: see [Health & combat](#health--combat)
 - `H` — toggle the hotkey list, a panel on the right edge of the screen listing every key above (and this one). Hidden by default so it doesn't clutter the screen; the front-page tutorial still covers the basics before you even start playing.
 - The **❓ How to play** button on the start screen reveals the full tutorial paragraph (chopping trees, crafting, badges) — collapsed by default so the front page stays short; click it again (now **✕ Hide help**) to put it away.
@@ -86,7 +86,7 @@ Four more icons sit fixed to the hotbar's left — Backpack, Camp Workbench, Fir
 
 - **🎒 Backpack** (`B`)
 - **🛠️ Camp Workbench** (`E`) — opens crafting if you're within 4 blocks of a placed Camp Workbench, otherwise just says so
-- **➕ First Aid** (`P`) — an instant heal of 2 hearts, once every 60 seconds — an active option alongside the passive stand-still regen, not a replacement for it
+- **➕ First Aid** (`P`) — an instant heal of 2 hearts, once every 10 seconds — an active option alongside the passive stand-still regen, not a replacement for it
 - **🐻🚫 Stop Bear** (`O`) — see [Health & combat](#health--combat) below
 
 Every one of the four also has a keyboard shortcut, shown as a small letter in its corner — they work identically whether you click the icon or press the key.
@@ -315,7 +315,7 @@ Rabbits, squirrels, and deer are always harmless — you can hit them but they n
 
 Climbing onto a short ledge doesn't make a hostile animal give up — if it can't physically walk the rest of the way to you (a real height drop it can't climb), it can still lunge and land a hit as long as you're within a generous reach measured in real 3D space, not just flat ground distance. Get far enough away — a real cliff well out of that lunge range — and you're genuinely out of reach; a short obstacle just outside its normal attack range isn't. Water is no obstacle at all: land animals swim, surfacing and paddling once they're out of their depth rather than wading along the bottom out of sight, so wading into a lake only helps if you can out-swim whatever's chasing you.
 
-If a bear's already on you, the **🐻🚫 Stop Bear** quick-access icon (bottom of the screen, next to the hotbar) is the emergency out: click it to shout and clap — a big **GO AWAY! BEAR! GO AWAY!** banner on screen, a burst of deliberately silly noise — and every bear within about 8 blocks turns and runs for a full 6 seconds, aggro cleared, so it doesn't just spin around and resume the charge the moment the fright wears off. It's on a 20-second cooldown so it's a real emergency tool, not a way to make bears harmless outright.
+If a bear's already on you, the **🐻🚫 Stop Bear** quick-access icon (bottom of the screen, next to the hotbar) is the emergency out: click it to shout and clap — a big **GO AWAY! BEAR! GO AWAY!** banner on screen, a burst of deliberately silly noise — and every bear within about 8 blocks turns and runs for a full 6 seconds, aggro cleared, so it doesn't just spin around and resume the charge the moment the fright wears off. It's on a 3-second cooldown so it's a real emergency tool, not a way to make bears harmless outright.
 
 Animals are solid, not something you can walk or fall straight through — jump onto one from above and you land on its back like any other obstacle, instead of clipping through its body onto the ground underneath.
 
