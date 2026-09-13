@@ -2236,9 +2236,12 @@ const headMaterials = [skinMaterial, skinMaterial, skinMaterial, skinMaterial, s
 
 function createCharacterMesh(shirtColor){
   const group = new THREE.Group();
-  // A scout's uniform: khaki shirt, army green pants and hat.
+  // A scout's uniform: short-sleeve khaki shirt, short army green pants, bare arms/legs between
+  // them and the socks/shoes below, army green socks, hiking shoes, and a hat.
   const shirtMat = new THREE.MeshLambertMaterial({ color: shirtColor!==undefined ? shirtColor : 0xa89272 });
   const pantsMat = new THREE.MeshLambertMaterial({ color: 0x4b5320 });
+  const sockMat = new THREE.MeshLambertMaterial({ color: 0x4b5320 });
+  const shoeMat = new THREE.MeshLambertMaterial({ color: 0x4a3728 });
   const hatMat = new THREE.MeshLambertMaterial({ color: 0x4b5320 });
 
   function box(w,h,d,mat,pivotTop){
@@ -2246,18 +2249,35 @@ function createCharacterMesh(shirtColor){
     if(pivotTop) geo.translate(0,-h/2,0);
     return new THREE.Mesh(geo, mat);
   }
+  // Stacks segments (top to bottom) into a group pivoted at the very top (the shoulder or hip), so
+  // the existing walk-swing animation — which just rotates this group around its own origin — still
+  // swings every segment together as one rigid limb, exactly like the single-box limbs this replaced.
+  function makeLimb(w,d,segments){
+    const g = new THREE.Group();
+    let y = 0;
+    for(const seg of segments){
+      const mesh = box(w, seg.h, d, seg.mat);
+      mesh.position.set(0, y-seg.h/2, 0);
+      g.add(mesh);
+      y -= seg.h;
+    }
+    return g;
+  }
 
   const head = new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5), headMaterials);
   head.position.set(0, 1.55, 0);
   const body = box(0.5,0.75,0.28, shirtMat);
   body.position.set(0, 1.05, 0);
-  const armL = box(0.2,0.7,0.2, shirtMat, true);
+  // Short sleeve up top, bare arm (skin) the rest of the way down.
+  const armL = makeLimb(0.2,0.2, [{h:0.25,mat:shirtMat},{h:0.45,mat:skinMaterial}]);
   armL.position.set(-0.35, 1.4, 0);
-  const armR = box(0.2,0.7,0.2, shirtMat, true);
+  const armR = makeLimb(0.2,0.2, [{h:0.25,mat:shirtMat},{h:0.45,mat:skinMaterial}]);
   armR.position.set(0.35, 1.4, 0);
-  const legL = box(0.22,0.7,0.22, pantsMat, true);
+  // Short pants up top, bare leg (skin) through the knee/shin, a short sock, then a hiking shoe.
+  const legSegments = [{h:0.20,mat:pantsMat},{h:0.30,mat:skinMaterial},{h:0.10,mat:sockMat},{h:0.10,mat:shoeMat}];
+  const legL = makeLimb(0.22,0.22, legSegments);
   legL.position.set(-0.14, 0.7, 0);
-  const legR = box(0.22,0.7,0.22, pantsMat, true);
+  const legR = makeLimb(0.22,0.22, legSegments);
   legR.position.set(0.14, 0.7, 0);
   // A wide-brimmed scout hat rather than a baseball cap — the crown sinks down over the top of the
   // head instead of stacking a full extra block above it (so it sits low enough to clear the name

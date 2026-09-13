@@ -340,9 +340,10 @@ While you're playing, the game quietly checks every 5 minutes whether `main.js` 
 - The world is a fixed 128×128 block area (4x the original map) with procedurally generated hills, a beach/water line, and scattered trees — regenerated from a fixed seed, so it's the same every time you load it. The world is flooded three blocks higher than its original sea level, so some ground that used to be shoreline is underwater now.
 - Your current coordinates are shown live in the top-left HUD.
 - The camera starts in third person, showing your own blocky character in its scout uniform — a
-  khaki shirt, army green pants, and a wide-brimmed army green hat. Moving the mouse turns your
-  character freely without moving the camera, so you can spin all the way around to see your own
-  face; stop moving the mouse for a second and a half and the camera eases back to its normal spot
+  short-sleeve khaki shirt over bare arms, short army green pants over bare legs, army green socks,
+  hiking shoes, and a wide-brimmed army green hat. Moving the mouse turns your character freely
+  without moving the camera, so you can spin all the way around to see your own face; stop moving
+  the mouse for a second and a half and the camera eases back to its normal spot
   behind you. `V` switches to the classic first-person view instead.
 - Your name tag floats over your head with your current rank underneath it (Tenderfoot, Second
   Class, and so on through Eagle Scout) instead of a health readout — your hearts are already shown
