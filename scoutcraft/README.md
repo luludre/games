@@ -66,10 +66,10 @@ Then visit `http://localhost:8000`.
 - `O` (or the fixed **🐻🚫** quick-access icon) — Stop Bear: see [Health & combat](#health--combat)
 - `H` — toggle the hotkey list, a panel on the right edge of the screen listing every key above (and this one). Hidden by default so it doesn't clutter the screen; the front-page tutorial still covers the basics before you even start playing.
 - The **❓ How to play** button on the start screen reveals the full tutorial paragraph (chopping trees, crafting, badges) — collapsed by default so the front page stays short; click it again (now **✕ Hide help**) to put it away.
-- The **🚪 Quit** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
-- Closing the tab or navigating away without clicking Quit first triggers the browser's own "Leave site?" confirmation instead — a browser won't let a page show its own custom screen at that exact moment, so this is the closest real equivalent, just enough of a pause to reconsider. It only fires once; if you've already seen the actual thank-you screen, closing from there doesn't prompt twice.
-- That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you quit so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
-- The thank-you screen also draws a shareable badge picture on the spot — your current rank plus all 18 merit badges, earned ones lit up in gold and the rest dimmed, regenerated fresh every time you quit just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
+- The **🏅 Share My Achievements** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
+- Closing the tab or navigating away without clicking it first triggers the browser's own "Leave site?" confirmation instead — a browser won't let a page show its own custom screen at that exact moment, so this is the closest real equivalent, just enough of a pause to reconsider. It only fires once; if you've already seen the actual thank-you screen, closing from there doesn't prompt twice.
+- That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you open it so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
+- The thank-you screen also draws a shareable badge picture on the spot — your current rank plus all 18 merit badges, earned ones lit up in gold and the rest dimmed, regenerated fresh every time you open it just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
 
 The front page says so directly, but worth repeating here too: ScoutCraft is designed for a desktop or laptop with a real keyboard and mouse — that's where every control above actually applies. On a phone or tablet (iPad included), the game automatically switches to touch controls instead — no setup needed, just open the page in Safari and tap to play — but that's a fallback, not the intended experience:
 
@@ -149,10 +149,16 @@ want and how far along you are ("14 / 25 wood").
 | 🐴 | Horseback Riding | Ride 200 blocks on horseback |
 | 🏅 | Scout Spirit | Find all 12 golden Scout Law boxes hidden around camp |
 
-Ranks follow from the count alone — **Scout** (0), **Tenderfoot** (1), **Second Class** (2),
-**First Class** (5), **Star Scout** (8), **Life Scout** (11), **Eagle Scout** (all 18) — and your current rank and badge
-count sit in the HUD at the top of the screen. Earning one plays a short bugle call and drops a
+Ranks follow from the count alone — **None** (0, nothing earned yet), **Scout** (1), **Tenderfoot**
+(2), **Second Class** (3), **First Class** (6), **Star Scout** (9), **Life Scout** (12), **Eagle
+Scout** (14 — just over 3/4 of all 18, not literally every one of them) — and your current rank and
+badge count sit in the HUD at the top of the screen. Earning one plays a short bugle call and drops a
 banner telling you what you got, and what rank it just made you.
+
+Your rank also shows up as a small original badge icon — a colored disc with one star per tier, not a
+copy of any real insignia — in three places: next to your rank on the floating name tag over your
+head, stitched onto your shirt's left chest pocket (updates the moment you rank up), and above your
+rank name on the achievement card the exit screen generates for sharing.
 
 Progress is per-browser, saved to `localStorage` alongside your world edits and inventory, and only
 counts while you're actually playing — nothing accrues while you sit on the start screen or have a
@@ -459,9 +465,10 @@ While you're playing, the game quietly checks every 5 minutes whether `main.js` 
   character freely without moving the camera, so you can spin all the way around to see your own
   face and uniform; stop moving the mouse for a second and a half and the camera eases back to its
   normal spot behind you. `V` switches to the classic first-person view instead.
-- Your name tag floats over your head with your current rank underneath it (Scout, Tenderfoot, Second
-  Class, and so on through Eagle Scout) instead of a health readout — your hearts are already shown
-  in the HUD, so this doubles as a second place to glance at your standing.
+- Your name tag floats over your head with your current rank underneath it (None, Scout, Tenderfoot,
+  Second Class, and so on through Eagle Scout), a small rank badge icon beside the rank text, instead
+  of a health readout — your hearts are already shown in the HUD, so this doubles as a second place to
+  glance at your standing.
 - A small drawn paper map floats in view — a fold crease, a few contour-line squiggles, a dashed
   trail and a north arrow — in place of the arm-and-held-block view most voxel games show. It's a
   fixed prop, not a per-item indicator; it looks the same no matter what's actually selected in your

@@ -371,22 +371,31 @@ const BADGES = [
   { id:'horseback',  emoji:'🐴', name:'Horseback Riding', hint:'Ride 200 blocks on horseback.',            test:()=> scoutStats.horsebackBlocks >= HORSEBACK_BADGE_BLOCKS },
   { id:'scoutspirit',emoji:'🏅', name:'Scout Spirit', hint:'Find all 12 golden Scout Law boxes hidden around camp.', test:()=> scoutStats.lawsCollected.length >= SCOUT_LAW_POINTS.length },
 ];
-// Ranks are purely derived from how many badges you hold — no separate progression to track.
-// Eagle Scout always means "every badge earned," so it's tied to BADGES.length rather than a number
-// that would need updating by hand every time a badge is added.
+// Ranks are purely derived from how many badges you hold — no separate progression to track. A brand
+// new Scout hasn't earned anything yet, so rank starts at "None" rather than jumping straight to
+// "Scout" — every other threshold below is just the old numbers shifted up by one to make room for it.
+// Eagle Scout doesn't need every badge — real Scouting lets you count some from outside the required
+// list, so this is modeled as "more than 3/4 of them" instead of literally all of them, tied to
+// BADGES.length (rounded up) rather than a number that would need updating by hand every time a
+// badge is added.
+const EAGLE_BADGE_FRACTION = 0.75;
 const RANKS = [
-  { min:0,  name:'Scout' },
-  { min:1,  name:'Tenderfoot' },
-  { min:2,  name:'Second Class' },
-  { min:5,  name:'First Class' },
-  { min:8,  name:'Star Scout' },
-  { min:11, name:'Life Scout' },
-  { min:BADGES.length, name:'Eagle Scout' },
+  { min:0,  name:'None' },
+  { min:1,  name:'Scout' },
+  { min:2,  name:'Tenderfoot' },
+  { min:3,  name:'Second Class' },
+  { min:6,  name:'First Class' },
+  { min:9,  name:'Star Scout' },
+  { min:12, name:'Life Scout' },
+  { min: Math.ceil(BADGES.length * EAGLE_BADGE_FRACTION), name:'Eagle Scout' },
 ];
+function rankIndexFor(count){
+  let idx = 0;
+  for(let i=0;i<RANKS.length;i++) if(count >= RANKS[i].min) idx = i;
+  return idx;
+}
 function rankFor(count){
-  let r = RANKS[0];
-  for(const cand of RANKS) if(count >= cand.min) r = cand;
-  return r.name;
+  return RANKS[rankIndexFor(count)].name;
 }
 
 const BADGE_KEY = 'scoutcraft_badges_v1';
@@ -590,6 +599,19 @@ function updateScoutHUD(){
   if(c) c.textContent = `${earnedBadges.size}/${BADGES.length}`;
   const r = document.getElementById('rankLabel');
   if(r) r.textContent = rankFor(earnedBadges.size);
+  updateCharacterRankBadge();
+}
+// Re-draws the shirt's left-pocket rank badge only when the rank itself actually changed — called
+// every time updateScoutHUD is (i.e. whenever the earned badge count changes), same trigger the sash
+// and name tag refresh on.
+function updateCharacterRankBadge(){
+  const u = characterMesh && characterMesh.userData.uniform;
+  if(!u) return;
+  const idx = rankIndexFor(earnedBadges.size);
+  if(u.lastRankIndex === idx) return;
+  u.lastRankIndex = idx;
+  u.shirtFrontMat.map = buildShirtFrontTexture(idx);
+  u.shirtFrontMat.needsUpdate = true;
 }
 
 // ---- The compass: how far, and in which direction, camp is ----
@@ -758,9 +780,12 @@ function renderSash(){
   const rankEl = document.getElementById('sashRank');
   if(rankEl){
     const next = RANKS.find(r => r.min > earnedBadges.size);
+    // Eagle only needs EAGLE_BADGE_FRACTION of the badges now, not literally all of them, so reaching
+    // it (the last rank with no "next") doesn't necessarily mean every badge is earned anymore —
+    // check that separately rather than assuming the two are still the same thing.
     rankEl.textContent = next
       ? `${rankFor(earnedBadges.size)} — ${next.min - earnedBadges.size} more badge${next.min-earnedBadges.size===1?'':'s'} to ${next.name}`
-      : `${rankFor(earnedBadges.size)} — every badge earned!`;
+      : (earnedBadges.size >= BADGES.length ? `${rankFor(earnedBadges.size)} — every badge earned!` : `${rankFor(earnedBadges.size)} — the highest rank!`);
   }
   const countEl = document.getElementById('sashCount');
   if(countEl) countEl.textContent = `${earnedBadges.size} of ${BADGES.length}`;
@@ -1467,6 +1492,36 @@ function drawStar(ctx,cx,cy,rOuter,rInner){
   }
   ctx.closePath();
   ctx.fill();
+}
+// Rank badge art — an original, simple design (not a reproduction of any real insignia): a colored
+// disc that gets richer per tier, with one star per rank above None. Drawn straight onto whatever 2D
+// context is handed in, so the exact same function puts the same-looking badge on the floating name
+// tag, the shirt's left chest pocket, and the exit screen's achievement card — "what rank am I" always
+// reads the same way wherever it shows up. rankIndex is an index into RANKS (0 = None).
+const RANK_BADGE_COLORS = ['#6b6b6b','#a8825a','#8a9a5a','#7a9a4a','#5a8a4a','#b8b8c0','#c94a3a','#f0c020'];
+function drawRankBadge(ctx, cx, cy, radius, rankIndex){
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI*2);
+  ctx.fillStyle = RANK_BADGE_COLORS[rankIndex] || RANK_BADGE_COLORS[0];
+  ctx.fill();
+  ctx.lineWidth = Math.max(1, radius*0.12);
+  ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+  ctx.stroke();
+  if(rankIndex<=0) return;
+  const n = rankIndex;
+  const starR = radius*0.32, starInner = starR*0.42;
+  const rows = n<=4 ? 1 : 2;
+  const perRow = Math.ceil(n/rows);
+  const rowSpacing = radius*0.7;
+  ctx.fillStyle = '#fff8e0';
+  for(let row=0; row<rows; row++){
+    const count = row===rows-1 ? n-perRow*(rows-1) : perRow;
+    const y = cy + (row-(rows-1)/2)*rowSpacing;
+    for(let i=0;i<count;i++){
+      const x = cx + (i-(count-1)/2)*(starR*1.7);
+      drawStar(ctx, x, y, starR, starInner);
+    }
+  }
 }
 let usFlagMasterCanvas = null;
 function buildUSFlagMaster(){
@@ -2527,7 +2582,9 @@ function pixelTexture(canvas){
 // Two chest pockets and a row of buttons down the placket — drawn onto the torso box's front (-z)
 // face only, same face-array trick as the head's own faceMaterial above.
 const SHIRT_COLOR_HEX = '#a89272'; // must track the shirtMat default a few lines down
-function buildShirtFrontTexture(){
+// rankIndex (0=None) puts your current rank badge on the left chest pocket, same small vector art as
+// drawRankBadge everywhere else — left blank until you've actually earned your way to at least Scout.
+function buildShirtFrontTexture(rankIndex){
   const w=32, h=48;
   const canvas = document.createElement('canvas');
   canvas.width=w; canvas.height=h;
@@ -2542,6 +2599,10 @@ function buildShirtFrontTexture(){
   ctx.fillRect(19,9,10,3);
   ctx.fillStyle = '#5a4a38';
   for(let i=0;i<5;i++) ctx.fillRect(15,5+i*8,2,2);
+  // The canvas's own left (small x) lands on the character's own right once mapped onto the body's
+  // front face and viewed face-on — confirmed by comparing against the right-sleeve flag patch in a
+  // front-view render — so the *character's* left pocket is the second one, at larger x.
+  if(rankIndex>0) drawRankBadge(ctx, 24, 14.5, 5, rankIndex);
   return pixelTexture(canvas);
 }
 // A small US flag patch, sewn-on-sleeve style — just a striped rectangle with a canton block, since
@@ -2641,7 +2702,8 @@ function createCharacterMesh(shirtColor){
   const body = box(0.5,0.75,0.28, shirtMat);
   body.position.set(0, 1.05, 0);
   // Front (-z) face only gets the pockets/buttons texture — same per-face-array trick as the head.
-  const shirtFrontMat = new THREE.MeshLambertMaterial({ map: buildShirtFrontTexture() });
+  const initialRankIndex = rankIndexFor(earnedBadges.size);
+  const shirtFrontMat = new THREE.MeshLambertMaterial({ map: buildShirtFrontTexture(initialRankIndex) });
   body.material = [shirtMat, shirtMat, shirtMat, shirtMat, shirtMat, shirtFrontMat];
   // Short sleeve up top, bare arm (skin) the rest of the way down.
   const armL = makeLimb(0.2,0.2, [{h:0.25,mat:shirtMat},{h:0.45,mat:skinMaterial}]);
@@ -2685,7 +2747,7 @@ function createCharacterMesh(shirtColor){
   group.userData.parts = { armL, armR, legL, legR };
   // Stashed so applyUniformCustomization can update the troop number / neckerchief color live, after
   // the front-page overlay is actually submitted, without rebuilding this whole mesh.
-  group.userData.uniform = { troopPatchMat, neckerchief, backpack };
+  group.userData.uniform = { troopPatchMat, neckerchief, backpack, shirtFrontMat, lastRankIndex: initialRankIndex };
   group.traverse(o => { if(o.isMesh){ o.castShadow = true; } });
   return group;
 }
@@ -2711,7 +2773,9 @@ function animateWalk(group, state, dt, moving, sprinting){
   legR.rotation.x = -swing;
 }
 // ---------- Floating name/HP tag (drawn on a canvas, shown as a billboard sprite above the head) ----------
-function buildNameTagCanvas(name, rank){
+function buildNameTagCanvas(name, badgeCount){
+  const rankIndex = rankIndexFor(badgeCount);
+  const rankName = RANKS[rankIndex].name;
   const canvas = document.createElement('canvas');
   canvas.width = 256; canvas.height = 64;
   const ctx = canvas.getContext('2d');
@@ -2721,23 +2785,30 @@ function buildNameTagCanvas(name, rank){
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 24px sans-serif';
   ctx.fillText(name, 128, 28);
+  // Rank badge + name, centered together as one unit — the badge sized/measured against the text
+  // width so it never looks off-center regardless of how long the rank name is.
   ctx.font = '18px sans-serif';
   ctx.fillStyle = '#f0dfa8';
-  ctx.fillText(rank, 128, 52);
+  const badgeD = 20, gap = 6;
+  const textW = ctx.measureText(rankName).width;
+  const startX = 128 - (badgeD+gap+textW)/2;
+  drawRankBadge(ctx, startX+badgeD/2, 50, badgeD/2, rankIndex);
+  ctx.textAlign = 'left';
+  ctx.fillText(rankName, startX+badgeD+gap, 56);
   return canvas;
 }
 function createNameTagSprite(){
-  const tex = new THREE.CanvasTexture(buildNameTagCanvas('', rankFor(0)));
+  const tex = new THREE.CanvasTexture(buildNameTagCanvas('', 0));
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
   sprite.scale.set(1.6, 0.4, 1);
   sprite.position.set(0, 2.05, 0);
   return { sprite, tex, lastKey: null };
 }
-function updateNameTag(tag, name, rank){
-  const key = name + ':' + rank;
+function updateNameTag(tag, name, badgeCount){
+  const key = name + ':' + badgeCount;
   if(tag.lastKey === key) return;
   tag.lastKey = key;
-  const canvas = buildNameTagCanvas(name, rank);
+  const canvas = buildNameTagCanvas(name, badgeCount);
   tag.tex.dispose();
   tag.tex = new THREE.CanvasTexture(canvas);
   tag.sprite.material.map = tag.tex;
@@ -3731,7 +3802,7 @@ function updateCharacterAnim(dt, moving, sprinting){
   // Cheap third-person "crawling" tell: squash the whole body toward the ground rather than building a
   // separate prone pose. The group's origin is at the feet, so this alone keeps it planted correctly.
   characterMesh.scale.y = player.crawling ? 0.42 : 1;
-  updateNameTag(myNameTag, myName, rankFor(earnedBadges.size));
+  updateNameTag(myNameTag, myName, earnedBadges.size);
 }
 
 // ---------- World edits ----------
@@ -7777,8 +7848,9 @@ if(sashModalEl){
 
 // ---------- Quit / thank-you screen ----------
 // A deliberate in-game "I'm done for now" action, not tied to actually closing the tab (a page can't
-// intercept that with anything beyond a native browser prompt) — clicking Quit unlocks the mouse and
-// swaps in a full-screen thank-you screen with Andre's popcorn fundraiser link. World/inventory/badge
+// intercept that with anything beyond a native browser prompt) — clicking the "Share My Achievements"
+// button unlocks the mouse and swaps in a full-screen thank-you screen with Andre's popcorn fundraiser
+// link. World/inventory/badge
 // progress is already saved continuously during play, so there's nothing extra to do on the way out;
 // "Keep playing instead" just puts the overlay away again.
 const thankYouScreen = document.getElementById('thankYouScreen');
@@ -7824,17 +7896,18 @@ function buildAchievementCanvas(){
 
   ctx.textAlign = 'center';
   ctx.fillStyle = '#f2e9d8';
-  ctx.font = 'bold 40px sans-serif';
-  ctx.fillText('🏕️ ScoutCraft', width/2, 62);
+  ctx.font = 'bold 36px sans-serif';
+  ctx.fillText('🏕️ ScoutCraft', width/2, 46);
 
   const count = earnedBadges.size, total = BADGES.length;
+  drawRankBadge(ctx, width/2, 96, 30, rankIndexFor(count));
   ctx.fillStyle = '#e8c46a';
-  ctx.font = 'bold 56px sans-serif';
-  ctx.fillText(rankFor(count), width/2, 128);
+  ctx.font = 'bold 52px sans-serif';
+  ctx.fillText(rankFor(count), width/2, 160);
 
   ctx.fillStyle = '#c8e0a8';
   ctx.font = '26px sans-serif';
-  ctx.fillText(`${count} of ${total} Merit Badges Earned`, width/2, 168);
+  ctx.fillText(`${count} of ${total} Merit Badges Earned`, width/2, 195);
 
   BADGES.forEach((b,i)=>{
     const col = i%cols, row = Math.floor(i/cols);
