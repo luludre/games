@@ -9,6 +9,14 @@
      reload. Bump the version if the icon ever needs to change and still isn't picking up. -->
 <link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png?v=1">
 <link rel="apple-touch-icon" href="assets/icon-512.png?v=1">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-EGYQVF8PSF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-EGYQVF8PSF');
+</script>
 <style>
   html,body{margin:0;padding:0;overflow:hidden;height:100%;background:#8fd0ee;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
   canvas{display:block;}
@@ -33,7 +41,8 @@
   .slot .icon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:22px;line-height:1;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.5);}
   .slot.empty .icon{opacity:0.35;}
   #overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:20;cursor:pointer;overflow-y:auto;padding:16px 0;box-sizing:border-box;}
-  #overlay h1{font-size:2.4em;margin:0 0 10px;}
+  #overlay h1{font-size:2.4em;margin:0 0 2px;}
+  #campSubtitle{font-size:1em;font-weight:600;color:#e8c46a;margin:0 0 10px;letter-spacing:0.03em;}
   #overlay p{max-width:520px;line-height:1.6;opacity:0.92;font-size:15px;}
   #overlay .key{background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:4px;}
   #overlay .small{margin-top:18px;font-size:12px;opacity:0.65;}
@@ -216,7 +225,7 @@
 </style>
 </head>
 <body>
-<div id="hud">📍<span id="coordsLabel">0, 0, 0</span> · Edits <span id="blockCount">0</span> · <span id="fps">0</span>fps · 📅<span id="dateLabel">Jan 1, Y0</span> · 🕐<span id="worldTimeLabel">00:00</span><span id="timeModeLabel"></span> · <span id="weatherLabel">Sunny</span> · <span id="windLabel">Calm</span> · <span id="seasonLabel">Spring</span> <span id="tempLabel">50°F</span> · 🐛<span id="wormCount">0</span> · 🦋<span id="butterflyCount">0</span> · 🎖️<span id="badgeCount">0/13</span> · <span id="rankLabel">Tenderfoot</span></div>
+<div id="hud">📍<span id="coordsLabel">0, 0, 0</span> · <span id="fps">0</span>fps · 📅<span id="dateLabel">Jan 1, Y0</span> · 🕐<span id="worldTimeLabel">00:00</span><span id="timeModeLabel"></span> · <span id="weatherLabel">Sunny</span> · <span id="windLabel">Calm</span> · <span id="seasonLabel">Spring</span> <span id="tempLabel">50°F</span> · 🎖️<span id="badgeCount">0/13</span> · <span id="rankLabel">Tenderfoot</span><span id="hudHiddenStats" hidden>Edits <span id="blockCount">0</span> 🐛<span id="wormCount">0</span> 🦋<span id="butterflyCount">0</span></span></div>
 <div id="debugPanel" hidden></div>
 <div id="updateBanner" hidden>🔄 A new version of ScoutCraft is available <button id="updateReloadBtn">Reload</button></div>
 <div id="minimap"><canvas id="minimapCanvas" width="160" height="160"></canvas></div>
@@ -377,6 +386,7 @@
 </div>
 <div id="overlay">
   <h1>ScoutCraft</h1>
+  <p id="campSubtitle">🏕️ Camp Merit Ridge</p>
   <p id="desktopNotice">💻 Best played on a desktop or laptop with a keyboard and mouse. It also works on phones and tablets with on-screen touch controls, but that's not what it was designed for.</p>
   <p id="controlsText">
     Set up camp in the wilderness and earn your merit badges — a browser voxel world where

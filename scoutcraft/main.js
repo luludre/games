@@ -1650,10 +1650,11 @@ function buildCookingArea(){
   protect(x0+15, fy, z0+14, BEAR_BOX);
 }
 // A giant American flag towering over the cooking area's far corner, clear of every station above —
-// a very long flagpole (17 stacked segments, topped with the same gold-finial block the little Troop
-// Flag already uses) with a 3-wide x 2-tall mural mounted flush against its hoist side, high enough to
-// see from across the clearing. See buildUSFlagMaster for how the mural's 50 stars actually get drawn.
-const GIANT_FLAG_POLE_HEIGHT = 17;
+// a flagpole (12 stacked segments, topped with the same gold-finial block the little Troop Flag
+// already uses) with a 3-wide x 2-tall mural mounted flush against its hoist side, raised all the way
+// up so its top row is level with the finial itself, not just the topmost bare pole segment below it.
+// See buildUSFlagMaster for how the mural's 50 stars actually get drawn.
+const GIANT_FLAG_POLE_HEIGHT = 12;
 function buildGiantFlag(){
   const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
   const poleX = x0 + COOKING_AREA_SIZE - 2, poleZ = z0 + COOKING_AREA_SIZE - 2;
@@ -1661,7 +1662,7 @@ function buildGiantFlag(){
   const protect = (x,y,z,block) => { setBlock(x,y,z,block); PROTECTED_CELLS.add(x+','+y+','+z); };
   for(let i=0;i<GIANT_FLAG_POLE_HEIGHT;i++) protect(poleX, baseY+i, poleZ, FLAG_POLE);
   protect(poleX, baseY+GIANT_FLAG_POLE_HEIGHT, poleZ, FLAG);
-  const flagTopY = baseY + GIANT_FLAG_POLE_HEIGHT - 4;
+  const flagTopY = baseY + GIANT_FLAG_POLE_HEIGHT;
   const grid = [
     [US_FLAG_TL, US_FLAG_TC, US_FLAG_TR],
     [US_FLAG_BL, US_FLAG_BC, US_FLAG_BR],
@@ -1741,6 +1742,37 @@ function buildLawLabelSprite(word){
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
   sprite.scale.set(2.0, 0.45, 1);
   return sprite;
+}
+const CAMPSITE_NAME = 'Camp Merit Ridge';
+// A rustic wooden welcome sign floating over the cooking area — same canvas-texture sprite technique
+// as the Scout Law labels above, just styled like carved wood planks instead of a gold plaque.
+function buildCampSignSprite(text){
+  const canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#6b4a2b';
+  ctx.fillRect(0,0,512,128);
+  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+  ctx.lineWidth = 2;
+  for(let x=64;x<512;x+=64){ ctx.beginPath(); ctx.moveTo(x,4); ctx.lineTo(x,124); ctx.stroke(); }
+  ctx.strokeStyle = '#3a2818';
+  ctx.lineWidth = 10;
+  ctx.strokeRect(5,5,502,118);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#f0dfa8';
+  ctx.font = 'bold 46px sans-serif';
+  ctx.fillText(text, 256, 66);
+  const tex = new THREE.CanvasTexture(canvas);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
+  sprite.scale.set(4.0, 1.0, 1);
+  return sprite;
+}
+function buildCampSign(){
+  const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
+  const sprite = buildCampSignSprite('🏕️ ' + CAMPSITE_NAME);
+  sprite.position.set(x0 + COOKING_AREA_SIZE/2, COOKING_AREA_Y + 5, z0 + 2);
+  scene.add(sprite);
 }
 // Runs once after loadEdits() has replayed any saved edits on top of the freshly generated world —
 // a box collected in an earlier session now sits under an AIR edit, so this drops it (and skips its
@@ -1959,11 +1991,16 @@ const glassMaterial = new THREE.MeshLambertMaterial({ vertexColors: true, side: 
 // skipped (no point rendering the seam between two adjacent water, window, or leaf blocks); a face
 // against a *different* transparent type, or against AIR, still draws.
 const TRANSPARENT_BLOCKS = new Set([WATER, WINDOW, WINDOW_OPEN, DOOR_OPEN, SAPLING, FIRE, TORCH, LADDER, LEAVES, LANTERN, FLAG, FLAG_POLE, DUTCH_OVEN, POT, PAN, GRIDDLE]);
-// The subset of the above that a "is this column covered by a roof" check treats as passing sky/
-// light straight through. Leaves are deliberately left out — a tree's canopy still counts as real
+// Mostly the subset of the above that a "is this column covered by a roof" check treats as passing
+// sky/light straight through. Leaves are deliberately left out — a tree's canopy still counts as real
 // shelter/shade (indoor darkening, temperature danger) even though it now renders sparse and
-// translucent rather than as a solid cube.
-const SKY_PASS_BLOCKS = new Set([WATER, WINDOW, WINDOW_OPEN, DOOR_OPEN, SAPLING, FIRE, TORCH, LADDER, LANTERN, FLAG, FLAG_POLE]);
+// translucent rather than as a solid cube. The giant flag's 6 mural blocks are the one exception in
+// the other direction: fully opaque (not in TRANSPARENT_BLOCKS, so they still render as solid color,
+// no alpha blending) but listed here anyway, since without it the top row's own shadow was darkening
+// the bottom row directly beneath it — a real roof would darken what's under it, but a paper-thin
+// 2-block-tall panel floating in open air isn't meaningfully "indoors."
+const SKY_PASS_BLOCKS = new Set([WATER, WINDOW, WINDOW_OPEN, DOOR_OPEN, SAPLING, FIRE, TORCH, LADDER, LANTERN, FLAG, FLAG_POLE,
+  US_FLAG_TL, US_FLAG_TC, US_FLAG_TR, US_FLAG_BL, US_FLAG_BC, US_FLAG_BR]);
 // A block that gives off light shouldn't be *shaded* by light: with MeshLambertMaterial a campfire
 // sat as a black cube in the middle of its own pool of light, because its point light is inside the
 // block and so contributes nothing to the outward-facing normals. MeshBasicMaterial ignores lighting
@@ -7758,6 +7795,7 @@ function init(){
   // they'd silently punch through it. Unlike a Scout Law box, there's no legitimate way for this to be
   // missing, so it just gets placed again rather than accepting the loss.
   buildGiantFlag();
+  buildCampSign();
   restoreTorchLights();
   restoreScoutLawBoxes();
   updateScoutHUD();
@@ -7921,6 +7959,16 @@ setInterval(checkForUpdate, UPDATE_CHECK_INTERVAL_MS);
 setInterval(savePosition, POSITION_SAVE_INTERVAL_MS);
 window.addEventListener('beforeunload', savePosition);
 window.addEventListener('pagehide', savePosition);
+// Browsers don't let a page show its own custom UI at the moment of leaving — the tab just tears
+// down — so there's no way to actually pop the thank-you screen open on a close/navigate-away the
+// way clicking Quit does. The closest real equivalent is the browser's own generic "Leave site?"
+// prompt, which at least gives a beat to reconsider before going. Skipped once they've already seen
+// the real thank-you screen (clicked Quit themselves) — no need to prompt twice on the way out.
+window.addEventListener('beforeunload', e=>{
+  if(!thankYouScreen.hidden) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
 
 init();
 })();

@@ -1,6 +1,6 @@
 # ScoutCraft
 
-Set up camp in the wilderness and earn your merit badges. A single-player voxel world that runs
+Welcome to **Camp Merit Ridge** — set up camp in the wilderness and earn your merit badges. A single-player voxel world that runs
 entirely in the browser — procedurally generated terrain, block breaking/placing, crafting — built
 with [three.js](https://threejs.org/) — with a scouting layer on top: rope you twist from leaves, a
 walk-in tent you pitch, campfires you cook on, a compass that finds its way back to camp, and
@@ -65,6 +65,7 @@ Then visit `http://localhost:8000`.
 - `H` — toggle the hotkey list, a panel on the right edge of the screen listing every key above (and this one). Hidden by default so it doesn't clutter the screen; the front-page tutorial still covers the basics before you even start playing.
 - The **❓ How to play** button on the start screen reveals the full tutorial paragraph (chopping trees, crafting, badges) — collapsed by default so the front page stays short; click it again (now **✕ Hide help**) to put it away.
 - The **🚪 Quit** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
+- Closing the tab or navigating away without clicking Quit first triggers the browser's own "Leave site?" confirmation instead — a browser won't let a page show its own custom screen at that exact moment, so this is the closest real equivalent, just enough of a pause to reconsider. It only fires once; if you've already seen the actual thank-you screen, closing from there doesn't prompt twice.
 - That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you quit so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
 - The thank-you screen also draws a shareable badge picture on the spot — your current rank plus all 16 merit badges, earned ones lit up in gold and the rest dimmed, regenerated fresh every time you quit just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
 
@@ -252,12 +253,17 @@ yourself. All five campfires there work exactly like any other campfire — see
 purely decorative.
 
 A giant American flag towers over the clearing's far corner, clear of every station above — a
-17-block flagpole (the same thin pole the little Troop Flag uses, just stacked a lot taller, capped
-with its usual gold finial) flying a mural 3 blocks wide and 2 tall, mounted flush against the pole
-partway up. Each of those 6 blocks is really just its own slice of one shared, high-resolution flag
+12-block flagpole (the same thin pole the little Troop Flag uses, just stacked taller, capped with
+its usual gold finial) flying a mural 3 blocks wide and 2 tall, mounted flush against the pole and
+raised all the way up — its top row level with the finial itself, not just the bare pole segment
+below it. Each of those 6 blocks is really just its own slice of one shared, high-resolution flag
 image — 13 stripes, a blue canton, and all 50 stars individually drawn and actually countable up
 close — cropped and downscaled into that block's texture, so the six line up into one seamless image
 rather than six separately-drawn tiles. Like the cooking fixtures, it's permanently indestructible.
+
+A rustic wooden sign floats over the clearing naming the camp — "🏕️ Camp Merit Ridge" — the same
+canvas-texture billboard technique as the Scout Law boxes' word labels, just styled like carved wood
+instead of a gold plaque.
 
 ## Fire & torches
 
@@ -390,7 +396,7 @@ While you're playing, the game quietly checks every 5 minutes whether `main.js` 
   straight line at ground level instead of standing up, so they read as a downed trunk rather than
   a sapling. Same deterministic per-column placement as trees, so they stay put across reloads and
   chopping one for wood is a real, persistent edit like any tree.
-- Worms and butterflies are currently disabled — no worm ever spawns on the world's trees, so none grow into a butterfly either. The HUD's worm/butterfly counts always read 0.
+- Worms and butterflies are currently disabled — no worm ever spawns on the world's trees, so none grow into a butterfly either. Their counts (always 0) and the block-edit counter are no longer shown in the top HUD — both still live in the debug panel (`Alt+Shift+D`) for anyone who wants the numbers.
 - 10 black Hercules beetles cling to tree trunks around the map, one per tree — a real low-poly body with the signature pair of curved horns a male Hercules beetle fights with, and six legs gripping the bark. Purely ambient decoration like the birds and fish: they never leave their trunk, aren't attackable, and aren't saved between reloads, so a fresh load re-picks 10 trees.
 - 30 different species of birds (robins, cardinals, eagles, hummingbirds, penguin-less but everything else you'd expect, right down to a toucan) circle through the sky around you, each with its own size, coloring, and a real 3D body with a pair of flapping wings — genuinely a different-looking silhouette depending which way you're looking at one, not a flat cutout — and occasionally give a little chirp if one happens to be close enough to actually hear. Fish are real 3D bodies too (fins, a wiggling tail), and swim within whatever body of water is nearest you, staying inside its actual depth rather than beaching themselves. Six kinds — goldfish through catfish — swim at ordinary size; two much bigger species, Sharks (a solid 2 blocks nose to tail) and the rarer Whale Shark (a full 3 blocks), are scaled-up versions of that same fish model and need genuinely deep water to spawn in, so you'll only run into one out over a real lake or the ocean, never in a shallow pond. Every fish is attackable and drops Meat when killed, scaled to size — the small schooling species drop 1 (tuna 2), a Shark drops 3, a Whale Shark 5 — and all of them keep swimming continuously, a home spot too far away smoothly drifting to a new one over a second and a half instead of teleporting. Like the fireflies, birds and fish are purely ambient decoration, not saved between reloads.
 - 2 Giant Eagles soar much higher and range much further than the regular birds — the same bird model, just scaled up to a real wingspan, and colored like the real thing: a near-black body and wings, a white head, and the same golden beak every bird already has. Rather than drifting like a regular bird, each one actually circles a fixed point in a real loop (one clockwise, one counterclockwise), the way a real bird of prey wheels while scanning the ground below. Roughly once an in-game day, each one hunts down the 2 birds or fish currently nearest it and eats them outright — that kill is the eagle's alone, so unlike hunting one yourself it drops no Meat. They're attackable like every other creature here and worth 3 Meat if you take one down (4 HP, tougher than a regular bird). Land on one from above (jump onto its back, same as landing on any animal) and you'll ride it: it stops circling and instead flies a long, slow tour of random points across the whole map, carrying you along for free sightseeing with no fall damage no matter how high it climbs. Press `Space` to hop off wherever you are — the eagle then finds a fresh spot nearby and goes back to its usual circling.
