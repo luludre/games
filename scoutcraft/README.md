@@ -1,10 +1,12 @@
 # ScoutCraft
 
+![Camp Merit Ridge, in-game](screenshot.png)
+
 Welcome to **Camp Merit Ridge** — set up camp in the wilderness and earn your merit badges. A single-player voxel world that runs
 entirely in the browser — procedurally generated terrain, block breaking/placing, crafting — built
 with [three.js](https://threejs.org/) — with a scouting layer on top: rope you twist from leaves, a
 walk-in tent you pitch, campfires you cook on, a compass that finds its way back to camp, and
-sixteen merit badges that promote you from Scout to Eagle Scout.
+eighteen merit badges that promote you from Scout to Eagle Scout.
 
 No build step, no server-side code, no dependencies to install, no account to make. Everything —
 your world, your inventory, your progress — lives in this browser's `localStorage`.
