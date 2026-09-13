@@ -166,7 +166,8 @@ single wall takes the whole shelter down and hands back just one Tent item, not 
   one builds a real walk-in shelter — three canvas walls and a flat roof around one tile of floor
   space, with a one-block gap left open at the front so you can actually step inside. It's oriented
   by which way you're facing when you place it, the same way a Door picks its width — the doorway
-  always ends up facing back toward you.
+  always ends up facing back toward you. Pure red canvas, with no ridge pole, door flap or guy lines
+  painted on it — just the sloped panels.
 - **Campfire** — the middle of camp. A permanent, harmless block (unlike wildfire `FIRE`, which
   burns out, spreads and hurts) that throws warm light over the whole clearing. Your **first**
   campfire is what the compass treats as camp from then on.
@@ -195,9 +196,10 @@ single wall takes the whole shelter down and hands back just one Tent item, not 
   Purely yours to plant.
 - **Fishing Pole** — right-click it into any water with a fish nearby to cast your line, then hold
   still (don't switch what you're holding, and don't wander more than a block and a half off) for 20
-  seconds to reel one in. A countdown reads out on screen the whole time it's cast, right-clicking
-  again reels the line back in early if you change your mind, and 5 fish caught earns the Fishing
-  badge — the last one on the sash.
+  seconds to reel one in. In first person, the floating map swaps out for a rod-and-line while a
+  line is actually cast, swapping back once it isn't. A countdown reads out above the panel buttons
+  the whole time it's cast, right-clicking again reels the line back in early if you change your
+  mind, and 5 fish caught earns the Fishing badge — the last one on the sash.
 
 **Sleep:** stand near your tent after dark and press `K`. It can't actually fast-forward the real
 clock the world runs on, so — like the `N` key's day/night override — it jumps your own view to
@@ -357,8 +359,14 @@ While you're playing, the game quietly checks every 5 minutes whether `main.js` 
 - New little saplings sprout randomly on open grass over time and slowly grow — visibly taller every so often — into a full tree (or, about 40% of the time, a low trunk-less bush instead, so the world isn't wall-to-wall tall trees) after about 50 real-world minutes. Break a sapling early and it's gone for good; cut a tree's trunk and whatever's left disconnected from the ground (the rest of the trunk, still holding its canopy) actually falls — real accelerating gravity, not a teleport — landing wherever it hits solid ground below. The original generated forest has the same tree/bush mix baked in from the start. About 5% of trees are giants, growing to 5x their normal trunk height — towering landmarks visible from well outside the canopy line — and unlike a normal tree's single top canopy, a giant also grows branches at regular intervals up its trunk, each a short limb jutting outward with its own small leaf clump, so the height actually reads as a tree rather than a bare pole with a hat.
 - As long as any part of a tree's trunk is still standing, its canopy slowly grows back over time — chop off some leaves and, minutes later, they'll have quietly regrown, one leaf at a time, back into the tree's original shape (including a giant's branches). Chop the trunk down to the ground, though, and that's permanent — a stump with no trunk left doesn't regrow anything.
 - Leaves are sparse and see-through rather than a solid green cube — a genuinely holey, dappled canopy (like Minecraft's own leaf blocks) that still counts as real shelter from sun/rain/temperature even though light visibly passes through the gaps.
+- Ordinary trunk bark is a light warm tan rather than a dark brown, front and center on every tree
+  since it's the base color every species tint and the dead-tree grey are built on top of.
 - Trees come in 7 species — oak, pine, birch, willow, maple, redwood, and apple — each with its own leaf and trunk coloring (birch's pale trunk, maple's red-orange leaves, redwood's dark canopy over a deep red-brown trunk, apple trees dotted with little red fruit-colored leaves, and so on) and its own canopy density — pine and redwood read as full, dense evergreens, birch and willow as wispy and open, the rest in between — picked deterministically per tree so it's consistent and doesn't need saving. This is purely a visual variation — chopping any of them still gives you the same plain Wood/Leaves items, nothing new to collect. A tree's whole trunk (even a 5x giant's) is always one consistent species end to end, and only wood that's actually got a canopy overhead gets tinted, so ordinary wood structures you build stay their normal color.
 - A minority of trees generate dead — the trunk itself renders a weathered grey instead of any species' bark color (true even for a completely bare one, so it reads as dead at a glance and not just an oddly leafless live tree), and most are entirely bare (no canopy at all, just a stripped-looking snag), while a few keep a canopy of dry, sparse brown leaves instead of their species' usual color. Which is purely deterministic per tree, same as species. Chopping a dead tree is completely fine — it's chopping a **living** one (any tree that still has a canopy) that gets you a message reminding you a real Scout leaves living trees standing and cuts only dead wood; it's a nudge, not a rule, so it doesn't stop you.
+- A scattering of fallen dead logs lie on open ground here and there — 2-4 plain Wood blocks in a
+  straight line at ground level instead of standing up, so they read as a downed trunk rather than
+  a sapling. Same deterministic per-column placement as trees, so they stay put across reloads and
+  chopping one for wood is a real, persistent edit like any tree.
 - Worms and butterflies are currently disabled — no worm ever spawns on the world's trees, so none grow into a butterfly either. The HUD's worm/butterfly counts always read 0.
 - 10 black Hercules beetles cling to tree trunks around the map, one per tree — a real low-poly body with the signature pair of curved horns a male Hercules beetle fights with, and six legs gripping the bark. Purely ambient decoration like the birds and fish: they never leave their trunk, aren't attackable, and aren't saved between reloads, so a fresh load re-picks 10 trees.
 - 30 different species of birds (robins, cardinals, eagles, hummingbirds, penguin-less but everything else you'd expect, right down to a toucan) circle through the sky around you, each with its own size, coloring, and a real 3D body with a pair of flapping wings — genuinely a different-looking silhouette depending which way you're looking at one, not a flat cutout — and occasionally give a little chirp if one happens to be close enough to actually hear. Fish are real 3D bodies too (fins, a wiggling tail), and swim within whatever body of water is nearest you, staying inside its actual depth rather than beaching themselves. Six kinds — goldfish through catfish — swim at ordinary size; two much bigger species, Sharks (a solid 2 blocks nose to tail) and the rarer Whale Shark (a full 3 blocks), are scaled-up versions of that same fish model and need genuinely deep water to spawn in, so you'll only run into one out over a real lake or the ocean, never in a shallow pond. Every fish is attackable and drops Meat when killed, scaled to size — the small schooling species drop 1 (tuna 2), a Shark drops 3, a Whale Shark 5 — and all of them keep swimming continuously, a home spot too far away smoothly drifting to a new one over a second and a half instead of teleporting. Like the fireflies, birds and fish are purely ambient decoration, not saved between reloads.
