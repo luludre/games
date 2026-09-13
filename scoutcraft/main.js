@@ -6485,6 +6485,162 @@ function updateTurtles(dt){
   }
 }
 
+// ---------- Frogs: small amphibians perched right at the water's edge ----------
+// Unlike fish/turtles they don't swim — they sit on the dry shoreline tile beside water and hop a
+// short, arcing distance to a new nearby edge spot every so often. Same recycled-near-player idea as
+// the rest of this ambient wildlife (findFrogSpot is the land-beside-water equivalent of findFishSpot
+// above), and just hides itself if there's no shoreline to be found nearby at all.
+const FROG_SPECIES = [
+  { id:'greenfrog',  name:'Green Frog',       body:0x4a7a3a, belly:0xd9c98a, size:1.0 },
+  { id:'bullfrog',   name:'Bullfrog',         body:0x5a6a3a, belly:0xc9c090, size:1.3 },
+  { id:'poisonfrog', name:'Poison Dart Frog', body:0x1a2a1a, belly:0xffcc22, size:0.7 },
+];
+const FROG_COUNT = FROG_SPECIES.length * 3;
+const FROG_RADIUS = 20; // relocate-near-player range, same role as FISH_RADIUS/TURTLE_RADIUS
+const FROG_HOP_RADIUS = 2.2; // how far a single hop can land from where the frog already is
+const frogs = [];
+const frogMatCache = new Map();
+const frogEyeMat = new THREE.MeshLambertMaterial({ color: 0x141414 });
+function frogMaterials(species){
+  let m = frogMatCache.get(species.id);
+  if(!m){
+    m = { body: new THREE.MeshLambertMaterial({ color: species.body }), belly: new THREE.MeshLambertMaterial({ color: species.belly }) };
+    frogMatCache.set(species.id, m);
+  }
+  return m;
+}
+// A squat little body built the same "compose primitives" way as the rest of this file's wildlife —
+// a rounded torso, two bulging eyes on top so it reads as a frog even at a glance, and four legs on
+// hinges that kick back at launch and tuck under mid-hop.
+function buildFrogMesh(species){
+  const { body: bodyMat, belly: bellyMat } = frogMaterials(species);
+  const g = new THREE.Group();
+
+  const body = animalBox(0.26, 0.14, 0.32, bodyMat);
+  body.position.set(0, 0.1, 0);
+  g.add(body);
+  const belly = animalBox(0.18, 0.08, 0.2, bellyMat);
+  belly.position.set(0, 0.06, 0.03);
+  g.add(belly);
+
+  for(const side of [1,-1]){
+    const eye = animalBox(0.08, 0.08, 0.08, bodyMat);
+    eye.position.set(side*0.08, 0.19, -0.1);
+    g.add(eye);
+    const pupil = animalBox(0.03, 0.03, 0.03, frogEyeMat);
+    pupil.position.set(side*0.08, 0.2, -0.14);
+    g.add(pupil);
+  }
+
+  const legs = [];
+  // Back legs: longer, the ones that actually do the jumping — pivoted at the hip so they swing back
+  // on launch and tuck forward mid-air, same hinge-not-centered trick as the bird wings above.
+  for(const side of [1,-1]){
+    const pivot = new THREE.Group();
+    pivot.position.set(side*0.13, 0.08, 0.13);
+    const leg = animalBox(0.06, 0.05, 0.22, bodyMat);
+    leg.geometry.translate(0, 0, 0.11);
+    pivot.add(leg);
+    pivot.userData.back = true;
+    g.add(pivot);
+    legs.push(pivot);
+  }
+  // Front legs: short, mostly just for the landing pose.
+  for(const side of [1,-1]){
+    const pivot = new THREE.Group();
+    pivot.position.set(side*0.1, 0.07, -0.14);
+    const leg = animalBox(0.05, 0.04, 0.1, bodyMat);
+    leg.geometry.translate(0, 0, -0.05);
+    pivot.add(leg);
+    pivot.userData.back = false;
+    g.add(pivot);
+    legs.push(pivot);
+  }
+  g.userData.legs = legs;
+
+  g.scale.setScalar(species.size);
+  g.traverse(o => { if(o.isMesh) o.castShadow = true; });
+  return g;
+}
+// A dry land cell within `radius` of (cx,cz) that has at least one WATER neighbor — the frog
+// equivalent of findFishSpot's "a nearby water column," just inverted to land-beside-water.
+function findFrogSpot(cx, cz, radius){
+  for(let tries=0; tries<20; tries++){
+    const ang = Math.random()*Math.PI*2, r = Math.random()*radius;
+    const x = Math.floor(cx + Math.cos(ang)*r);
+    const z = Math.floor(cz + Math.sin(ang)*r);
+    const h = heightAt(x,z);
+    if(h < SEA_LEVEL) continue; // underwater here, not the shore
+    const isWaterEdge = [[x+1,z],[x-1,z],[x,z+1],[x,z-1]].some(([nx,nz]) => heightAt(nx,nz) < SEA_LEVEL);
+    if(isWaterEdge) return { x:x+0.5, z:z+0.5, y:h+1 };
+  }
+  return null;
+}
+function spawnFrogHome(fr, cx, cz){
+  const spot = findFrogSpot(cx, cz, FROG_RADIUS);
+  if(!spot){ fr.hasHome = false; fr.mesh.visible = false; return; }
+  fr.hasHome = true; fr.mesh.visible = true;
+  fr.x = spot.x; fr.z = spot.z; fr.y = spot.y;
+  fr.mesh.position.set(fr.x, fr.y, fr.z);
+  fr.hopping = false;
+  fr.idleTimer = 1 + Math.random()*3;
+}
+function ensureFrogs(){
+  if(frogs.length) return;
+  for(const species of FROG_SPECIES) for(let i=0;i<3;i++){
+    const mesh = buildFrogMesh(species);
+    scene.add(mesh);
+    const fr = {
+      mesh, species, x:0, z:0, y:0, hasHome:false,
+      hopping:false, idleTimer:0, hopElapsed:0, hopDuration:0,
+      fromX:0, fromZ:0, toX:0, toZ:0, toY:0,
+    };
+    spawnFrogHome(fr, player.pos.x, player.pos.z);
+    frogs.push(fr);
+  }
+}
+function updateFrogs(dt){
+  ensureFrogs();
+  for(const fr of frogs){
+    if(!fr.hasHome){ spawnFrogHome(fr, player.pos.x, player.pos.z); if(!fr.hasHome) continue; }
+    const dx = fr.x-player.pos.x, dz = fr.z-player.pos.z;
+    if(dx*dx+dz*dz > FROG_RADIUS*FROG_RADIUS){ spawnFrogHome(fr, player.pos.x, player.pos.z); if(!fr.hasHome) continue; }
+
+    if(fr.hopping){
+      fr.hopElapsed += dt;
+      const t = Math.min(1, fr.hopElapsed / fr.hopDuration);
+      const arcH = Math.sin(t*Math.PI) * 0.35;
+      fr.mesh.position.set(
+        fr.fromX + (fr.toX-fr.fromX)*t,
+        fr.toY + arcH,
+        fr.fromZ + (fr.toZ-fr.fromZ)*t,
+      );
+      const squash = 1 - Math.sin(t*Math.PI)*0.25;
+      fr.mesh.scale.set(fr.species.size/squash, fr.species.size*squash, fr.species.size/squash);
+      for(const leg of fr.mesh.userData.legs) leg.rotation.x = (leg.userData.back?-1:1) * Math.sin(t*Math.PI) * (leg.userData.back?1.1:0.6);
+      if(t>=1){
+        fr.hopping = false;
+        fr.x = fr.toX; fr.z = fr.toZ; fr.y = fr.toY;
+        fr.mesh.scale.setScalar(fr.species.size);
+        fr.idleTimer = 1.5 + Math.random()*4;
+      }
+    } else {
+      fr.idleTimer -= dt;
+      if(fr.idleTimer <= 0){
+        const spot = findFrogSpot(fr.x, fr.z, FROG_HOP_RADIUS);
+        if(spot){
+          fr.hopping = true; fr.hopElapsed = 0; fr.hopDuration = 0.35+Math.random()*0.15;
+          fr.fromX = fr.x; fr.fromZ = fr.z;
+          fr.toX = spot.x; fr.toZ = spot.z; fr.toY = spot.y;
+          fr.mesh.rotation.y = Math.atan2(-(fr.toX-fr.fromX), -(fr.toZ-fr.fromZ));
+        } else {
+          fr.idleTimer = 1 + Math.random()*2; // nowhere to hop to right now — try again shortly
+        }
+      }
+    }
+  }
+}
+
 // ---------- Hercules beetles: purely decorative, fixed population clinging to tree trunks ----------
 // Unlike birds/fish/turtles they never roam and are never recycled toward the player — each one
 // picks one real trunk in the world at spawn time and stays there for the session. Like the rest of
@@ -9151,6 +9307,7 @@ function animate(now){
   updateBirds(dt);
   updateFish(dt);
   updateTurtles(dt);
+  updateFrogs(dt);
   updateBeetles(dt);
   updateBigEagles(dt);
   updateGophers(dt);
