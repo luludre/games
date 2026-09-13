@@ -1,6 +1,6 @@
 # ScoutCraft
 
-Set up camp in the wilderness and earn your merit badges. A single-player voxel world that runs
+Welcome to **Camp Merit Ridge** — set up camp in the wilderness and earn your merit badges. A single-player voxel world that runs
 entirely in the browser — procedurally generated terrain, block breaking/placing, crafting — built
 with [three.js](https://threejs.org/) — with a scouting layer on top: rope you twist from leaves, a
 walk-in tent you pitch, campfires you cook on, a compass that finds its way back to camp, and
@@ -259,6 +259,10 @@ below it. Each of those 6 blocks is really just its own slice of one shared, hig
 image — 13 stripes, a blue canton, and all 50 stars individually drawn and actually countable up
 close — cropped and downscaled into that block's texture, so the six line up into one seamless image
 rather than six separately-drawn tiles. Like the cooking fixtures, it's permanently indestructible.
+
+A rustic wooden sign floats over the clearing naming the camp — "🏕️ Camp Merit Ridge" — the same
+canvas-texture billboard technique as the Scout Law boxes' word labels, just styled like carved wood
+instead of a gold plaque.
 
 ## Fire & torches
 

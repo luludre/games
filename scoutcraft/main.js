@@ -1743,6 +1743,37 @@ function buildLawLabelSprite(word){
   sprite.scale.set(2.0, 0.45, 1);
   return sprite;
 }
+const CAMPSITE_NAME = 'Camp Merit Ridge';
+// A rustic wooden welcome sign floating over the cooking area — same canvas-texture sprite technique
+// as the Scout Law labels above, just styled like carved wood planks instead of a gold plaque.
+function buildCampSignSprite(text){
+  const canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#6b4a2b';
+  ctx.fillRect(0,0,512,128);
+  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+  ctx.lineWidth = 2;
+  for(let x=64;x<512;x+=64){ ctx.beginPath(); ctx.moveTo(x,4); ctx.lineTo(x,124); ctx.stroke(); }
+  ctx.strokeStyle = '#3a2818';
+  ctx.lineWidth = 10;
+  ctx.strokeRect(5,5,502,118);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#f0dfa8';
+  ctx.font = 'bold 46px sans-serif';
+  ctx.fillText(text, 256, 66);
+  const tex = new THREE.CanvasTexture(canvas);
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
+  sprite.scale.set(4.0, 1.0, 1);
+  return sprite;
+}
+function buildCampSign(){
+  const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
+  const sprite = buildCampSignSprite('🏕️ ' + CAMPSITE_NAME);
+  sprite.position.set(x0 + COOKING_AREA_SIZE/2, COOKING_AREA_Y + 5, z0 + 2);
+  scene.add(sprite);
+}
 // Runs once after loadEdits() has replayed any saved edits on top of the freshly generated world —
 // a box collected in an earlier session now sits under an AIR edit, so this drops it (and skips its
 // label) rather than leaving a floating word tag over a box that's no longer really there.
@@ -7764,6 +7795,7 @@ function init(){
   // they'd silently punch through it. Unlike a Scout Law box, there's no legitimate way for this to be
   // missing, so it just gets placed again rather than accepting the loss.
   buildGiantFlag();
+  buildCampSign();
   restoreTorchLights();
   restoreScoutLawBoxes();
   updateScoutHUD();
