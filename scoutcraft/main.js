@@ -164,6 +164,106 @@ const HOTBAR_ICON = { [CRAFTING_TABLE]: '🛠️', [WINDOW]: '🪟', [DOOR]: '�
   [POCKETKNIFE]: '🔪', [FIRST_AID_KIT]: '🩹', [EXTRA_CLOTHING]: '🧥', [RAIN_GEAR]: '☂️', [WATER_BOTTLE]: '🥤',
   [FLASHLIGHT]: '🔦', [TRAIL_FOOD]: '🥜', [SUN_PROTECTION]: '🧴', [SCOUTBOOK]: '📘',
   [FISHING_POLE]: '🎣', [FISH]: '🐟', [SLEEPING_BAG]: '🛌', [SLEEPING_PAD]: '🛏️' };
+
+// ---------- Cooking ingredients & dishes ----------
+// 57 more items (31 raw ingredients + 26 finished dishes) generated from one data table instead of
+// hand-written across BLOCK_COLOR/BLOCK_NAME/HOTBAR_ICON/ALL_ITEMS the way the ~13 essentials above
+// are — at this scale a table beats 57x4 nearly-identical manual lines. Ids start right after
+// US_FLAG_BR (57): ingredients first, then dishes, in the order they're listed below.
+const INGREDIENT_DEFS = [
+  ['PASTA','Pasta','🍝',0xe8c887], ['CHEESE','Cheese','🧀',0xf2c14e], ['MILK','Milk','🥛',0xf5f5f0],
+  ['BUTTER','Butter','🧈',0xf7d358], ['BEEF','Beef','🥩',0x8b3a3a], ['VEGETABLES','Vegetables','🥕',0xe07b39],
+  ['POTATOES','Potatoes','🥔',0xc9a06c], ['WATER_JUG','Jug of Water','🚰',0x6fa8dc], ['TOMATOES','Tomatoes','🍅',0xc0392b],
+  ['OATS','Oats','🌾',0xd8c48a], ['SUGAR_SYRUP','Sugar/Syrup','🍯',0xd9a441], ['FRUIT','Fruit','🍎',0xb0281a],
+  ['SAUSAGE','Sausage','🌭',0xa85c3b], ['BEANS','Beans','🫘',0x8a5a3a], ['SAUCE','Sauce','🥫',0xb03a2e],
+  ['TORTILLAS','Tortillas','🫓',0xe8d5a0], ['CHICKEN','Chicken','🐔',0xd9b38c], ['EGGS','Eggs','🥚',0xf0e6d2],
+  ['SEASONING','Seasoning','🧂',0xd8d8d8], ['BREAD','Bread','🍞',0xc68a4e], ['HASH_BROWNS','Hash Browns','🍟',0xd9a441],
+  ['BACON','Bacon','🥓',0xa8453a], ['GROUND_MEAT','Ground Meat','🥩',0x9a3a3a], ['BAKING_MIX','Baking Mix','🥣',0xe8e0c8],
+  ['SODA','Soda','🥤',0x8a5a2a], ['YEAST','Yeast','🫙',0xc9a86b], ['PIZZA_DOUGH','Pizza Dough','🍕',0xe0c898],
+  ['PEPPERONI','Pepperoni','🔴',0xa8302a], ['GRAHAM_CRACKERS','Graham Crackers','🍪',0xc99a5c],
+  ['MARSHMALLOWS','Marshmallows','⚪',0xf5f0e6], ['CHOCOLATE','Chocolate','🍫',0x5a3a26],
+];
+// Recipes, grouped by cookware "wareKey" — matching the 5 real stations in buildCookingArea, plus any
+// player-placed CAMPFIRE (see doInteract/BLOCK_TO_WARE_KEY below). Deliberately NOT shown anywhere in
+// the UI as a required-ingredients list — see openCookware's hint and the design note on tryCookRecipe.
+const COOKWARE_DISH_DEFS = {
+  pot: [
+    ['MAC_CHEESE','Macaroni & Cheese','🧀',0xf2c14e,['PASTA','CHEESE','MILK','BUTTER']],
+    ['CAMPFIRE_STEW','Campfire Stew','🍲',0x8a5a3a,['BEEF','VEGETABLES','POTATOES','WATER_JUG']],
+    ['TOMATO_PASTA','Tomato Pasta','🍝',0xc0392b,['PASTA','TOMATOES','WATER_JUG','CHEESE']],
+    ['SCOUTS_OATMEAL',"Scout's Oatmeal",'🥣',0xd8c48a,['OATS','WATER_JUG','SUGAR_SYRUP','FRUIT']],
+    ['HOT_DOGS_BEANS','Hot Dogs & Beans','🌭',0xa85c3b,['SAUSAGE','BEANS','SAUCE']],
+  ],
+  pan: [
+    ['QUESADILLAS','Campfire Quesadillas','🌮',0xe8d5a0,['TORTILLAS','CHEESE','CHICKEN','SAUCE']],
+    ['EASY_SCRAMBLE','Easy Scramble','🍳',0xf0e6d2,['EGGS','SAUSAGE','BUTTER','SEASONING']],
+    ['GRILLED_CHEESE','Classic Grilled Cheese','🥪',0xc68a4e,['BREAD','CHEESE','BUTTER']],
+    ['QUICK_HASH','Quick Hash','🍽️',0xd9a441,['HASH_BROWNS','BACON','EGGS','VEGETABLES']],
+    ['PAN_FAJITAS','Pan Fajitas','🌯',0xe07b39,['BEEF','VEGETABLES','SEASONING','BUTTER']],
+  ],
+  dutch: [
+    ['MOUNTAIN_BREAKFAST','Mountain Man Breakfast','🍳',0x9a3a3a,['HASH_BROWNS','EGGS','GROUND_MEAT','CHEESE']],
+    ['CHERRY_DUMP_CAKE','Cherry Dump Cake','🍒',0xb0281a,['FRUIT','BAKING_MIX','BUTTER','SODA']],
+    ['DUTCH_CHILI','Dutch Oven Chili','🌶️',0x9a3a3a,['GROUND_MEAT','TOMATOES','BEANS','SEASONING']],
+    ['CAMPFIRE_BREAD','Cast-Iron Campfire Bread','🍞',0xc68a4e,['BAKING_MIX','WATER_JUG','YEAST','SEASONING']],
+    ['DEEP_DISH_PIZZA','Deep Dish Pizza','🍕',0xe0c898,['PIZZA_DOUGH','TOMATOES','CHEESE','PEPPERONI']],
+    ['PEACH_COBBLER','Peach Cobbler','🍑',0xd9a441,['FRUIT','BAKING_MIX','MILK','SUGAR_SYRUP']],
+  ],
+  campfire: [
+    ['SMORES',"Classic S'mores",'🍫',0x5a3a26,['GRAHAM_CRACKERS','MARSHMALLOWS','CHOCOLATE']],
+    ['FOIL_CHICKEN','Foil Packet Chicken','🍗',0xd9b38c,['CHICKEN','VEGETABLES','BUTTER','SEASONING']],
+    ['COAL_POTATOES','Coal-Baked Potatoes','🥔',0xc9a06c,['POTATOES','BUTTER','CHEESE','BACON']],
+    ['ROASTED_CORN','Roasted Corn','🌽',0xe0c840,['VEGETABLES','BUTTER','SEASONING']],
+    ['SAUSAGE_STICK','Sausage on a Stick','🌭',0xa85c3b,['SAUSAGE']],
+  ],
+  griddle: [
+    ['CAMP_PANCAKES','Camp Pancakes','🥞',0xd9a441,['BAKING_MIX','WATER_JUG','BUTTER','SUGAR_SYRUP']],
+    ['SMASH_BURGERS','Smash Burgers','🍔',0x9a3a3a,['GROUND_MEAT','BREAD','CHEESE','SEASONING']],
+    ['FRENCH_TOAST','French Toast','🍞',0xc68a4e,['BREAD','EGGS','MILK','SUGAR_SYRUP']],
+    ['BACON_EGGS','Bacon and Eggs','🥓',0xa8453a,['BACON','EGGS']],
+    ['PHILLY_CHEESESTEAKS','Philly Cheesesteaks','🥖',0xc68a4e,['BEEF','BREAD','CHEESE','VEGETABLES']],
+  ],
+};
+const COOKWARE_INFO = {
+  pot:      { block: POT,        name:'Pot',        emoji:'🍲' },
+  pan:      { block: PAN,        name:'Pan',        emoji:'🍳' },
+  dutch:    { block: DUTCH_OVEN, name:'Dutch Oven', emoji:'🫕' },
+  campfire: { block: CAMPFIRE,   name:'Campfire',   emoji:'🔥' },
+  griddle:  { block: GRIDDLE,    name:'Griddle',    emoji:'🧇' },
+};
+// A clicked block id straight back to its recipe category — the reverse of COOKWARE_INFO[key].block.
+const BLOCK_TO_WARE_KEY = {};
+for(const key in COOKWARE_INFO) BLOCK_TO_WARE_KEY[COOKWARE_INFO[key].block] = key;
+// COOK_ID.PASTA etc. — assigned sequentially right after the last hand-numbered id (US_FLAG_BR),
+// ingredients first, then dishes, and every one of them gets threaded into the exact same lookup
+// tables (BLOCK_COLOR/BLOCK_NAME/HOTBAR_ICON/ALL_ITEMS/CARRY_ONLY_ITEMS) the ~13 essentials go
+// through by hand above.
+const COOK_ID = {};
+const ALL_DISH_IDS = []; // every dish id, across every cookware — FOOD_RESTORE (declared later) loops over this
+let _nextCookItemId = US_FLAG_BR + 1;
+for(const [key, name, emoji, color] of INGREDIENT_DEFS){
+  const id = _nextCookItemId++;
+  COOK_ID[key] = id;
+  BLOCK_COLOR[id] = color;
+  BLOCK_NAME[id] = name;
+  HOTBAR_ICON[id] = emoji;
+  ALL_ITEMS.push(id);
+  CARRY_ONLY_ITEMS.add(id); // raw ingredients: no block form, not eaten raw — only useful in a recipe
+}
+const COOKWARE_RECIPES = {}; // wareKey -> [{id, name, ingredients:[id,...]}, ...]
+for(const wareKey in COOKWARE_DISH_DEFS){
+  COOKWARE_RECIPES[wareKey] = COOKWARE_DISH_DEFS[wareKey].map(([key, name, emoji, color, ingredientKeys]) => {
+    const id = _nextCookItemId++;
+    COOK_ID[key] = id;
+    BLOCK_COLOR[id] = color;
+    BLOCK_NAME[id] = name;
+    HOTBAR_ICON[id] = emoji;
+    ALL_ITEMS.push(id);
+    ALL_DISH_IDS.push(id);
+    return { id, name, ingredients: ingredientKeys.map(k => COOK_ID[k]) };
+  });
+}
+
 // Blocks with an open/closed state: right-clicking one toggles it to the other id in this map.
 const TOGGLE_MAP = { [WINDOW]:WINDOW_OPEN, [WINDOW_OPEN]:WINDOW, [DOOR]:DOOR_OPEN, [DOOR_OPEN]:DOOR };
 // Breaking the open form of a toggleable block gives you back its closed (placeable) form.
@@ -256,7 +356,7 @@ const BADGES = [
   { id:'pioneering', emoji:'🪢', name:'Pioneering',   hint:'Twist 6 lengths of rope.',                     test:()=> scoutStats.rope >= 6 },
   { id:'firecraft',  emoji:'🔥', name:'Firecraft',    hint:'Light your first campfire.',                   test:()=> scoutStats.campfires >= 1 },
   { id:'camping',    emoji:'⛺',          name:'Camping',      hint:'Pitch a tent.',                                test:()=> scoutStats.tents >= 1 },
-  { id:'cooking',    emoji:'🍳', name:'Cooking',      hint:'Cook a meal on a campfire.',                   test:()=> scoutStats.meals >= 1 },
+  { id:'cooking',    emoji:'🍳', name:'Cooking',      hint:'Cook one dish on every kind of cookware.',     test:()=> scoutStats.cookwareUsed.length >= 5 },
   { id:'navigation', emoji:'🧭', name:'Navigation',   hint:'Take a bearing with your compass.',            test:()=> scoutStats.compassUses >= 1 },
   { id:'hiking',     emoji:'🥾', name:'Hiking',       hint:'Hike 1,000 blocks on foot.',                   test:()=> scoutStats.hiked >= 1000 },
   { id:'swimming',   emoji:'🏊', name:'Swimming',     hint:'Swim 60 blocks.',                              test:()=> scoutStats.swam >= 60 },
@@ -294,9 +394,9 @@ const STATS_KEY = 'scoutcraft_stats_v1';
 const earnedBadges = new Set();
 // species is an array rather than a Set purely so it survives JSON.stringify into localStorage.
 const scoutStats = {
-  wood:0, rope:0, campfires:0, tents:0, flags:0, meals:0, compassUses:0,
+  wood:0, rope:0, campfires:0, tents:0, flags:0, compassUses:0,
   hiked:0, swam:0, highest:0, nightSeconds:0, species:[],
-  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, horsebackBlocks:0, lawsCollected:[],
+  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, horsebackBlocks:0, lawsCollected:[], cookwareUsed:[],
 };
 function saveScoutProgress(){
   try{
@@ -313,6 +413,7 @@ function loadScoutProgress(){
       for(const k in scoutStats) if(k in st) scoutStats[k] = st[k];
       if(!Array.isArray(scoutStats.species)) scoutStats.species = [];
       if(!Array.isArray(scoutStats.lawsCollected)) scoutStats.lawsCollected = [];
+      if(!Array.isArray(scoutStats.cookwareUsed)) scoutStats.cookwareUsed = [];
     }
   }catch(e){}
 }
@@ -396,6 +497,12 @@ const Scout = {
   sawSpecies(name){
     if(!name || scoutStats.species.includes(name)) return;
     scoutStats.species.push(name);
+    checkBadges();
+  },
+  cookedOn(wareKey){
+    if(scoutStats.cookwareUsed.includes(wareKey)) return;
+    scoutStats.cookwareUsed.push(wareKey);
+    saveScoutProgress();
     checkBadges();
   },
   foundDipper(){
@@ -506,22 +613,6 @@ function useCompass(){
     : `🧭 ${where}: ${Math.round(dist)} blocks ${bearingName(dx,dz)}.`;
   addChatMessage('Camp', msg);
   Scout.bump('compassUses');
-  saveScoutProgress();
-}
-
-// ---- Cooking at a campfire ----
-function tryCookAtCampfire(){
-  if(invCount(MEAT) <= 0){
-    addChatMessage('Camp', '🍳 You need Raw Meat in your pack to cook.');
-    return;
-  }
-  invSub(MEAT, 1);
-  invAdd(COOKED_MEAT, 1);
-  saveInventory();
-  updateHotbarUI();
-  SFX.craft();
-  addChatMessage('Camp', '🍖 You cooked a meal on the campfire.');
-  Scout.bump('meals');
   saveScoutProgress();
 }
 
@@ -642,7 +733,7 @@ function badgeProgress(b){
     pioneering: ()=> [Math.floor(scoutStats.rope), 6, 'rope'],
     firecraft:  ()=> [scoutStats.campfires, 1, 'campfires'],
     camping:    ()=> [scoutStats.tents, 1, 'tents'],
-    cooking:    ()=> [scoutStats.meals, 1, 'meals'],
+    cooking:    ()=> [scoutStats.cookwareUsed.length, 5, 'cookware'],
     navigation: ()=> [scoutStats.compassUses, 1, 'bearings'],
     hiking:     ()=> [Math.floor(scoutStats.hiked), 1000, 'blocks'],
     swimming:   ()=> [Math.floor(scoutStats.swam), 60, 'blocks'],
@@ -3520,7 +3611,7 @@ function respawnAfterDeath(){
 let sleeping = false;
 const WAKE_UP_HOUR = 7; // 7am
 function trySleep(){
-  if(sleeping || craftingOpen || itemsOpen || sashOpen || bearBoxOpen || backpackOpen) return;
+  if(sleeping || craftingOpen || itemsOpen || sashOpen || bearBoxOpen || backpackOpen || cookwareOpen) return;
   if(!nearestTent(4)){ addChatMessage('Camp', '⛺ You need to be near your tent to sleep.'); return; }
   if(invCount(SLEEPING_BAG)<=0 || invCount(SLEEPING_PAD)<=0){
     addChatMessage('Camp', "🛏️ You need your Sleeping Bag and Sleeping Pad out to make camp for the night — check your Backpack.");
@@ -7234,11 +7325,12 @@ window.addEventListener('keydown', e=>{
     if(itemsOpen){ closeItems(false); return; }
     if(bearBoxOpen){ closeBearBox(false); return; }
     if(backpackOpen){ closeBackpackStorage(false); return; }
+    if(cookwareOpen){ closeCookware(false); return; }
     if(sashOpen){ closeSash(false); return; }
   }
   if(e.code==='KeyM'){
     if(sashOpen){ closeSash(true); return; }
-    if(craftingOpen || itemsOpen || bearBoxOpen || backpackOpen) return;
+    if(craftingOpen || itemsOpen || bearBoxOpen || backpackOpen || cookwareOpen) return;
     if(locked && !isDead) openSash();
     return;
   }
@@ -7255,7 +7347,7 @@ window.addEventListener('keydown', e=>{
   }
   if(e.code==='KeyB'){
     if(backpackOpen){ closeBackpackStorage(true); return; }
-    if(craftingOpen || itemsOpen || bearBoxOpen || sashOpen) return;
+    if(craftingOpen || itemsOpen || bearBoxOpen || sashOpen || cookwareOpen) return;
     if(locked && !isDead) openBackpackStorage();
     return;
   }
@@ -7291,17 +7383,17 @@ function tryEatFood(id){
   updateHungerUI();
   SFX.eat();
 }
-function tryEatMeat(){ tryEatFood(MEAT); }
 function doInteract(){
   const hit = raycastBlock();
   const hitBlock = hit ? getBlock(hit.x,hit.y,hit.z) : null;
   const held = HOTBAR[selectedSlot];
-  // Raw meat pointed at a campfire cooks it rather than eating it where you stand.
-  if(hitBlock===CAMPFIRE && held===MEAT){ tryCookAtCampfire(); return; }
+  // Any cookware — Pot/Pan/Dutch Oven/Griddle at the fixed camp stations, or any Campfire anywhere,
+  // fixed or player-placed — opens its recipe window regardless of what's in hand, same priority a
+  // Crafting Table or the Bear Box already gets below.
+  if(hitBlock in BLOCK_TO_WARE_KEY){ openCookware(BLOCK_TO_WARE_KEY[hitBlock]); return; }
   if(held===FLINT){ tryIgniteFire(hit); return; }
   if(held===FIREWORK){ launchFirework(); return; }
-  if(held===MEAT){ tryEatMeat(); return; }
-  if(held===COOKED_MEAT){ tryEatFood(COOKED_MEAT); return; }
+  if(FOOD_RESTORE[held]!=null){ tryEatFood(held); return; }
   if(held===COMPASS){ useCompass(); return; }
   if(held===FISHING_POLE){ tryFish(); return; }
   // Carried items with no block form at all — without this they'd place as an untextured cube,
@@ -7395,7 +7487,7 @@ overlay.addEventListener('click', ()=>{
 document.addEventListener('pointerlockchange', ()=>{
   if(isTouchDevice) return;
   locked = document.pointerLockElement === document.body;
-  overlay.hidden = locked || craftingOpen || itemsOpen || bearBoxOpen || backpackOpen;
+  overlay.hidden = locked || craftingOpen || itemsOpen || bearBoxOpen || backpackOpen || cookwareOpen;
 });
 document.addEventListener('mousemove', e=>{
   if(!locked || isTouchDevice) return;
@@ -7932,8 +8024,10 @@ function renderItemsGrid(){
 // ---------- Bear box (fixed camp food storage, up to 100 items total) ----------
 // A single shared stash, independent of your own pack, sitting at the cooking area — click an item
 // on either side to move one across. Capacity is a combined total across every item type, not
-// per-type, same as "100 items" reads literally.
-const BEAR_BOX_CAPACITY = 100;
+// per-type, same as "1,000 items" reads literally — raised well past its original 100 once the box
+// became the camp's whole cooking pantry too (see the pre-stock below: 10 of every raw ingredient per
+// recipe that calls for it, ~950 items total before a single player deposit).
+const BEAR_BOX_CAPACITY = 1000;
 const BEAR_BOX_KEY = 'scoutcraft_bearbox_v1';
 const bearBoxStorage = {}; // id -> qty
 let bearBoxOpen = false;
@@ -7943,9 +8037,25 @@ function saveBearBox(){
 }
 function loadBearBox(){
   try{
-    const obj = JSON.parse(localStorage.getItem(BEAR_BOX_KEY) || '{}');
-    for(const k in obj) bearBoxStorage[k] = obj[k];
+    const raw = localStorage.getItem(BEAR_BOX_KEY);
+    if(raw){
+      const obj = JSON.parse(raw);
+      for(const k in obj) bearBoxStorage[k] = obj[k];
+      return;
+    }
   }catch(e){}
+  // First time ever: stock the pantry with every raw ingredient every camp recipe needs — 10 per
+  // recipe that calls for it, so something used in 3 different dishes starts with 30 (see
+  // COOKWARE_RECIPES). Doesn't touch a bear box that's already been saved once, same "first run only"
+  // gate as the Backpack's own starter gear below.
+  const counts = {};
+  for(const wareKey in COOKWARE_RECIPES){
+    for(const recipe of COOKWARE_RECIPES[wareKey]){
+      for(const ing of recipe.ingredients) counts[ing] = (counts[ing]||0)+1;
+    }
+  }
+  for(const id in counts) bearBoxStorage[id] = counts[id]*10;
+  saveBearBox();
 }
 function depositToBearBox(id){
   if(invCount(id)<=0 || bearBoxTotal()>=BEAR_BOX_CAPACITY) return;
@@ -8028,6 +8138,117 @@ function openBearBox(){
 function closeBearBox(relock){
   bearBoxOpen = false;
   bearBoxModal.hidden = true;
+  if(relock){
+    if(isTouchDevice) locked = true;
+    else document.body.requestPointerLock();
+  } else if(!isTouchDevice) overlay.hidden = false;
+}
+
+// ---------- Cookware: click any Pot/Pan/Dutch Oven/Griddle/Campfire (see BLOCK_TO_WARE_KEY) to try
+// cooking one of its secret recipes. Up to 4 ingredients you're already holding go into fixed slots
+// (a small array, not a free-form dict like the Bear Box/Backpack above — there's nowhere to browse a
+// stash from here, just your own pack on one side and the 4 slots on the other), then Cook! checks
+// them against COOKWARE_RECIPES for that cookware as an unordered exact set — extra or missing
+// ingredients both miss. Deliberately no ingredient list shown anywhere; opening the window drops one
+// hint in the camp chat instead (see openCookware) and the rest is trial and error.
+let cookwareOpen = false;
+let cookwareWareKey = null;
+const cookwareSlots = [null, null, null, null]; // each an item id or null
+const DISH_HUNGER_RESTORE = 6; // every dish restores the same amount — a real meal, better than a snack
+for(const id of ALL_DISH_IDS) FOOD_RESTORE[id] = DISH_HUNGER_RESTORE;
+function addToCookware(id){
+  const slot = cookwareSlots.indexOf(null);
+  if(slot<0 || invCount(id)<=0) return;
+  invSub(id,1);
+  cookwareSlots[slot] = id;
+  saveInventory();
+  updateHotbarUI();
+  renderCookware();
+}
+function removeFromCookware(slotIdx){
+  const id = cookwareSlots[slotIdx];
+  if(id==null) return;
+  invAdd(id,1);
+  cookwareSlots[slotIdx] = null;
+  saveInventory();
+  updateHotbarUI();
+  renderCookware();
+}
+function tryCookRecipe(){
+  const used = cookwareSlots.filter(x=>x!=null);
+  if(used.length===0) return;
+  const sortedUsed = [...used].sort((a,b)=>a-b);
+  const match = COOKWARE_RECIPES[cookwareWareKey].find(r=>{
+    const sortedRecipe = [...r.ingredients].sort((a,b)=>a-b);
+    return sortedRecipe.length===sortedUsed.length && sortedRecipe.every((v,i)=>v===sortedUsed[i]);
+  });
+  if(!match){
+    addChatMessage('Camp', "🍳 That doesn't look like any recipe anyone's ever heard of.");
+    return;
+  }
+  for(let i=0;i<cookwareSlots.length;i++) cookwareSlots[i] = null; // spent, not returned — unlike closing the window
+  invAdd(match.id, 1);
+  saveInventory();
+  updateHotbarUI();
+  SFX.craft();
+  addChatMessage('Camp', `${HOTBAR_ICON[match.id]} You cooked up ${match.name}!`);
+  Scout.cookedOn(cookwareWareKey);
+  renderCookware();
+}
+function renderCookware(){
+  const info = COOKWARE_INFO[cookwareWareKey];
+  const title = document.getElementById('cookwareTitle');
+  if(title) title.textContent = `${info.emoji} ${info.name}`;
+  const yourGrid = document.getElementById('cookwareYourGrid');
+  const slotsGrid = document.getElementById('cookwareSlotsGrid');
+  yourGrid.innerHTML = '';
+  slotsGrid.innerHTML = '';
+  const held = ALL_ITEMS.filter(id => id!==FIREWORK && invCount(id)>0);
+  if(held.length===0){
+    const note = document.createElement('div'); note.className = 'bearBoxEmptyNote'; note.textContent = "You aren't holding any ingredients.";
+    yourGrid.appendChild(note);
+  } else {
+    held.forEach(id => yourGrid.appendChild(makeBearBoxTile(id, invCount(id), ()=> addToCookware(id))));
+  }
+  for(let i=0;i<cookwareSlots.length;i++){
+    const id = cookwareSlots[i];
+    if(id==null){
+      const empty = document.createElement('div'); empty.className = 'cookwareSlotEmpty'; empty.textContent = '+';
+      slotsGrid.appendChild(empty);
+    } else {
+      slotsGrid.appendChild(makeBearBoxTile(id, 1, ()=> removeFromCookware(i)));
+    }
+  }
+}
+const cookwareModal = document.getElementById('cookwareModal');
+document.getElementById('cookwareClose').addEventListener('click', ()=> closeCookware(true));
+document.getElementById('cookwareCookBtn').addEventListener('click', tryCookRecipe);
+cookwareModal.addEventListener('click', e=>{ if(e.target===cookwareModal) closeCookware(true); });
+function openCookware(wareKey){
+  cookwareOpen = true;
+  cookwareWareKey = wareKey;
+  cookwareModal.hidden = false;
+  if(document.pointerLockElement) document.exitPointerLock();
+  if(isTouchDevice) locked = false;
+  overlay.hidden = true;
+  // One hint per visit, not the recipe itself — a single random ingredient off a random recipe for
+  // this cookware, so checking back in keeps being (a little) useful without spelling anything out.
+  const recipes = COOKWARE_RECIPES[wareKey];
+  const pick = recipes[Math.floor(Math.random()*recipes.length)];
+  const ing = pick.ingredients[Math.floor(Math.random()*pick.ingredients.length)];
+  addChatMessage('Camp', `${COOKWARE_INFO[wareKey].emoji} Hint: one of the ${COOKWARE_INFO[wareKey].name} recipes uses ${BLOCK_NAME[ing]}.`);
+  renderCookware();
+}
+function closeCookware(relock){
+  // The 4 slots are just a staging area, not real storage — anything still sitting in one when you
+  // close goes straight back to your pack instead of being lost.
+  for(let i=0;i<cookwareSlots.length;i++){
+    if(cookwareSlots[i]!=null){ invAdd(cookwareSlots[i],1); cookwareSlots[i]=null; }
+  }
+  saveInventory();
+  updateHotbarUI();
+  cookwareOpen = false;
+  cookwareModal.hidden = true;
   if(relock){
     if(isTouchDevice) locked = true;
     else document.body.requestPointerLock();

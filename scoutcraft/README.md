@@ -134,7 +134,7 @@ want and how far along you are ("14 / 25 wood").
 | 🪢 | Pioneering | Twist 6 lengths of rope |
 | 🔥 | Firecraft | Light your first campfire |
 | ⛺ | Camping | Pitch a tent |
-| 🍳 | Cooking | Cook a meal on a campfire |
+| 🍳 | Cooking | Cook one dish on every kind of cookware |
 | 🧭 | Navigation | Take a bearing with your compass |
 | 🥾 | Hiking | Hike 1,000 blocks on foot |
 | 🏊 | Swimming | Swim 60 blocks |
@@ -244,9 +244,8 @@ instead of doing anything.
 
 **Cooking:** Raw Meat is disabled — it's been pulled from the inventory panel and can no longer be
 selected into a hotbar slot, so the old "hold Raw Meat, aim at a Campfire, right-click" flow (and the
-double-hunger Cooked Meal it made) isn't reachable through normal play anymore. The Cooking badge
-still exists on the sash but currently has no path to earning it — let us know if you'd like it
-retired, pointed at Fish instead, or something else.
+double-hunger Cooked Meal it made) isn't reachable through normal play anymore. In its place, cooking
+is now a real recipe system — see [Cooking area](#cooking-area) below for how it actually works.
 
 Campfires, lanterns and torches render *unlit* — at full texture brightness, day or night. This is
 deliberate: a block that gives off light shouldn't be shaded by light, and with the normal material
@@ -261,16 +260,66 @@ different piece of cookware sitting on top (Dutch oven, cooking pot, frying pan,
 its own distinct look, so you can tell them apart at a glance), a fifth plain campfire, and a **Bear
 Box** for food storage.
 
-The Bear Box holds up to 100 items total (any kind, not just food) completely separately from your
+The Bear Box holds up to 1,000 items total (any kind, not just food) completely separately from your
 own pack — right-click it to open a two-column panel, click an item on your side to store it, click
-one in the box to take it back. It's a second, larger stash, not a bottomless one: once it's full at
-100, it stops accepting more until you take something out.
+one in the box to take it back. It's a second, larger stash, not a bottomless one: once it's full, it
+stops accepting more until you take something out. The very first time you ever open it, it's already
+stocked with every raw cooking ingredient every recipe below calls for — 10 of an ingredient per
+recipe that uses it, so something that shows up in, say, 3 different dishes starts with 30. After
+that first stocking it's yours to manage like any other storage — nothing restocks it again.
 
 Every one of these ten fixtures (five campfires, four pieces of cookware, one Bear Box) is
 permanently indestructible — breaking has no effect on them at all, unlike everything else you place
-yourself. All five campfires there work exactly like any other campfire — see
-[Cooking](#camp-gear) for why cooking on one currently has nothing to cook — the cookware on top is
-purely decorative and, like every other block here, fully opaque.
+yourself.
+
+**Cooking a dish:** right-click any of the five stations — the four with cookware, or the plain
+campfire (and this works on any campfire you place yourself too, not just this one) — to open its
+recipe window: your held items on one side, 4 empty cooking slots on the other. Click an ingredient
+to load it into the next slot, click a loaded slot to take it back, then hit **Cook!**. Load exactly
+the right ingredients (extras or a wrong one both miss) and you get a named dish back, ready to eat
+for 6 hunger — anything else, and the game just tells you that's not a recipe anyone's heard of, slots
+still loaded so you can swap one ingredient and try again. Closing the window without cooking hands
+back whatever's still sitting in the slots — they're a staging area, not real storage.
+
+Nothing tells you a dish's ingredients up front — that's the point. Camp chat drops one hint (a single
+ingredient from one of that cookware's recipes) every time you open its window, so checking back is
+always at least a little useful, but the rest is figuring it out from what's in the Bear Box. Cook at
+least one dish on all 5 cookware types — pot, pan, Dutch oven, campfire, griddle — to earn the Cooking
+badge.
+
+<details>
+<summary>All 26 recipes, if you'd rather not guess (spoilers)</summary>
+
+| Cookware | Dish | Ingredients |
+| --- | --- | --- |
+| Pot | Macaroni & Cheese | Pasta, Cheese, Milk, Butter |
+| Pot | Campfire Stew | Beef, Vegetables, Potatoes, Jug of Water |
+| Pot | Tomato Pasta | Pasta, Tomatoes, Jug of Water, Cheese |
+| Pot | Scout's Oatmeal | Oats, Jug of Water, Sugar/Syrup, Fruit |
+| Pot | Hot Dogs & Beans | Sausage, Beans, Sauce |
+| Pan | Campfire Quesadillas | Tortillas, Cheese, Chicken, Sauce |
+| Pan | Easy Scramble | Eggs, Sausage, Butter, Seasoning |
+| Pan | Classic Grilled Cheese | Bread, Cheese, Butter |
+| Pan | Quick Hash | Hash Browns, Bacon, Eggs, Vegetables |
+| Pan | Pan Fajitas | Beef, Vegetables, Seasoning, Butter |
+| Dutch Oven | Mountain Man Breakfast | Hash Browns, Eggs, Ground Meat, Cheese |
+| Dutch Oven | Cherry Dump Cake | Fruit, Baking Mix, Butter, Soda |
+| Dutch Oven | Dutch Oven Chili | Ground Meat, Tomatoes, Beans, Seasoning |
+| Dutch Oven | Cast-Iron Campfire Bread | Baking Mix, Jug of Water, Yeast, Seasoning |
+| Dutch Oven | Deep Dish Pizza | Pizza Dough, Tomatoes, Cheese, Pepperoni |
+| Dutch Oven | Peach Cobbler | Fruit, Baking Mix, Milk, Sugar/Syrup |
+| Campfire | Classic S'mores | Graham Crackers, Marshmallows, Chocolate |
+| Campfire | Foil Packet Chicken | Chicken, Vegetables, Butter, Seasoning |
+| Campfire | Coal-Baked Potatoes | Potatoes, Butter, Cheese, Bacon |
+| Campfire | Roasted Corn | Vegetables, Butter, Seasoning |
+| Campfire | Sausage on a Stick | Sausage |
+| Griddle | Camp Pancakes | Baking Mix, Jug of Water, Butter, Sugar/Syrup |
+| Griddle | Smash Burgers | Ground Meat, Bread, Cheese, Seasoning |
+| Griddle | French Toast | Bread, Eggs, Milk, Sugar/Syrup |
+| Griddle | Bacon and Eggs | Bacon, Eggs |
+| Griddle | Philly Cheesesteaks | Beef, Bread, Cheese, Vegetables |
+
+</details>
 
 Every campfire — these five and any you place yourself — has a real flickering flame licking up out
 of the stone ring, not just an invisible glow: the same light that's always come from it now visibly
@@ -360,9 +409,8 @@ You also have a hunger bar (10 drumsticks, right under your hearts) that empties
 Killing an animal still drops Meat internally — bigger animals drop more (1 for a rabbit or
 squirrel, 2 for a deer, 3 for a bear, 5 for a moose) — but Raw Meat itself is disabled: it's
 gone from the Inventory panel, so there's no way left to select it into a hotbar slot, eat it, or
-cook it into a Cooked Meal. **This currently leaves hunger with no way to be restored at all once it
-empties** — worth flagging if you want that revisited (Fish or Trail Food becoming edible are the
-two obvious candidates).
+cook it into a Cooked Meal. Hunger is restored by actually cooking now instead — any of the 26 dishes
+from the [Cooking area](#cooking-area) restores 6 hunger once you've made one.
 
 Every animal is modeled at real-world scale — world units are ~1 unit = 1 meter throughout, the same scale the 1.8-unit-tall player uses. That means a moose, at a good 2.1 blocks at the shoulder before you even count its antlers, towers well over you. Bigger animals also get a proportionally longer attack reach so their size isn't just cosmetic — a moose's kick reaches out a full block.
 
