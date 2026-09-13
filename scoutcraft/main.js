@@ -1371,14 +1371,23 @@ function buildUSFlagMaster(){
   const canvas = document.createElement('canvas');
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d');
-  // 13 alternating stripes, red first and last.
-  const stripeH = h/13;
-  for(let i=0;i<13;i++){
+  // 13 stripes, but not all the same height: 7 sized to exactly fill the top mural row (where the
+  // canton sits) and 6 sized to exactly fill the bottom row, so the canton's bottom edge lands
+  // precisely on the row boundary instead of spilling a sliver of blue into the block below it (equal
+  // stripe heights across all 13 would leave the canton's real-flag proportion — 7/13 of the total
+  // height — taller than the top row it needs to fit inside).
+  const cellH = h/US_FLAG_ROWS;
+  const topStripeH = cellH/7, botStripeH = cellH/6;
+  for(let i=0;i<7;i++){
     ctx.fillStyle = i%2===0 ? '#b22234' : '#ffffff';
-    ctx.fillRect(0, i*stripeH, w, stripeH+1);
+    ctx.fillRect(0, i*topStripeH, w, topStripeH+1);
   }
-  // Canton (the blue star field) covers the top 7 stripes and 2/5 of the width, real-flag proportions.
-  const cantonW = w*0.4, cantonH = stripeH*7;
+  for(let i=0;i<6;i++){
+    ctx.fillStyle = i%2===0 ? '#ffffff' : '#b22234'; // continues the alternation from stripe 7 onward
+    ctx.fillRect(0, cellH + i*botStripeH, w, botStripeH+1);
+  }
+  // Canton (the blue star field) covers the whole top row and 2/5 of the width, real-flag proportions.
+  const cantonW = w*0.4, cantonH = cellH;
   ctx.fillStyle = '#3c3b6e';
   ctx.fillRect(0, 0, cantonW, cantonH);
   // 50 stars, 9 rows alternating 6/5, each 5-star row offset half a column to interleave — the same
