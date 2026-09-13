@@ -250,7 +250,11 @@ Every one of these ten fixtures (five campfires, four pieces of cookware, one Be
 permanently indestructible — breaking has no effect on them at all, unlike everything else you place
 yourself. All five campfires there work exactly like any other campfire — see
 [Cooking](#camp-gear) for why cooking on one currently has nothing to cook — the cookware on top is
-purely decorative.
+purely decorative and, like every other block here, fully opaque.
+
+Every campfire — these five and any you place yourself — has a real flickering flame licking up out
+of the stone ring, not just an invisible glow: the same light that's always come from it now visibly
+comes from an actual fire instead of seeming to shine out of a painted block.
 
 A giant American flag towers over the clearing's far corner, clear of every station above — a
 12-block flagpole (the same thin pole the little Troop Flag uses, just stacked taller, capped with
