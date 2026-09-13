@@ -196,16 +196,18 @@ const STARVE_DAMAGE = 1;
 const MEAT_HUNGER_RESTORE = 4; // 2 icons per piece eaten
 
 // HP is scaled against the 20-HP (10-heart) human baseline to roughly track real-world size/toughness:
-// rabbits, squirrels and deer are small and fragile prey; wolves match a human in raw toughness (they're
-// dangerous because of their attack and pack speed, not their HP); a black bear is a serious tank;
+// rabbits, squirrels and deer are small and fragile prey; a black bear is a serious tank;
 // a moose is the toughest animal in the woods, nearly bear-sized HP with a kick to match.
-const ANIMAL_TYPES = ['rabbit','squirrel','deer','wolf','bear','moose'];
+const ANIMAL_TYPES = ['rabbit','squirrel','deer','bear','moose'];
 const ANIMAL_STATS = {
   rabbit:   { maxHp: 1*HP_PER_HEART,  dmg:0, retaliate:false, aggressive:false, speed:1.6, chaseSpeed:1.6, reach:0 },
   squirrel: { maxHp: 1*HP_PER_HEART,  dmg:0, retaliate:false, aggressive:false, speed:1.9, chaseSpeed:1.9, reach:0 },
   deer:   { maxHp: 4*HP_PER_HEART,  dmg:0, retaliate:false, aggressive:false, speed:1.3, chaseSpeed:2.2, reach:0 },
-  wolf:   { maxHp: 6*HP_PER_HEART,  dmg:3, retaliate:true,  aggressive:true,  speed:1.3, chaseSpeed:4.0, reach:0.2 },
-  bear:   { maxHp: 16*HP_PER_HEART, dmg:5, retaliate:true,  aggressive:true,  speed:0.9, chaseSpeed:3.2, reach:0.6 },
+  // chaseSpeed is above WALK_SPEED (5.2) so a charging bear actually catches a player who's just
+  // walking away — it was 3.2 (slower than even a walk) before, so it could roar and chase forever
+  // without ever closing the gap unless the player stood still. Still below SPRINT_SPEED (8.4), so
+  // sprinting away is a real (if risky) way to escape once one's after you.
+  bear:   { maxHp: 16*HP_PER_HEART, dmg:5, retaliate:true,  aggressive:true,  speed:0.9, chaseSpeed:6.0, reach:0.6 },
   moose:  { maxHp: 18*HP_PER_HEART, dmg:5, retaliate:true,  aggressive:false, speed:1.0, chaseSpeed:2.8, reach:1.0 },
 };
 
@@ -215,12 +217,12 @@ const ANIMAL_STATS = {
 // player is 1.8 units tall). ANIMAL_SCALE is derived once below by comparing this target height
 // to each model's original bodyY.
 const ANIMAL_REAL_HEIGHT = {
-  rabbit: 0.3, squirrel: 0.22, deer: 1.0, wolf: 0.8, bear: 1.0, moose: 2.1,
+  rabbit: 0.3, squirrel: 0.22, deer: 1.0, bear: 1.0, moose: 2.1,
 };
 // How much Meat killing each animal drops, non-decreasing with its real size above (squirrel is the
 // smallest, moose the biggest) — not a strict formula, just hand-picked round numbers in the same
 // order. Birds/fish scale by size too: large flying/aquatic species (eagle, swan, tuna) drop 2.
-const MEAT_YIELD = { rabbit:1, squirrel:1, deer:2, wolf:2, bear:3, moose:5,
+const MEAT_YIELD = { rabbit:1, squirrel:1, deer:2, bear:3, moose:5,
   robin:1, sparrow:1, blue_jay:1, cardinal:1, crow:2, bluebird:1, finch:1, swallow:1, dove:1, woodpecker:1, owl:2, hawk:2, eagle:2, parrot:1, toucan:1, flamingo:2, hummingbird:1, kingfisher:1, heron:2, pelican:2, seagull:1, magpie:1, raven:2, wren:1, chickadee:1, oriole:1, warbler:1, swan:2, duck:1, goose:2,
   goldfish:1, bass:1, salmon:1, tuna:2, clownfish:1, catfish:1, shark:3, whaleshark:5,
   worm:1, gopher:2, bigeagle:3,
@@ -228,7 +230,7 @@ const MEAT_YIELD = { rabbit:1, squirrel:1, deer:2, wolf:2, bear:3, moose:5,
 };
 // Rough horizontal collision radius per species, used for entity-vs-entity collision below.
 const ANIMAL_RADIUS = {
-  rabbit: 0.18, squirrel: 0.13, deer: 0.4, wolf: 0.3, bear: 0.55, moose: 0.75,
+  rabbit: 0.18, squirrel: 0.13, deer: 0.4, bear: 0.55, moose: 0.75,
 };
 // Reproduction mechanics: animals reproduce when two of the same species meet.
 // Cooldown is set in real-time ms further below (ANIMAL_REPRODUCE_INTERVAL_MS), once
@@ -250,7 +252,7 @@ const BADGES = [
   { id:'hiking',     emoji:'🥾', name:'Hiking',       hint:'Hike 1,000 blocks on foot.',                   test:()=> scoutStats.hiked >= 1000 },
   { id:'swimming',   emoji:'🏊', name:'Swimming',     hint:'Swim 60 blocks.',                              test:()=> scoutStats.swam >= 60 },
   { id:'climbing',   emoji:'🧗', name:'Climbing',     hint:'Get 18 blocks above sea level.',               test:()=> scoutStats.highest >= 18 },
-  { id:'nature',     emoji:'🦌', name:'Nature Study', hint:'Study all 6 animals up close — the bear and moose included.', test:()=> scoutStats.species.length >= ANIMAL_TYPES.length },
+  { id:'nature',     emoji:'🦌', name:'Nature Study', hint:'Study all 5 animals up close — the bear and moose included.', test:()=> scoutStats.species.length >= ANIMAL_TYPES.length },
   { id:'nightwatch', emoji:'🦉', name:'Night Watch',  hint:'Spend 5 minutes outdoors after dark.',         test:()=> scoutStats.nightSeconds >= 300 },
   { id:'firstaid',   emoji:'⛑️',          name:'First Aid',    hint:'Heal back to full health after nearly dying.', test:()=> scoutStats.recoveries >= 1 },
   { id:'troopflag',  emoji:'🚩', name:'Troop Flag',   hint:'Raise your troop flag at camp.',               test:()=> scoutStats.flags >= 1 },
@@ -2405,16 +2407,6 @@ const ANIMAL_HIDE = {
     fillTileSized(ctx,size,0xa9713f);
     speckleSized(ctx,size,0xa9713f,45,10);
   }),
-  wolf: buildHideTexture((ctx,size)=>{
-    fillTileSized(ctx,size,0x777d82);
-    speckleSized(ctx,size,0x777d82,60,10);
-    for(let x=0;x<size;x+=2){
-      if(Math.random()<0.5){
-        ctx.fillStyle = shadeStr(0x777d82, 0.6+Math.random()*0.3, 6);
-        ctx.fillRect(x, Math.random()*size*0.5, 1, size*0.35+Math.random()*size*0.3);
-      }
-    }
-  }),
   bear: buildHideTexture((ctx,size)=>{
     fillTileSized(ctx,size,0x2b211a);
     speckleSized(ctx,size,0x2b211a,50,8);
@@ -2515,20 +2507,6 @@ const ANIMAL_BUILDERS = {
       },
     });
   },
-  wolf(){
-    const hide = ANIMAL_HIDE_MAT.wolf;
-    return makeQuadruped({
-      bodyW:0.5, bodyH:0.32, bodyD:0.62, bodyY:0.42, bodyMat:hide,
-      legW:0.08,
-      headW:0.22, headH:0.2, headD:0.26, headY:0.5, headZ:-0.36,
-      extras(g){
-        const earL=animalBox(0.07,0.12,0.06,hide); earL.position.set(-0.09,0.66,-0.34); g.add(earL);
-        const earR=animalBox(0.07,0.12,0.06,hide); earR.position.set(0.09,0.66,-0.34); g.add(earR);
-        const snout=animalBox(0.1,0.08,0.14,0x2c2c2c); snout.position.set(0,0.46,-0.5); g.add(snout);
-        const tail=animalBox(0.08,0.08,0.34,hide); tail.position.set(0,0.5,0.36); tail.rotation.x=0.35; g.add(tail);
-      },
-    });
-  },
   bear(){
     const hide = ANIMAL_HIDE_MAT.bear;
     return makeQuadruped({
@@ -2567,7 +2545,7 @@ const ANIMAL_BUILDERS = {
 };
 // Original bodyY (quadrupeds) / hip height (bipeds) each model was designed at, before rescaling.
 const ANIMAL_ORIGINAL_BODY_Y = {
-  rabbit:0.22, squirrel:0.16, deer:0.85, wolf:0.42, bear:0.55, moose:1.6,
+  rabbit:0.22, squirrel:0.16, deer:0.85, bear:0.55, moose:1.6,
 };
 const ANIMAL_SCALE = {};
 for(const type of ANIMAL_TYPES) ANIMAL_SCALE[type] = ANIMAL_REAL_HEIGHT[type] / ANIMAL_ORIGINAL_BODY_Y[type];
@@ -2598,7 +2576,7 @@ function groundHeightAt(x,z){
   }
   return 1;
 }
-const SPAWN_COUNTS = { deer:5, bear:1, wolf:2, rabbit:10, squirrel:10, moose:1 };
+const SPAWN_COUNTS = { deer:5, bear:1, rabbit:10, squirrel:10, moose:1 };
 function findSpawnSpot(seedX, seedZ){
   let x,z,h,tries=0;
   do{
@@ -2751,10 +2729,21 @@ function killAnimal(a){
   const i = animals.indexOf(a);
   if(i>=0) animals.splice(i,1);
 }
+let lastAnimalWarningAt = 0;
+const ANIMAL_WARNING_COOLDOWN_MS = 5000;
 function damageAnimal(a, dmg){
+  // Checked before retaliate below updates aggroUntil, so this reflects whether the animal was
+  // already hostile BEFORE this hit — a Scout fighting off a charging bear isn't the same as
+  // picking a fight with a calm one, so only the latter gets the nudge (same "nudge, not a rule"
+  // spirit as the living-tree warning: it never blocks the attack, just names the ethic).
+  const wasHostile = performance.now() < a.aggroUntil;
   a.hp = Math.max(0, a.hp - dmg);
   const stats = ANIMAL_STATS[a.type];
   if(stats.retaliate) a.aggroUntil = performance.now() + RETALIATE_MS;
+  if(!wasHostile && Date.now()-lastAnimalWarningAt >= ANIMAL_WARNING_COOLDOWN_MS){
+    lastAnimalWarningAt = Date.now();
+    addChatMessage('Camp', "🦌 A real Scout leaves wildlife alone — only fight an animal that's already attacking you.");
+  }
   if(a.hp<=0){
     SFX.animalDeath();
     invAdd(MEAT, MEAT_YIELD[a.type] || 1);
@@ -6574,10 +6563,11 @@ const keys = {};
 let selectedSlot = 0;
 // Direct letter shortcuts for the hotbar, one per slot — no numbers, no scroll-wheel cycling.
 // Picked to avoid every letter already bound to something else (WASD move, E craft, I inventory,
-// V third-person, B backpack, M badges, K sleep, N day/night, L crawl toggle), and clustered as
+// V third-person, B backpack, M badges, K sleep, N day/night, Z crawl toggle), and clustered as
 // tightly as possible around WASD so they're reachable without moving your hand — H is the one
 // key here that isn't in that immediate block, since B (its neighbor) is now taken by Backpack.
-const HOTBAR_KEYS = ['KeyQ','KeyR','KeyF','KeyT','KeyG','KeyC','KeyX','KeyZ','KeyH'];
+// L took Z's old slot here once crawl toggle moved onto Z (see the keydown handler below).
+const HOTBAR_KEYS = ['KeyQ','KeyR','KeyF','KeyT','KeyG','KeyC','KeyX','KeyL','KeyH'];
 window.addEventListener('keydown', e=>{
   keys[e.code]=true;
   if(e.code==='KeyD' && e.altKey && e.shiftKey && !e.ctrlKey && !e.metaKey){
@@ -6621,7 +6611,7 @@ window.addEventListener('keydown', e=>{
   if(e.code==='KeyV' && locked){ thirdPerson = !thirdPerson; return; }
   if(e.code==='KeyN' && locked){ cycleTimeMode(); return; }
   if(e.code==='KeyK' && locked && !isDead){ trySleep(); return; }
-  if(e.code==='KeyL' && locked){ player.crawlMode = !player.crawlMode; return; }
+  if(e.code==='KeyZ' && locked){ player.crawlMode = !player.crawlMode; return; }
   const slotIdx = HOTBAR_KEYS.indexOf(e.code);
   if(slotIdx>=0 && slotIdx<HOTBAR.length){
     selectedSlot = slotIdx; updateHotbarUI(); updateHeldItemColor();
