@@ -5784,7 +5784,10 @@ const KAYAK_START_ANGLE = Math.atan2(9.5, 3.5); // the dock's own angle on the c
 const KAYAK_SPEED = 2; // blocks/second — a full loop takes ~31s, about one badge's worth
 const KAYAK_ANGULAR_SPEED = KAYAK_SPEED / KAYAK_LAKE_RADIUS;
 const KAYAK_ENTER_RADIUS = 1.3;
-const KAYAK_SIT_Y = SEA_LEVEL + 0.35; // floating just above the water surface
+// The water surface itself is SEA_LEVEL+1, not SEA_LEVEL — the topmost water block is placed AT
+// SEA_LEVEL and, like any voxel, its visible top face is one full block above that (see
+// waterSurfaceAt above, which returns exactly this). KAYAK_SIT_Y sits the hull right on that surface.
+const KAYAK_SIT_Y = SEA_LEVEL + 1.05;
 let kayakMesh = null;
 let kayakAngle = KAYAK_START_ANGLE;
 function kayakDockPos(){
