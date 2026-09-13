@@ -7533,7 +7533,7 @@ function renderItemsGrid(){
   if(held.length>0){
     const lbl = document.createElement('div');
     lbl.className = 'sectionLabel';
-    lbl.textContent = 'Your items';
+    lbl.textContent = 'Items in your hands';
     grid.appendChild(lbl);
     held.forEach(id => grid.appendChild(makeItemTile(id)));
   }
