@@ -16,7 +16,13 @@
   #crosshair:before,#crosshair:after{content:"";position:absolute;background:rgba(255,255,255,0.85);box-shadow:0 0 2px rgba(0,0,0,0.6);}
   #crosshair:before{left:9px;top:0;width:2px;height:20px;}
   #crosshair:after{top:9px;left:0;width:20px;height:2px;}
-  #hotbar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:10;background:rgba(0,0,0,0.25);padding:6px;border-radius:8px;}
+  #bottomBar{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:10;display:flex;gap:10px;}
+  #hotbar{display:flex;gap:6px;background:rgba(0,0,0,0.25);padding:6px;border-radius:8px;}
+  #specialIcons{display:flex;gap:6px;background:rgba(0,0,0,0.25);padding:6px;border-radius:8px;}
+  #specialIcons button{width:48px;height:48px;border:2px solid #c8a44d;border-radius:6px;background:rgba(200,164,77,0.14);
+    color:#fff;font-size:20px;cursor:pointer;font-family:inherit;}
+  #specialIcons button:hover{background:rgba(200,164,77,0.3);}
+  #specialIcons button:disabled{opacity:0.4;cursor:default;background:rgba(255,255,255,0.06);}
   .slot{width:48px;height:48px;border:2px solid rgba(255,255,255,0.4);border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;background:rgba(255,255,255,0.08);}
   .slot.active{border-color:#fff;box-shadow:0 0 8px rgba(255,255,255,0.8);}
   .slot.empty .swatch{opacity:0.3;}
@@ -30,6 +36,8 @@
   #overlay p{max-width:520px;line-height:1.6;opacity:0.92;font-size:15px;}
   #overlay .key{background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:4px;}
   #overlay .small{margin-top:18px;font-size:12px;opacity:0.65;}
+  #desktopNotice{max-width:420px;font-size:12.5px;font-weight:600;background:rgba(255,255,255,0.12);
+    border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:8px 14px;opacity:1;margin:0 0 16px;}
   #overlay .credits{margin-top:16px;font-size:16px;line-height:1.5;opacity:1;font-weight:600;
     color:#fff3d6;background:rgba(255,204,77,0.14);border:1px solid rgba(255,204,77,0.45);
     border-radius:10px;padding:14px 18px;}
@@ -50,11 +58,18 @@
   #hearts{position:fixed;top:10px;left:50%;transform:translateX(-50%);display:flex;gap:2px;z-index:10;filter:drop-shadow(0 0 2px rgba(0,0,0,0.7));pointer-events:none;}
   #hunger{position:fixed;top:34px;left:50%;transform:translateX(-50%);display:flex;gap:2px;z-index:10;font-size:16px;text-shadow:0 0 3px #000;pointer-events:none;}
   #deathMessage{position:fixed;top:35%;left:50%;transform:translate(-50%,-50%);color:#e05a4a;font-size:2em;font-weight:700;text-shadow:0 0 8px rgba(0,0,0,0.8);z-index:15;pointer-events:none;}
+  #stopBearBanner{position:fixed;top:28%;left:50%;transform:translate(-50%,-50%);color:#ffcc33;font-size:2.4em;font-weight:800;
+    text-shadow:0 0 10px rgba(0,0,0,0.9),0 0 20px rgba(0,0,0,0.6);z-index:16;pointer-events:none;text-align:center;letter-spacing:0.02em;}
   #hurtOverlay{position:fixed;inset:0;z-index:14;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center, rgba(180,0,0,0) 35%, rgba(180,0,0,0.55) 100%);}
   #sleepOverlay{position:fixed;inset:0;z-index:15;pointer-events:none;opacity:0;background:#000;}
   #lightningFlash{position:fixed;inset:0;z-index:13;pointer-events:none;opacity:0;background:#fff;}
-  #hint{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);color:#fff;font-size:12px;text-shadow:0 0 3px #000;z-index:10;opacity:0.85;white-space:nowrap;pointer-events:none;}
-  body.touch-device #hint{display:none;}
+  #hotkeyPanel{position:fixed;top:50%;right:14px;transform:translateY(-50%);z-index:10;background:rgba(0,0,0,0.55);
+    color:#fff;border-radius:10px;padding:14px 16px;font-size:12px;width:260px;pointer-events:none;
+    box-shadow:0 6px 24px rgba(0,0,0,0.4);}
+  #hotkeyPanel h3{margin:0 0 8px;font-size:13px;opacity:0.85;text-transform:uppercase;letter-spacing:0.05em;}
+  #hotkeyPanel .hkRow{display:flex;gap:10px;padding:3px 0;line-height:1.35;}
+  #hotkeyPanel .hkKey{flex:none;min-width:78px;color:#e8c46a;font-weight:600;}
+  body.touch-device #hotkeyPanel{display:none;}
   #updateBanner{position:fixed;top:36px;left:50%;transform:translateX(-50%);z-index:25;background:#3a2f0f;color:#ffe9a8;border:1px solid rgba(255,220,120,0.5);border-radius:8px;padding:8px 14px;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,0.4);white-space:nowrap;}
   #updateReloadBtn{background:#ffcc4d;color:#2b2100;border:none;border-radius:5px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;}
   #updateReloadBtn:hover{background:#ffd966;}
@@ -207,13 +222,38 @@
 <div id="hearts"></div>
 <div id="hunger"></div>
 <div id="deathMessage" hidden>You died</div>
+<div id="stopBearBanner" hidden>GO AWAY! BEAR! GO AWAY!</div>
 <div id="hurtOverlay"></div>
 <div id="sleepOverlay"></div>
 <div id="lightningFlash"></div>
 <div id="badgeToast" hidden></div>
 <div id="crosshair"></div>
-<div id="hotbar"></div>
-<div id="hint">Left click: break / attack &nbsp;·&nbsp; Right click: place (or take a bearing with the compass / open a table or backpack / toggle a window or door / cast a fishing pole into water / collect a golden Scout Law box) &nbsp;·&nbsp; Q R F T G C X Z H: select item &nbsp;·&nbsp; I: inventory &nbsp;·&nbsp; B: backpack &nbsp;·&nbsp; M: badge sash &nbsp;·&nbsp; E: craft &nbsp;·&nbsp; K: sleep in tent &nbsp;·&nbsp; V: 3rd person &nbsp;·&nbsp; Ctrl: hold to crawl &nbsp;·&nbsp; L: toggle crawl &nbsp;·&nbsp; N: cycle day/night &nbsp;·&nbsp; Esc: release mouse</div>
+<div id="bottomBar">
+  <div id="specialIcons">
+    <button id="btnQuickBackpack" title="Backpack">🎒</button>
+    <button id="btnQuickWorkbench" title="Camp Workbench">🛠️</button>
+    <button id="btnQuickFirstAid" title="First Aid">🩹</button>
+    <button id="btnStopBear" title="Scare off a nearby bear">🐻🚫</button>
+  </div>
+  <div id="hotbar"></div>
+</div>
+<div id="hotkeyPanel" hidden>
+  <h3>Hotkeys</h3>
+  <div class="hkRow"><span class="hkKey">Left click</span>break / attack</div>
+  <div class="hkRow"><span class="hkKey">Right click</span>place / interact (compass, fishing pole, tables, backpack, windows, doors, Scout Law boxes)</div>
+  <div class="hkRow"><span class="hkKey">Q R F T G C X L J</span>select hotbar slot</div>
+  <div class="hkRow"><span class="hkKey">I</span>inventory</div>
+  <div class="hkRow"><span class="hkKey">B</span>backpack</div>
+  <div class="hkRow"><span class="hkKey">M</span>badge sash</div>
+  <div class="hkRow"><span class="hkKey">E</span>craft</div>
+  <div class="hkRow"><span class="hkKey">K</span>sleep in tent</div>
+  <div class="hkRow"><span class="hkKey">V</span>3rd person view</div>
+  <div class="hkRow"><span class="hkKey">Ctrl</span>hold to crawl</div>
+  <div class="hkRow"><span class="hkKey">Z</span>toggle crawl</div>
+  <div class="hkRow"><span class="hkKey">N</span>cycle day/night</div>
+  <div class="hkRow"><span class="hkKey">H</span>toggle this panel</div>
+  <div class="hkRow"><span class="hkKey">Esc</span>release mouse</div>
+</div>
 <div id="craftHint">Right-click the table (or press E) to craft</div>
 <div id="fishingHint"></div>
 <div id="chatLog"></div>
@@ -334,17 +374,18 @@
 </div>
 <div id="overlay">
   <h1>ScoutCraft</h1>
+  <p id="desktopNotice">💻 Best played on a desktop or laptop with a keyboard and mouse. It also works on phones and tablets with on-screen touch controls, but that's not what it was designed for.</p>
   <p id="controlsText">
     Set up camp in the wilderness and earn your merit badges — a browser voxel world where
     woodcraft, firecraft and a good tent actually count for something.<br><br>
-    <span class="key">WASD</span> move &nbsp; <span class="key">Space</span> jump &nbsp; <span class="key">Shift</span> sprint &nbsp; <span class="key">Ctrl</span> crawl &nbsp; <span class="key">L</span> toggle crawl<br>
+    <span class="key">WASD</span> move &nbsp; <span class="key">Space</span> jump &nbsp; <span class="key">Shift</span> sprint &nbsp; <span class="key">Ctrl</span> crawl &nbsp; <span class="key">Z</span> toggle crawl<br>
     <span class="key">Mouse</span> look &nbsp; <span class="key">Left click</span> break / attack &nbsp; <span class="key">Right click</span> place<br>
-    <span class="key">Q R F T G C X Z H</span> select item &nbsp; <span class="key">I</span> inventory &nbsp; <span class="key">B</span> backpack &nbsp; <span class="key">M</span> badge sash &nbsp; <span class="key">E</span> craft at workbench &nbsp; <span class="key">K</span> sleep in tent &nbsp; <span class="key">V</span> 3rd person &nbsp; <span class="key">N</span> cycle day/night
+    <span class="key">Q R F T G C X L J</span> select item &nbsp; <span class="key">I</span> inventory &nbsp; <span class="key">B</span> backpack &nbsp; <span class="key">M</span> badge sash &nbsp; <span class="key">E</span> craft at workbench &nbsp; <span class="key">K</span> sleep in tent &nbsp; <span class="key">V</span> 3rd person &nbsp; <span class="key">N</span> cycle day/night &nbsp; <span class="key">H</span> hotkeys
   </p>
   <div id="nameEntry"><input id="nameInput" type="text" maxlength="16" placeholder="Your name" autocomplete="off"></div>
   <p id="tapToPlay"><strong>Click anywhere to play</strong></p>
   <button id="btnHelp">❓ How to play</button>
-  <p id="playHint" class="small" hidden>Press <span class="key">B</span> to open your Backpack — it starts already packed with the real Scout's 10 Essentials plus a tent, sleeping bag, sleeping pad and rope. Pitch your tent (a real shelter you can walk into) and take a bearing with your compass to earn merit badges right away. Chop a tree for wood and leaves, put down your Camp Workbench, and press E beside it to craft — twist leaves into <b>rope</b>, then set up a <b>campfire</b>, a <b>lantern</b> and your <b>troop flag</b> — each one earns a merit badge too, and badges promote you from Tenderfoot all the way to Eagle Scout. Press <span class="key">M</span> to see your sash, or <span class="key">K</span> near your tent after dark to sleep through the night. Rabbits and deer are harmless — moose fight back if provoked, and wolves and the black bear attack on sight. Progress saves automatically in this browser.</p>
+  <p id="playHint" class="small" hidden>Press <span class="key">B</span> to open your Backpack — it starts already packed with the real Scout's 10 Essentials plus a tent, sleeping bag, sleeping pad and rope. Pitch your tent (a real shelter you can walk into) and take a bearing with your compass to earn merit badges right away. Chop a tree for wood and leaves, put down your Camp Workbench, and press E beside it to craft — twist leaves into <b>rope</b>, then set up a <b>campfire</b>, a <b>lantern</b> and your <b>troop flag</b> — each one earns a merit badge too, and badges promote you from Tenderfoot all the way to Eagle Scout. Press <span class="key">M</span> to see your sash, <span class="key">K</span> near your tent after dark to sleep through the night, or <span class="key">H</span> any time for the full hotkey list. Rabbits and deer are harmless — the moose fights back if provoked, and the black bear attacks on sight. Progress saves automatically in this browser.</p>
   <p class="credits">Built by Andre Wu, his dad, and an AI to help others discover scouting! Andre scouts
   with Troop 904 out of Dublin, CA. If you had fun, please consider supporting his scouting adventures
   and our heroes: <a href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">🍿 Andre's Popcorn Sale</a></p>

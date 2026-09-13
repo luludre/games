@@ -2576,6 +2576,17 @@ function groundHeightAt(x,z){
   }
   return 1;
 }
+// Surface height of the topmost WATER block in this column, or null if there's none — lets a land
+// animal that's wandered out over its depth float there instead of walking the submerged lake bed
+// groundHeightAt alone would put it on (groundHeightAt ignores water entirely, on purpose, so it can
+// find the real ground beneath it).
+function waterSurfaceAt(x,z){
+  const bx=Math.floor(x), bz=Math.floor(z);
+  for(let y=WORLD_HEIGHT-1;y>=0;y--){
+    if(getBlock(bx,y,bz)===WATER) return y+1;
+  }
+  return null;
+}
 const SPAWN_COUNTS = { deer:5, bear:1, rabbit:10, squirrel:10, moose:1 };
 function findSpawnSpot(seedX, seedZ){
   let x,z,h,tries=0;
@@ -2600,7 +2611,7 @@ function addAnimal(type, id, spot, yawSeed){
     hp: stats.maxHp, maxHp: stats.maxHp,
     x:spot.x+0.5, y:gy, z:spot.z+0.5, yaw: (yawSeed!=null ? yawSeed : Math.random())*Math.PI*2,
     wanderTimer: Math.random()*2, target:null,
-    aggroUntil:0, attackCooldown:0, walk:{phase:0,amp:0}, wasAggro:false,
+    aggroUntil:0, attackCooldown:0, walk:{phase:0,amp:0}, wasAggro:false, swimming:false, fleeUntil:0,
     lastReproducedAt: Date.now(),
   };
   animals.push(a);
@@ -2640,13 +2651,28 @@ function updateAnimal(a, dt){
   const distToPlayer = Math.hypot(dxp,dzp);
   const now = performance.now();
 
-  if(stats.aggressive && distToPlayer < AGGRO_RADIUS) a.aggroUntil = Math.max(a.aggroUntil, now + 1500);
-  const isAggro = now < a.aggroUntil && distToPlayer < DEAGGRO_RADIUS;
-  if(isAggro && !a.wasAggro && a.type==='bear') SFX.roar();
+  const fleeing = now < a.fleeUntil;
+  let isAggro = false;
+  if(!fleeing){
+    if(stats.aggressive && distToPlayer < AGGRO_RADIUS) a.aggroUntil = Math.max(a.aggroUntil, now + 1500);
+    isAggro = now < a.aggroUntil && distToPlayer < DEAGGRO_RADIUS;
+    if(isAggro && !a.wasAggro && a.type==='bear') SFX.roar();
+  }
   a.wasAggro = isAggro;
 
   let moving = false;
-  if(isAggro){
+  if(fleeing){
+    // Scared off by the Stop Bear function (see scareBearsNear below) — run straight away from the
+    // player, overriding aggro/wander entirely until the fright wears off. Clearing aggroUntil too
+    // means it doesn't just spin around and resume the charge the instant the fright ends.
+    a.aggroUntil = 0;
+    if(distToPlayer > 0.05 && distToPlayer < DEAGGRO_RADIUS*2){
+      const nx = -dxp/distToPlayer, nz = -dzp/distToPlayer;
+      a.yaw = Math.atan2(-nx, -nz);
+      stepAnimal(a, nx*stats.chaseSpeed*dt, nz*stats.chaseSpeed*dt);
+      moving = true;
+    }
+  } else if(isAggro){
     if(distToPlayer > 0.05){
       const nx = dxp/distToPlayer, nz = dzp/distToPlayer;
       a.yaw = Math.atan2(-nx, -nz);
@@ -2700,7 +2726,14 @@ function updateAnimal(a, dt){
 
   a.x = Math.max(1, Math.min(WORLD_SIZE-1, a.x));
   a.z = Math.max(1, Math.min(WORLD_SIZE-1, a.z));
-  a.y = groundHeightAt(a.x, a.z);
+  const groundY = groundHeightAt(a.x, a.z);
+  const waterTop = waterSurfaceAt(a.x, a.z);
+  const realH = ANIMAL_REAL_HEIGHT[a.type] || 0.8;
+  // Deep enough that walking the real lake bed would put most of the animal underwater — float and
+  // paddle at the surface instead, rather than the "invisible, strolling along the bottom" look
+  // groundY alone would give it. Shallow water (a stream, a pond's edge) still just wades normally.
+  a.swimming = waterTop!==null && (waterTop-groundY) > realH*0.6;
+  a.y = a.swimming ? waterTop - realH*0.4 : groundY;
 
   a.mesh.position.set(a.x, a.y, a.z);
   a.mesh.rotation.y = a.yaw;
@@ -2724,6 +2757,20 @@ function updateAnimal(a, dt){
   }
 }
 function updateAnimals(dt){ animals.forEach(a=>updateAnimal(a,dt)); }
+const STOP_BEAR_RADIUS = 8;      // a bit past AGGRO_RADIUS, so it can interrupt one already charging
+const STOP_BEAR_FLEE_MS = 6000;
+// Shouting and clapping at any bear close enough to hear it — see the Stop Bear quick-access icon.
+// Returns how many bears actually got scared, so the caller can react if there weren't any nearby.
+function scareBearsNear(x, z, radius){
+  let scared = 0;
+  for(const a of animals){
+    if(a.type!=='bear') continue;
+    if(Math.hypot(a.x-x, a.z-z) > radius) continue;
+    a.fleeUntil = performance.now() + STOP_BEAR_FLEE_MS;
+    scared++;
+  }
+  return scared;
+}
 function killAnimal(a){
   scene.remove(a.mesh);
   const i = animals.indexOf(a);
@@ -3007,6 +3054,17 @@ const SFX = {
     });
   },
   roar(){ playRoar(); },
+  // Yelling and clapping to scare off a bear: a handful of quick, wavering shouts rather than any
+  // one clean tone — deliberately silly-sounding, since it's the player making the noise, not the
+  // game's own SFX library doing something musical.
+  scareShout(){
+    [0,140,270].forEach((delay,i)=>{
+      setTimeout(()=>{
+        playTone(180+i*30, 0.16, 'sawtooth', 0.16, 420+i*40);
+        playNoise(0.08, 0.14, 1800);
+      }, delay);
+    });
+  },
   // Waking up: two soft rising tones, the opposite shape of death's falling one.
   sleep(){
     playTone(320, 0.35, 'sine', 0.1, 420, 0.06);
@@ -6559,15 +6617,17 @@ function placeBlock(){
 }
 
 // ---------- Input ----------
+const hotkeyPanel = document.getElementById('hotkeyPanel');
+function toggleHotkeyPanel(){ hotkeyPanel.hidden = !hotkeyPanel.hidden; }
 const keys = {};
 let selectedSlot = 0;
 // Direct letter shortcuts for the hotbar, one per slot — no numbers, no scroll-wheel cycling.
 // Picked to avoid every letter already bound to something else (WASD move, E craft, I inventory,
-// V third-person, B backpack, M badges, K sleep, N day/night, Z crawl toggle), and clustered as
-// tightly as possible around WASD so they're reachable without moving your hand — H is the one
-// key here that isn't in that immediate block, since B (its neighbor) is now taken by Backpack.
-// L took Z's old slot here once crawl toggle moved onto Z (see the keydown handler below).
-const HOTBAR_KEYS = ['KeyQ','KeyR','KeyF','KeyT','KeyG','KeyC','KeyX','KeyL','KeyH'];
+// V third-person, B backpack, M badges, K sleep, N day/night, Z crawl toggle, H hotkey panel), and
+// clustered as tightly as possible around WASD so they're reachable without moving your hand.
+// L took Z's old slot once crawl toggle moved onto Z, and J takes H's old slot now that H opens the
+// hotkey panel instead (see the keydown handler below).
+const HOTBAR_KEYS = ['KeyQ','KeyR','KeyF','KeyT','KeyG','KeyC','KeyX','KeyL','KeyJ'];
 window.addEventListener('keydown', e=>{
   keys[e.code]=true;
   if(e.code==='KeyD' && e.altKey && e.shiftKey && !e.ctrlKey && !e.metaKey){
@@ -6612,6 +6672,7 @@ window.addEventListener('keydown', e=>{
   if(e.code==='KeyN' && locked){ cycleTimeMode(); return; }
   if(e.code==='KeyK' && locked && !isDead){ trySleep(); return; }
   if(e.code==='KeyZ' && locked){ player.crawlMode = !player.crawlMode; return; }
+  if(e.code==='KeyH' && locked){ toggleHotkeyPanel(); return; }
   const slotIdx = HOTBAR_KEYS.indexOf(e.code);
   if(slotIdx>=0 && slotIdx<HOTBAR.length){
     selectedSlot = slotIdx; updateHotbarUI(); updateHeldItemColor();
@@ -6688,7 +6749,7 @@ if(isTouchDevice){
   const tapP = document.getElementById('tapToPlay');
   if(tapP) tapP.innerHTML = '<strong>Tap anywhere to play</strong>';
   const hintP = document.getElementById('playHint');
-  if(hintP) hintP.textContent = 'Tap Backpack (B) for your tent, compass and other starting gear, then break blocks to gather materials and place your Crafting Table to craft a campfire, lantern and troop flag. Rabbits and deer are harmless — the moose will fight back if you attack it, and wolves and the black bear will attack on sight if you get too close. Progress is saved automatically in this browser.';
+  if(hintP) hintP.textContent = 'Tap Backpack (B) for your tent, compass and other starting gear, then break blocks to gather materials and place your Crafting Table to craft a campfire, lantern and troop flag. Rabbits and deer are harmless — the moose will fight back if you attack it, and the black bear will attack on sight if you get too close. Progress is saved automatically in this browser.';
 }
 overlay.addEventListener('click', ()=>{
   ensureAudio();
@@ -7459,6 +7520,56 @@ function closeBackpackStorage(relock){
 }
 document.getElementById('btnBackpack').addEventListener('click', ()=>{ if(locked && !isDead) openBackpackStorage(); });
 
+// ---------- Special function icons (Backpack, Camp Workbench, First Aid, Stop Bear) ----------
+// A small fixed cluster to the left of the hotbar — always the same four actions, never swapped out
+// for an item the way an ordinary hotbar slot can be.
+const FIRST_AID_HEAL_HP = 2 * HP_PER_HEART; // 2 hearts
+const FIRST_AID_COOLDOWN_S = 60;
+const STOP_BEAR_COOLDOWN_S = 20;
+let firstAidCooldown = 0, stopBearCooldown = 0;
+document.getElementById('btnQuickBackpack').addEventListener('click', ()=>{
+  if(locked && !isDead) openBackpackStorage();
+});
+document.getElementById('btnQuickWorkbench').addEventListener('click', ()=>{
+  if(!locked || isDead) return;
+  if(nearestCraftingTable(4)) openCrafting();
+  else addChatMessage('Camp', '🛠️ You need to be near your Camp Workbench to craft.');
+});
+document.getElementById('btnQuickFirstAid').addEventListener('click', ()=>{
+  if(!locked || isDead) return;
+  if(firstAidCooldown>0){
+    addChatMessage('Camp', `🩹 First Aid is still resting — ${Math.ceil(firstAidCooldown)}s.`);
+    return;
+  }
+  if(myHP >= PLAYER_MAX_HP){
+    addChatMessage('Camp', "🩹 You're already at full health.");
+    return;
+  }
+  myHP = Math.min(PLAYER_MAX_HP, myHP + FIRST_AID_HEAL_HP);
+  updateHeartsUI();
+  firstAidCooldown = FIRST_AID_COOLDOWN_S;
+  SFX.craft();
+  addChatMessage('Camp', '🩹 First Aid: patched up a couple hearts.');
+});
+const stopBearBanner = document.getElementById('stopBearBanner');
+let stopBearBannerTimer = null;
+document.getElementById('btnStopBear').addEventListener('click', ()=>{
+  if(!locked || isDead) return;
+  if(stopBearCooldown>0){
+    addChatMessage('Camp', `🐻🚫 Give it a moment — ${Math.ceil(stopBearCooldown)}s.`);
+    return;
+  }
+  stopBearCooldown = STOP_BEAR_COOLDOWN_S;
+  SFX.scareShout();
+  stopBearBanner.hidden = false;
+  if(stopBearBannerTimer) clearTimeout(stopBearBannerTimer);
+  stopBearBannerTimer = setTimeout(()=>{ stopBearBanner.hidden = true; }, 1600);
+  const scared = scareBearsNear(player.pos.x, player.pos.z, STOP_BEAR_RADIUS);
+  addChatMessage('Camp', scared>0
+    ? `🐻🚫 GO AWAY, BEAR! ${scared>1?'The bears run':'The bear runs'} off.`
+    : "🐻🚫 GO AWAY, BEAR! ...no bear was close enough to hear you.");
+});
+
 // ---------- Camp log ----------
 // A small on-screen message log for local feedback (cooking hints, sleep, badge-adjacent tips) —
 // there's no chat to send here, single-player has no one else to send it to.
@@ -7574,6 +7685,8 @@ function animate(now){
   updateDeathState(dt);
   updateScout(dt);
   updateFishing(dt);
+  firstAidCooldown = Math.max(0, firstAidCooldown - dt);
+  stopBearCooldown = Math.max(0, stopBearCooldown - dt);
 
   const moving = locked && !isDead && (keys['KeyW']||keys['KeyA']||keys['KeyS']||keys['KeyD']);
   const sprinting = !!(keys['ShiftLeft']||keys['ShiftRight']);
