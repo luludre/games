@@ -263,10 +263,12 @@ const BADGES = [
   { id:'climbing',   emoji:'🧗', name:'Climbing',     hint:'Get 18 blocks above sea level.',               test:()=> scoutStats.highest >= 18 },
   { id:'nature',     emoji:'🦌', name:'Nature Study', hint:'Study all 5 animals up close — the bear and moose included.', test:()=> scoutStats.species.length >= ANIMAL_TYPES.length },
   { id:'nightwatch', emoji:'🦉', name:'Night Watch',  hint:'Spend 5 minutes outdoors after dark.',         test:()=> scoutStats.nightSeconds >= 300 },
-  { id:'firstaid',   emoji:'⛑️',          name:'First Aid',    hint:'Heal back to full health after nearly dying.', test:()=> scoutStats.recoveries >= 1 },
+  { id:'firstaid',   emoji:'⛑️',          name:'First Aid',    hint:'Use your First Aid Kit.',                     test:()=> scoutStats.firstAidUses >= 1 },
   { id:'troopflag',  emoji:'🚩', name:'Troop Flag',   hint:'Raise your troop flag at camp.',               test:()=> scoutStats.flags >= 1 },
   { id:'astronomy',  emoji:'⭐', name:'Astronomy',    hint:'Find the Big Dipper and stare at it for 10 seconds.', test:()=> scoutStats.dipperFound },
   { id:'fishing',    emoji:'🎣', name:'Fishing',      hint:'Catch 5 fish.',                                test:()=> scoutStats.fishCaught >= 5 },
+  { id:'kayaking',   emoji:'🛶', name:'Kayaking',     hint:'Paddle the lake for 30 seconds.',              test:()=> scoutStats.kayakSeconds >= 30 },
+  { id:'horseback',  emoji:'🐴', name:'Horseback Riding', hint:'Ride 200 blocks on horseback.',            test:()=> scoutStats.horsebackBlocks >= HORSEBACK_BADGE_BLOCKS },
   { id:'scoutspirit',emoji:'🏅', name:'Scout Spirit', hint:'Find all 12 golden Scout Law boxes hidden around camp.', test:()=> scoutStats.lawsCollected.length >= SCOUT_LAW_POINTS.length },
 ];
 // Ranks are purely derived from how many badges you hold — no separate progression to track.
@@ -293,8 +295,8 @@ const earnedBadges = new Set();
 // species is an array rather than a Set purely so it survives JSON.stringify into localStorage.
 const scoutStats = {
   wood:0, rope:0, campfires:0, tents:0, flags:0, meals:0, compassUses:0,
-  hiked:0, swam:0, highest:0, nightSeconds:0, recoveries:0, species:[],
-  campX:null, campZ:null, dipperFound:false, fishCaught:0, lawsCollected:[],
+  hiked:0, swam:0, highest:0, nightSeconds:0, species:[],
+  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, horsebackBlocks:0, lawsCollected:[],
 };
 function saveScoutProgress(){
   try{
@@ -404,9 +406,8 @@ const Scout = {
   },
 };
 
-// ---- Continuous tracking (distance, altitude, night time, health recovery, wildlife) ----
+// ---- Continuous tracking (distance, altitude, night time, wildlife) ----
 let scoutLastX = null, scoutLastZ = null;
-let scoutWasLow = false;
 let scoutSpeciesScanTimer = 0;
 let scoutSaveTimer = 0;
 let dipperGazeTimer = 0, dipperGraceTimer = 0;
@@ -438,6 +439,7 @@ function updateScout(dt){
   if(above > scoutStats.highest) scoutStats.highest = above;
 
   if(isScoutNight()) scoutStats.nightSeconds += dt;
+  if(player.inKayak) scoutStats.kayakSeconds += dt;
 
   // Astronomy: keep the Big Dipper roughly in view, at night, for 10 seconds of attention. A brief
   // glance away (mouse drift, checking your footing) doesn't wipe the streak — only DIPPER_GAZE_GRACE_S
@@ -451,10 +453,6 @@ function updateScout(dt){
     dipperGraceTimer -= dt;
     if(dipperGraceTimer <= 0) dipperGazeTimer = 0;
   }
-
-  // First aid: drop below 3 hearts, then get all the way back to full.
-  if(myHP <= 3*HP_PER_HEART) scoutWasLow = true;
-  else if(scoutWasLow && myHP >= PLAYER_MAX_HP){ scoutWasLow = false; scoutStats.recoveries++; }
 
   // Nature study: what's within sight right now. Twice a second is plenty and keeps this off the
   // per-frame budget.
@@ -579,8 +577,19 @@ function tryFish(){
 }
 function updateFishing(dt){
   if(!fishingSpot) return;
-  if(!locked || isDead){ fishingSpot = null; fishingTimer = 0; return; }
-  if(HOTBAR[selectedSlot] !== FISHING_POLE){ fishingSpot = null; fishingTimer = 0; return; }
+  // These two used to reset the line with no message at all — indistinguishable from a catch simply
+  // never landing. Opening any panel (the Badges screen included, the obvious thing to check while
+  // waiting out the 20-second hold) or swapping off the Fishing Pole both silently broke the line.
+  if(!locked || isDead){
+    if(!isDead) addChatMessage('Camp', '🎣 You lost your line.');
+    fishingSpot = null; fishingTimer = 0;
+    return;
+  }
+  if(HOTBAR[selectedSlot] !== FISHING_POLE){
+    addChatMessage('Camp', '🎣 You lost your line.');
+    fishingSpot = null; fishingTimer = 0;
+    return;
+  }
   if(keys['KeyW']||keys['KeyA']||keys['KeyS']||keys['KeyD']){
     addChatMessage('Camp', '🎣 You moved and lost your line.');
     fishingSpot = null; fishingTimer = 0;
@@ -640,10 +649,12 @@ function badgeProgress(b){
     climbing:   ()=> [Math.max(0,Math.floor(scoutStats.highest)), 18, 'blocks up'],
     nature:     ()=> [scoutStats.species.length, ANIMAL_TYPES.length, 'animals'],
     nightwatch: ()=> [Math.floor(scoutStats.nightSeconds), 300, 'seconds'],
-    firstaid:   ()=> [scoutStats.recoveries, 1, 'recoveries'],
+    firstaid:   ()=> [scoutStats.firstAidUses, 1, 'uses'],
     troopflag:  ()=> [scoutStats.flags, 1, 'flags'],
     astronomy:  ()=> [scoutStats.dipperFound?1:0, 1, 'found'],
     fishing:    ()=> [scoutStats.fishCaught, 5, 'fish'],
+    kayaking:   ()=> [Math.floor(scoutStats.kayakSeconds), 30, 'seconds'],
+    horseback:  ()=> [Math.floor(scoutStats.horsebackBlocks), HORSEBACK_BADGE_BLOCKS, 'blocks'],
     scoutspirit:()=> [scoutStats.lawsCollected.length, SCOUT_LAW_POINTS.length, 'boxes'],
   }[b.id];
   if(!p) return null;
@@ -1666,9 +1677,14 @@ function buildCookingArea(){
 // up so its top row is level with the finial itself, not just the topmost bare pole segment below it.
 // See buildUSFlagMaster for how the mural's 50 stars actually get drawn.
 const GIANT_FLAG_POLE_HEIGHT = 12;
-function buildGiantFlag(){
+// Single source of truth for where the pole actually stands — buildGiantFlag uses it to place the
+// thing, and raycastUSFlag's proximity check (see below) uses it to know how close counts as "close".
+function giantFlagPolePos(){
   const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
-  const poleX = x0 + COOKING_AREA_SIZE - 2, poleZ = z0 + COOKING_AREA_SIZE - 2;
+  return { x: x0 + COOKING_AREA_SIZE - 2, z: z0 + COOKING_AREA_SIZE - 2 };
+}
+function buildGiantFlag(){
+  const { x: poleX, z: poleZ } = giantFlagPolePos();
   const baseY = COOKING_AREA_Y + 1;
   const protect = (x,y,z,block) => { setBlock(x,y,z,block); PROTECTED_CELLS.add(x+','+y+','+z); };
   for(let i=0;i<GIANT_FLAG_POLE_HEIGHT;i++) protect(poleX, baseY+i, poleZ, FLAG_POLE);
@@ -2339,7 +2355,7 @@ const player = {
   pos: new THREE.Vector3(0,0,0),
   vel: new THREE.Vector3(0,0,0),
   yaw: 0, pitch: 0, onGround: false, crawling: false, inWater: false,
-  canDoubleJump: false, spaceWasDown: false, crawlMode: false, ridingEagle: null,
+  canDoubleJump: false, spaceWasDown: false, crawlMode: false, ridingEagle: null, inKayak: false, ridingHorse: false,
   width: 0.6, height: PLAYER_HEIGHT, eye: PLAYER_EYE,
 };
 // 10 fixed spawn points spread across the map, as fractions of WORLD_SIZE so they scale with it.
@@ -2408,6 +2424,96 @@ const faceMaterial = new THREE.MeshLambertMaterial({ map: buildFaceTexture() });
 // BoxGeometry material order is +x,-x,+y,-y,+z,-z; index 5 (-z) is the character's forward side,
 // matching yaw=0 facing -Z (same convention as getLookDir/the camera).
 const headMaterials = [skinMaterial, skinMaterial, skinMaterial, skinMaterial, skinMaterial, faceMaterial];
+// Same NearestFilter/no-mipmap pixel-art treatment as buildFaceTexture — these are all tiny, viewed
+// up close, and should read as blocky patches rather than blurry smears.
+function pixelTexture(canvas){
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.magFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.NearestFilter;
+  tex.generateMipmaps = false;
+  return tex;
+}
+// Two chest pockets and a row of buttons down the placket — drawn onto the torso box's front (-z)
+// face only, same face-array trick as the head's own faceMaterial above.
+const SHIRT_COLOR_HEX = '#a89272'; // must track the shirtMat default a few lines down
+function buildShirtFrontTexture(){
+  const w=32, h=48;
+  const canvas = document.createElement('canvas');
+  canvas.width=w; canvas.height=h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = SHIRT_COLOR_HEX;
+  ctx.fillRect(0,0,w,h);
+  ctx.fillStyle = '#8a7860';
+  ctx.fillRect(3,9,10,11);
+  ctx.fillRect(19,9,10,11);
+  ctx.fillStyle = '#6b5a45';
+  ctx.fillRect(3,9,10,3);
+  ctx.fillRect(19,9,10,3);
+  ctx.fillStyle = '#5a4a38';
+  for(let i=0;i<5;i++) ctx.fillRect(15,5+i*8,2,2);
+  return pixelTexture(canvas);
+}
+// A small US flag patch, sewn-on-sleeve style — just a striped rectangle with a canton block, since
+// individual stars would be unreadable at this size (the segment it sits on is 0.2x0.25 units).
+function buildFlagPatchTexture(){
+  const w=32, h=40;
+  const canvas = document.createElement('canvas');
+  canvas.width=w; canvas.height=h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = SHIRT_COLOR_HEX;
+  ctx.fillRect(0,0,w,h);
+  const px=4, py=6, pw=24, ph=28;
+  const stripeH = ph/7;
+  for(let i=0;i<7;i++){
+    ctx.fillStyle = i%2===0 ? '#b22234' : '#ffffff';
+    ctx.fillRect(px, py+i*stripeH, pw, stripeH+0.6);
+  }
+  ctx.fillStyle = '#3c3b6e';
+  ctx.fillRect(px, py, pw*0.45, ph*0.4);
+  return pixelTexture(canvas);
+}
+// Regenerable (the troop number isn't known until the front-page overlay is submitted) — the sleeve
+// patch just re-draws the text in army green over the same shirt-colored background each time.
+function buildTroopPatchTexture(troop){
+  const w=32, h=40;
+  const canvas = document.createElement('canvas');
+  canvas.width=w; canvas.height=h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = SHIRT_COLOR_HEX;
+  ctx.fillRect(0,0,w,h);
+  if(troop){
+    ctx.fillStyle = '#4b5320';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = troop.length>3 ? 'bold 11px monospace' : 'bold 14px monospace';
+    ctx.fillText(troop, w/2, h/2+1);
+  }
+  return pixelTexture(canvas);
+}
+// A rolled neckerchief: a band wrapping the collar, plus its two rolled tails hanging down the front
+// side by side rather than one solid triangle — each a thin shaft capped with a small diamond-rotated
+// tip (same "rotate a box 45deg to read as a point" trick as the Kayak's bow/stern caps) so it reads
+// as two long, sharp-ended strings. Color comes from the front-page picker, so the material is stashed
+// on userData for applyUniformCustomization to recolor live without rebuilding the mesh.
+function buildNeckerchiefMesh(colorHex){
+  const mat = new THREE.MeshLambertMaterial({ color: colorHex });
+  const g = new THREE.Group();
+  const band = new THREE.Mesh(new THREE.BoxGeometry(0.56,0.12,0.34), mat);
+  band.position.set(0, 1.38, 0);
+  g.add(band);
+  for(const side of [-1,1]){
+    const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.09,0.34,0.05), mat);
+    shaft.position.set(side*0.08, 1.14, -0.17);
+    shaft.rotation.z = side*0.12;
+    g.add(shaft);
+    const tip = new THREE.Mesh(new THREE.BoxGeometry(0.09,0.09,0.05), mat);
+    tip.position.set(side*0.095, 0.95, -0.17);
+    tip.rotation.z = Math.PI/4 + side*0.12;
+    g.add(tip);
+  }
+  g.userData.mat = mat;
+  return g;
+}
 
 function createCharacterMesh(shirtColor){
   const group = new THREE.Group();
@@ -2443,11 +2549,31 @@ function createCharacterMesh(shirtColor){
   head.position.set(0, 1.55, 0);
   const body = box(0.5,0.75,0.28, shirtMat);
   body.position.set(0, 1.05, 0);
+  // Front (-z) face only gets the pockets/buttons texture — same per-face-array trick as the head.
+  const shirtFrontMat = new THREE.MeshLambertMaterial({ map: buildShirtFrontTexture() });
+  body.material = [shirtMat, shirtMat, shirtMat, shirtMat, shirtMat, shirtFrontMat];
   // Short sleeve up top, bare arm (skin) the rest of the way down.
   const armL = makeLimb(0.2,0.2, [{h:0.25,mat:shirtMat},{h:0.45,mat:skinMaterial}]);
   armL.position.set(-0.35, 1.4, 0);
   const armR = makeLimb(0.2,0.2, [{h:0.25,mat:shirtMat},{h:0.45,mat:skinMaterial}]);
   armR.position.set(0.35, 1.4, 0);
+  // Flag patch on the right sleeve's outer face, troop number on the left's — the arms sit at
+  // x=+-0.35 with no rotation, so "outer" is +x for the right arm (material index 0) and -x for the
+  // left (index 1). Only the top (shirt-colored) segment of each sleeve carries a patch.
+  const flagPatchMat = new THREE.MeshLambertMaterial({ map: buildFlagPatchTexture() });
+  const troopPatchMat = new THREE.MeshLambertMaterial({ map: buildTroopPatchTexture(myTroop) });
+  const rightSleeveTop = armR.children[0], leftSleeveTop = armL.children[0];
+  rightSleeveTop.material = [flagPatchMat, shirtMat, shirtMat, shirtMat, shirtMat, shirtMat];
+  leftSleeveTop.material = [shirtMat, troopPatchMat, shirtMat, shirtMat, shirtMat, shirtMat];
+  const neckerchief = buildNeckerchiefMesh(myNeckerchiefColor);
+  // A blue backpack worn on the back — flush against the torso box's rear (+z) face, opposite the
+  // front-face pocket/button texture and the neckerchief hanging over the front.
+  const backpackMat = new THREE.MeshLambertMaterial({ color: 0x2a5ca8 });
+  const backpack = box(0.36, 0.48, 0.2, backpackMat);
+  backpack.position.set(0, 1.05, 0.24);
+  const backpackFlapMat = new THREE.MeshLambertMaterial({ color: 0x1f4783 });
+  const backpackFlap = box(0.3, 0.14, 0.03, backpackFlapMat);
+  backpackFlap.position.set(0, 1.22, 0.35);
   // Short pants up top, bare leg (skin) through the knee/shin, a short sock, then a hiking shoe.
   const legSegments = [{h:0.20,mat:pantsMat},{h:0.30,mat:skinMaterial},{h:0.10,mat:sockMat},{h:0.10,mat:shoeMat}];
   const legL = makeLimb(0.22,0.22, legSegments);
@@ -2464,10 +2590,24 @@ function createCharacterMesh(shirtColor){
   const hatBrim = box(0.9,0.05,0.9, hatMat);
   hatBrim.position.set(0, 1.675, 0);
 
-  group.add(head, body, armL, armR, legL, legR, hatCrown, hatBrim);
+  group.add(head, body, armL, armR, legL, legR, hatCrown, hatBrim, neckerchief, backpack, backpackFlap);
   group.userData.parts = { armL, armR, legL, legR };
+  // Stashed so applyUniformCustomization can update the troop number / neckerchief color live, after
+  // the front-page overlay is actually submitted, without rebuilding this whole mesh.
+  group.userData.uniform = { troopPatchMat, neckerchief, backpack };
   group.traverse(o => { if(o.isMesh){ o.castShadow = true; } });
   return group;
+}
+// Re-applies the troop number and neckerchief color chosen on the front-page overlay — called once,
+// right when the player actually clicks/taps to start, since createCharacterMesh() itself already ran
+// during init() using whatever was last saved (or the defaults, for a first-time player).
+function applyUniformCustomization(charGroup, troop, neckerchiefColorHex){
+  const u = charGroup && charGroup.userData.uniform;
+  if(!u) return;
+  const newTex = buildTroopPatchTexture(troop);
+  u.troopPatchMat.map = newTex;
+  u.troopPatchMat.needsUpdate = true;
+  u.neckerchief.userData.mat.color.set(neckerchiefColorHex);
 }
 function animateWalk(group, state, dt, moving, sprinting){
   state.amp += ((moving?1:0) - state.amp) * Math.min(1, dt*8);
@@ -3284,6 +3424,10 @@ let myHP = PLAYER_MAX_HP;
 let myHunger = PLAYER_MAX_HUNGER; // same as myHP — in-memory only, resets to full on reload/respawn
 let myName = 'Player';
 try{ const savedName = localStorage.getItem('scoutcraft_player_name'); if(savedName) myName = savedName; }catch(e){}
+let myTroop = '';
+try{ const savedTroop = localStorage.getItem('scoutcraft_player_troop'); if(savedTroop) myTroop = savedTroop; }catch(e){}
+let myNeckerchiefColor = '#c62828';
+try{ const savedNeck = localStorage.getItem('scoutcraft_player_neckerchief'); if(savedNeck) myNeckerchiefColor = savedNeck; }catch(e){}
 // Regen: standing still (no movement keys held) for a bit slowly heals a half-heart at a time.
 const REGEN_IDLE_DELAY = 2;   // seconds of standing still before regen starts
 const REGEN_INTERVAL = 1.5;   // seconds between each half-heart tick while idle
@@ -5201,6 +5345,179 @@ function updateBigEagles(dt){
   }
 }
 
+// ---------- Kayak: a fixed prop moored at the lake near camp — hop in and it paddles a slow loop
+// around the lake entirely on its own, the same "along for the ride" idea as riding a Giant Eagle
+// (see player.ridingEagle above: position overridden every frame, mouse-look untouched) but grounded
+// in something a Scout would actually do at camp. The loop's center/radius were picked by hand
+// against this seed's real generated terrain (see heightAt) so the whole circle stays over open
+// water without ever brushing the shore, and the dock sits exactly on that circle so the ride starts
+// with no snap. It's a free-standing THREE mesh like the animals, not a voxel block — nothing to
+// place or break.
+const KAYAK_LAKE_CENTER = { x: 54, z: 29 };
+const KAYAK_LAKE_RADIUS = 10;
+const KAYAK_START_ANGLE = Math.atan2(9.5, 3.5); // the dock's own angle on the circle
+const KAYAK_SPEED = 2; // blocks/second — a full loop takes ~31s, about one badge's worth
+const KAYAK_ANGULAR_SPEED = KAYAK_SPEED / KAYAK_LAKE_RADIUS;
+const KAYAK_ENTER_RADIUS = 1.3;
+const KAYAK_SIT_Y = SEA_LEVEL + 0.35; // floating just above the water surface
+let kayakMesh = null;
+let kayakAngle = KAYAK_START_ANGLE;
+function kayakDockPos(){
+  return {
+    x: KAYAK_LAKE_CENTER.x + Math.cos(KAYAK_START_ANGLE)*KAYAK_LAKE_RADIUS,
+    z: KAYAK_LAKE_CENTER.z + Math.sin(KAYAK_START_ANGLE)*KAYAK_LAKE_RADIUS,
+  };
+}
+// Box-composition build, same technique as the fish/bird models above: a flattened hull, two corner-
+// rotated boxes at bow and stern to read as points from above, a dark cockpit rim, and a paddle laid
+// across it at rest.
+function buildKayakMesh(){
+  const g = new THREE.Group();
+  const hullMat = new THREE.MeshLambertMaterial({ color: 0xf0b429 });
+  const rimMat = new THREE.MeshLambertMaterial({ color: 0x2a2420 });
+  const hull = animalBox(0.85, 0.3, 1.9, hullMat);
+  hull.position.y = 0.15;
+  g.add(hull);
+  for(const side of [1,-1]){
+    const cap = animalBox(0.6, 0.3, 0.6, hullMat);
+    cap.position.set(0, 0.15, side*1.28);
+    cap.rotation.y = Math.PI/4;
+    g.add(cap);
+  }
+  const cockpit = animalBox(0.5, 0.08, 0.9, rimMat);
+  cockpit.position.y = 0.32;
+  g.add(cockpit);
+  const paddle = new THREE.Group();
+  const shaftMat = new THREE.MeshLambertMaterial({ color: 0x8a6a3a });
+  paddle.add(animalBox(0.06, 0.06, 1.4, shaftMat));
+  for(const side of [1,-1]){
+    const blade = animalBox(0.18, 0.03, 0.35, hullMat);
+    blade.position.z = side*0.72;
+    paddle.add(blade);
+  }
+  paddle.rotation.y = Math.PI/5;
+  paddle.position.set(0.1, 0.4, 0);
+  g.add(paddle);
+  return g;
+}
+function buildKayak(){
+  kayakMesh = buildKayakMesh();
+  const dock = kayakDockPos();
+  kayakMesh.position.set(dock.x, KAYAK_SIT_Y, dock.z);
+  scene.add(kayakMesh);
+}
+// Walking (or swimming) up to the moored kayak hops you in automatically — no key needed, same as
+// stepping into the flow of a real dock. Checked every normal-movement frame from updatePlayer.
+function tryEnterKayak(){
+  if(player.inKayak || player.ridingEagle || player.ridingHorse || isDead) return;
+  const dock = kayakDockPos();
+  const dx = player.pos.x-dock.x, dz = player.pos.z-dock.z;
+  if(dx*dx+dz*dz > KAYAK_ENTER_RADIUS*KAYAK_ENTER_RADIUS) return;
+  player.inKayak = true;
+  kayakAngle = KAYAK_START_ANGLE;
+  player.vel.set(0,0,0);
+  addChatMessage('Camp', '🛶 You hop in the kayak — it starts paddling on its own!');
+}
+function updateKayakRide(dt){
+  kayakAngle += KAYAK_ANGULAR_SPEED*dt;
+  const x = KAYAK_LAKE_CENTER.x + Math.cos(kayakAngle)*KAYAK_LAKE_RADIUS;
+  const z = KAYAK_LAKE_CENTER.z + Math.sin(kayakAngle)*KAYAK_LAKE_RADIUS;
+  player.pos.set(x, KAYAK_SIT_Y, z);
+  player.vel.set(0,0,0);
+  player.onGround = false;
+  // Face of travel — same atan2(-vx,-vz) tangent convention as the eagle's circling above.
+  const vx = -Math.sin(kayakAngle), vz = Math.cos(kayakAngle);
+  kayakMesh.position.set(x, KAYAK_SIT_Y, z);
+  kayakMesh.rotation.y = Math.atan2(-vx, -vz);
+}
+
+// ---------- Horse: tied up at camp — mount it and steer it yourself, unlike the hands-free Kayak
+// above or riding a Giant Eagle. Reuses the same box-composition makeQuadruped/animateQuadrupedWalk
+// helpers as the regular wildlife (see ANIMAL_BUILDERS) but isn't one of ANIMAL_TYPES — a single named
+// mount kept deliberately outside the wildlife roster, same precedent as the Big Eagles being their
+// own array rather than ordinary birds.
+const HORSE_MOUNT_RADIUS = 1.3;
+const HORSE_MOUNT_HEIGHT = 1.7; // eye-to-saddle offset above the ground the horse is standing on
+const HORSE_GALLOP_SPEED = 12;  // faster than SPRINT_SPEED (8.4)
+const HORSEBACK_BADGE_BLOCKS = 200;
+let horseMesh = null;
+const horseWalkState = { phase: 0, amp: 0 };
+function horseHomePos(){
+  const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
+  return { x: x0+2.5, z: z0+2.5 }; // a free corner of the clearing, clear of every cooking station
+}
+function buildHorseMesh(){
+  const bodyMat = new THREE.MeshLambertMaterial({ color: 0x6b4423 });
+  const maneMat = new THREE.MeshLambertMaterial({ color: 0x2a1a10 });
+  return makeQuadruped({
+    bodyW:0.8, bodyH:0.65, bodyD:1.35, bodyY:1.25, bodyMat,
+    legW:0.14,
+    headW:0.32, headH:0.4, headD:0.55, headY:1.62, headZ:-0.85,
+    extras(g){
+      const earL=animalBox(0.08,0.16,0.08,bodyMat); earL.position.set(-0.11,1.86,-0.7); earL.rotation.z=0.2; g.add(earL);
+      const earR=animalBox(0.08,0.16,0.08,bodyMat); earR.position.set(0.11,1.86,-0.7); earR.rotation.z=-0.2; g.add(earR);
+      // Mane: a row of dark segments along the top of the neck, tallest near the head.
+      for(let i=0;i<4;i++){
+        const seg = animalBox(0.1, 0.18-i*0.02, 0.14, maneMat);
+        seg.position.set(0, 1.66-i*0.03, -0.55+i*0.16);
+        g.add(seg);
+      }
+      // Tail: two hanging segments off the back, angled backward.
+      const t1=animalBox(0.12,0.35,0.12,maneMat); t1.position.set(0,1.05,0.68); t1.rotation.x=0.25; g.add(t1);
+      const t2=animalBox(0.1,0.3,0.1,maneMat); t2.position.set(0,0.78,0.8); t2.rotation.x=0.35; g.add(t2);
+    },
+  });
+}
+function buildHorse(){
+  horseMesh = buildHorseMesh();
+  const home = horseHomePos();
+  horseMesh.position.set(home.x, COOKING_AREA_Y+1, home.z);
+  scene.add(horseMesh);
+}
+// Walking (or swimming) up to the horse mounts it automatically — no key needed, same as the Kayak's
+// dock. Checked against wherever the horse actually currently stands (not its original tied-up spot),
+// since dismounting leaves it right where you left it rather than snapping back — a grounded animal
+// staying put is more natural than the Kayak paddling off without you.
+let horseRemountBlockedUntil = 0;
+function tryMountHorse(){
+  if(player.ridingHorse || player.ridingEagle || player.inKayak || isDead) return;
+  if(performance.now() < horseRemountBlockedUntil) return;
+  const dx = player.pos.x-horseMesh.position.x, dz = player.pos.z-horseMesh.position.z;
+  if(dx*dx+dz*dz > HORSE_MOUNT_RADIUS*HORSE_MOUNT_RADIUS) return;
+  player.ridingHorse = true;
+  player.vel.set(0,0,0);
+  addChatMessage('Camp', '🐴 You mount up!');
+}
+// Unlike the Kayak, this one you actually steer: same WASD-relative-to-look-direction convention as
+// ordinary walking, just faster, with no gravity/jump/collision — the horse always rides the ground
+// surface directly under it (see groundHeightAt, the same lookup regular land animals use).
+function updateHorseRide(dt){
+  const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw);
+  const rx =  Math.cos(player.yaw), rz = -Math.sin(player.yaw);
+  let mx=0, mz=0;
+  if(keys['KeyW']){ mx+=fx; mz+=fz; }
+  if(keys['KeyS']){ mx-=fx; mz-=fz; }
+  if(keys['KeyD']){ mx+=rx; mz+=rz; }
+  if(keys['KeyA']){ mx-=rx; mz-=rz; }
+  const len = Math.hypot(mx,mz);
+  const moving = len>0;
+  if(moving){ mx/=len; mz/=len; }
+  const dx = mx*HORSE_GALLOP_SPEED*dt, dz = mz*HORSE_GALLOP_SPEED*dt;
+  player.pos.x = Math.max(1, Math.min(WORLD_SIZE-1, player.pos.x+dx));
+  player.pos.z = Math.max(1, Math.min(WORLD_SIZE-1, player.pos.z+dz));
+  const groundY = groundHeightAt(player.pos.x, player.pos.z);
+  player.pos.y = groundY + HORSE_MOUNT_HEIGHT;
+  player.vel.set(0,0,0);
+  player.onGround = true;
+  if(moving){
+    scoutStats.horsebackBlocks += Math.hypot(dx,dz);
+    checkBadges();
+  }
+  horseMesh.position.set(player.pos.x, groundY, player.pos.z);
+  horseMesh.rotation.y = player.yaw;
+  animateQuadrupedWalk(horseMesh, horseWalkState, dt, moving, 2.2);
+}
+
 // ---------- Fish: swim in the water, ambient wildlife ----------
 // Same local-only, recycled-near-the-player home-point approach as birds/fireflies, but a fish's home
 // is a specific nearby water column (found by scanning for heightAt(x,z) < SEA_LEVEL, the exact
@@ -6449,6 +6766,48 @@ function updatePlayer(dt){
     return;
   }
 
+  if(!player.inKayak) tryEnterKayak();
+  if(player.inKayak){
+    // Space hops you out wherever you are on the loop — the kayak doesn't wait, it just paddles on
+    // without you, so getting back requires swimming to shore like any other lake crossing.
+    const spaceDown = !!keys['Space'];
+    const exitPressed = spaceDown && !player.spaceWasDown;
+    player.spaceWasDown = spaceDown;
+    if(exitPressed){
+      player.inKayak = false;
+      player.onGround = false;
+      // Snap the kayak itself straight back to the dock — otherwise it'd sit abandoned wherever you
+      // bailed, while tryEnterKayak keeps checking distance to the fixed dock spot, permanently
+      // desyncing the one visible boat from the one spot that can actually re-launch it.
+      const dock = kayakDockPos();
+      kayakMesh.position.set(dock.x, KAYAK_SIT_Y, dock.z);
+      kayakAngle = KAYAK_START_ANGLE;
+      addChatMessage('Camp', '🛶 You climb out and swim clear of the kayak.');
+      return;
+    }
+    updateKayakRide(dt);
+    return;
+  }
+
+  if(!player.ridingHorse) tryMountHorse();
+  if(player.ridingHorse){
+    const spaceDown = !!keys['Space'];
+    const dismountPressed = spaceDown && !player.spaceWasDown;
+    player.spaceWasDown = spaceDown;
+    if(dismountPressed){
+      player.ridingHorse = false;
+      player.onGround = false;
+      // Same reasoning as the Giant Eagle's remountBlockedUntil: without a brief cooldown, standing
+      // right next to the horse (there's no falling clear of it the way you fall clear of an eagle)
+      // means the very next frame's tryMountHorse just puts you straight back on.
+      horseRemountBlockedUntil = performance.now() + 1000;
+      addChatMessage('Camp', '🐴 You hop down off the horse.');
+      return;
+    }
+    updateHorseRide(dt);
+    return;
+  }
+
   const fx = -Math.sin(player.yaw), fz = -Math.cos(player.yaw);
   const rx =  Math.cos(player.yaw), rz = -Math.sin(player.yaw);
 
@@ -6579,8 +6938,14 @@ function raycastBlock(maxDist=6, step=0.02){
 // which is deliberately short for ordinary mining/attacking. Reciting the Pledge in front of it isn't
 // that kind of interaction, so it gets its own much longer raycast instead of widening reach for
 // everything else. A coarser 0.1 step is fine here since it only needs to catch a chunky 3x2 target.
+// The long reach is just to handle looking steeply up at the mural from nearby — FLAG_PLEDGE_PROXIMITY
+// below is what actually stops it firing from clear across camp.
 const FLAG_PLEDGE_MAX_DIST = 40;
+const FLAG_PLEDGE_PROXIMITY = 10; // horizontal blocks from the pole — has to be standing in front of it
 function raycastUSFlag(){
+  const pole = giantFlagPolePos();
+  const dx = player.pos.x-(pole.x+0.5), dz = player.pos.z-(pole.z+0.5);
+  if(dx*dx+dz*dz > FLAG_PLEDGE_PROXIMITY*FLAG_PLEDGE_PROXIMITY) return false;
   const dir = getLookDir(player.yaw, player.pitch);
   const origin = camera.position;
   for(let t=0; t<FLAG_PLEDGE_MAX_DIST; t+=0.1){
@@ -6958,6 +7323,17 @@ nameInput.value = myName==='Player' ? '' : myName;
 nameInput.addEventListener('click', e=> e.stopPropagation());
 nameInput.addEventListener('touchstart', e=> e.stopPropagation());
 nameInput.addEventListener('keydown', e=> e.stopPropagation());
+// Troop number and neckerchief color, same stopPropagation reasoning as the name field above —
+// otherwise a click here would bubble up into overlay's click-to-play handler.
+const troopInput = document.getElementById('troopInput');
+troopInput.value = myTroop;
+troopInput.addEventListener('click', e=> e.stopPropagation());
+troopInput.addEventListener('touchstart', e=> e.stopPropagation());
+troopInput.addEventListener('keydown', e=> e.stopPropagation());
+const neckerchiefColorInput = document.getElementById('neckerchiefColorInput');
+neckerchiefColorInput.value = myNeckerchiefColor;
+neckerchiefColorInput.addEventListener('click', e=> e.stopPropagation());
+neckerchiefColorInput.addEventListener('input', e=> e.stopPropagation());
 // Same reasoning as the name field above: without this, clicking the popcorn link would also bubble
 // up into overlay's own click-to-play handler and start the game right underneath the new tab.
 const overlayCreditsLink = document.querySelector('#overlay .credits a');
@@ -6988,6 +7364,13 @@ overlay.addEventListener('click', ()=>{
   const typedName = nameInput.value.trim().slice(0,16);
   if(typedName) myName = typedName;
   try{ localStorage.setItem('scoutcraft_player_name', myName); }catch(e){}
+  myTroop = troopInput.value.trim().slice(0,4);
+  myNeckerchiefColor = neckerchiefColorInput.value;
+  try{
+    localStorage.setItem('scoutcraft_player_troop', myTroop);
+    localStorage.setItem('scoutcraft_player_neckerchief', myNeckerchiefColor);
+  }catch(e){}
+  applyUniformCustomization(characterMesh, myTroop, myNeckerchiefColor);
   if(isTouchDevice){
     locked = true;
     overlay.hidden = true;
@@ -7533,7 +7916,7 @@ function renderItemsGrid(){
   if(held.length>0){
     const lbl = document.createElement('div');
     lbl.className = 'sectionLabel';
-    lbl.textContent = 'Your items';
+    lbl.textContent = 'Items in your hands';
     grid.appendChild(lbl);
     held.forEach(id => grid.appendChild(makeItemTile(id)));
   }
@@ -7781,6 +8164,8 @@ function useFirstAid(){
   myHP = Math.min(PLAYER_MAX_HP, myHP + FIRST_AID_HEAL_HP);
   updateHeartsUI();
   firstAidCooldown = FIRST_AID_COOLDOWN_S;
+  Scout.bump('firstAidUses');
+  saveScoutProgress();
   SFX.craft();
   addChatMessage('Camp', '➕ First Aid: patched up a couple hearts.');
 }
@@ -7886,6 +8271,8 @@ function init(){
   // missing, so it just gets placed again rather than accepting the loss.
   buildGiantFlag();
   buildCampSign();
+  buildKayak();
+  buildHorse();
   restoreTorchLights();
   restoreScoutLawBoxes();
   updateScoutHUD();
