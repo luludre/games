@@ -1960,11 +1960,16 @@ const glassMaterial = new THREE.MeshLambertMaterial({ vertexColors: true, side: 
 // skipped (no point rendering the seam between two adjacent water, window, or leaf blocks); a face
 // against a *different* transparent type, or against AIR, still draws.
 const TRANSPARENT_BLOCKS = new Set([WATER, WINDOW, WINDOW_OPEN, DOOR_OPEN, SAPLING, FIRE, TORCH, LADDER, LEAVES, LANTERN, FLAG, FLAG_POLE, DUTCH_OVEN, POT, PAN, GRIDDLE]);
-// The subset of the above that a "is this column covered by a roof" check treats as passing sky/
-// light straight through. Leaves are deliberately left out — a tree's canopy still counts as real
+// Mostly the subset of the above that a "is this column covered by a roof" check treats as passing
+// sky/light straight through. Leaves are deliberately left out — a tree's canopy still counts as real
 // shelter/shade (indoor darkening, temperature danger) even though it now renders sparse and
-// translucent rather than as a solid cube.
-const SKY_PASS_BLOCKS = new Set([WATER, WINDOW, WINDOW_OPEN, DOOR_OPEN, SAPLING, FIRE, TORCH, LADDER, LANTERN, FLAG, FLAG_POLE]);
+// translucent rather than as a solid cube. The giant flag's 6 mural blocks are the one exception in
+// the other direction: fully opaque (not in TRANSPARENT_BLOCKS, so they still render as solid color,
+// no alpha blending) but listed here anyway, since without it the top row's own shadow was darkening
+// the bottom row directly beneath it — a real roof would darken what's under it, but a paper-thin
+// 2-block-tall panel floating in open air isn't meaningfully "indoors."
+const SKY_PASS_BLOCKS = new Set([WATER, WINDOW, WINDOW_OPEN, DOOR_OPEN, SAPLING, FIRE, TORCH, LADDER, LANTERN, FLAG, FLAG_POLE,
+  US_FLAG_TL, US_FLAG_TC, US_FLAG_TR, US_FLAG_BL, US_FLAG_BC, US_FLAG_BR]);
 // A block that gives off light shouldn't be *shaded* by light: with MeshLambertMaterial a campfire
 // sat as a black cube in the middle of its own pool of light, because its point light is inside the
 // block and so contributes nothing to the outward-facing normals. MeshBasicMaterial ignores lighting
