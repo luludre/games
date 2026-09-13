@@ -49,6 +49,10 @@ const SCOUT_LAW_BOX=49;
 // Two more carried camp-gear items, pre-packed alongside the essentials (see STARTER_CAMP_GEAR) —
 // no block form, no recipe, same as the essentials above.
 const SLEEPING_BAG=50, SLEEPING_PAD=51;
+// A giant American flag at the cooking area (see buildGiantFlag) — six fixed panel blocks, one per
+// cell of a 3-wide x 2-tall mural, each just its own slice of one shared flag image. World fixtures
+// like DUTCH_OVEN/BEAR_BOX/SCOUT_LAW_BOX above: never craftable or held, just placed once at world-gen.
+const US_FLAG_TL=52, US_FLAG_TC=53, US_FLAG_TR=54, US_FLAG_BL=55, US_FLAG_BC=56, US_FLAG_BR=57;
 // Items with no block form at all (see doInteract) — right-clicking one does nothing, or whatever
 // its own special case above already handles (Flint ignites, Compass takes a bearing).
 const CARRY_ONLY_ITEMS = new Set([ROPE, POCKETKNIFE, FIRST_AID_KIT, EXTRA_CLOTHING, RAIN_GEAR,
@@ -105,6 +109,8 @@ const BLOCK_COLOR = {
   [SCOUT_LAW_BOX]: 0xd4af37,
   [SLEEPING_BAG]: 0x2c3e6b,
   [SLEEPING_PAD]: 0x8a9a7a,
+  [US_FLAG_TL]: 0x3c3b6e, [US_FLAG_TC]: 0xb22234, [US_FLAG_TR]: 0xb22234,
+  [US_FLAG_BL]: 0xb22234, [US_FLAG_BC]: 0xffffff, [US_FLAG_BR]: 0xb22234,
 };
 const BLOCK_NAME = {
   [GRASS]:'Grass', [DIRT]:'Dirt', [STONE]:'Stone', [SAND]:'Sand', [WOOD]:'Wood',
@@ -123,6 +129,8 @@ const BLOCK_NAME = {
   [FISHING_POLE]:'Fishing Pole', [FISH]:'Fish',
   [SCOUT_LAW_BOX]:'Scout Law Box',
   [SLEEPING_BAG]:'Sleeping Bag', [SLEEPING_PAD]:'Sleeping Pad',
+  [US_FLAG_TL]:'US Flag', [US_FLAG_TC]:'US Flag', [US_FLAG_TR]:'US Flag',
+  [US_FLAG_BL]:'US Flag', [US_FLAG_BC]:'US Flag', [US_FLAG_BR]:'US Flag',
 };
 // Every item the player can ever select. The hotbar only shows HOTBAR_SIZE of these at a time —
 // the rest are reachable through the Items panel (the palette button, or the "I" key), which lets
@@ -735,14 +743,15 @@ const PROTECTED_CELLS = new Set();
 // ---------- Texture atlas (procedurally drawn pixel-art, no external image assets) ----------
 // TILE=32 (was 16) gives 4x the pixel budget per block face — enough room for real structure
 // (cracks, grain, brick-by-brick variation, ripples) rather than flat color + noise.
-const TILE = 32, ATLAS_COLS = 4, ATLAS_ROWS = 10;
+const TILE = 32, ATLAS_COLS = 4, ATLAS_ROWS = 11;
 const T_GRASS_TOP=0, T_GRASS_SIDE=1, T_DIRT=2, T_STONE=3, T_SAND=4, T_LOG_SIDE=5, T_LOG_TOP=6,
       T_LEAVES=7, T_PLANKS=8, T_BEDROCK=9, T_CRAFT_TOP=10, T_CRAFT_SIDE=11, T_BRICKS=12, T_WATER=13,
       T_WINDOW=14, T_WINDOW_OPEN=15, T_DOOR=16, T_DOOR_OPEN=17, T_SAPLING=18, T_FLINT=19, T_FIRE=20,
       T_TORCH=21, T_LADDER=22, T_LEAVES_SPARSE=23, T_LEAVES_DENSE=24,
       T_TENT=25, T_CAMPFIRE=26, T_LANTERN=27, T_FLAG=28, T_BACKPACK=29,
       T_DUTCH_OVEN=30, T_POT=31, T_PAN=32, T_GRIDDLE=33, T_BEAR_BOX=34, T_FLAG_POLE=35,
-      T_SCOUT_LAW_BOX=36;
+      T_SCOUT_LAW_BOX=36,
+      T_US_FLAG_TL=37, T_US_FLAG_TC=38, T_US_FLAG_TR=39, T_US_FLAG_BL=40, T_US_FLAG_BC=41, T_US_FLAG_BR=42;
 
 function hexRGB(hex){ return [(hex>>16)&255, (hex>>8)&255, hex&255]; }
 function rgbStr(r,g,b){ return `rgb(${r|0},${g|0},${b|0})`; }
@@ -1338,6 +1347,68 @@ function drawScoutLawBox(ctx,x0,y0){
   ctx.closePath();
   ctx.fill();
 }
+// ---------- Giant US flag (see buildGiantFlag) ----------
+// Drawn once at real detail on an offscreen canvas well above tile resolution, then each of the 6
+// mural blocks just crops+downscales its own slice out of it into the atlas — that's what lets 50
+// individual stars actually read as stars instead of a blurry smear once shrunk to a 32px tile.
+const US_FLAG_COLS = 3, US_FLAG_ROWS = 2;
+const US_FLAG_CELL_PX = 160; // resolution per cell before downscaling into a TILE-sized atlas slot
+function drawStar(ctx,cx,cy,rOuter,rInner){
+  ctx.beginPath();
+  for(let i=0;i<5;i++){
+    const a = -Math.PI/2 + i*(Math.PI*2/5), a2 = a + Math.PI/5;
+    if(i===0) ctx.moveTo(cx+Math.cos(a)*rOuter, cy+Math.sin(a)*rOuter);
+    else ctx.lineTo(cx+Math.cos(a)*rOuter, cy+Math.sin(a)*rOuter);
+    ctx.lineTo(cx+Math.cos(a2)*rInner, cy+Math.sin(a2)*rInner);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+let usFlagMasterCanvas = null;
+function buildUSFlagMaster(){
+  const w = US_FLAG_COLS*US_FLAG_CELL_PX, h = US_FLAG_ROWS*US_FLAG_CELL_PX;
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  // 13 alternating stripes, red first and last.
+  const stripeH = h/13;
+  for(let i=0;i<13;i++){
+    ctx.fillStyle = i%2===0 ? '#b22234' : '#ffffff';
+    ctx.fillRect(0, i*stripeH, w, stripeH+1);
+  }
+  // Canton (the blue star field) covers the top 7 stripes and 2/5 of the width, real-flag proportions.
+  const cantonW = w*0.4, cantonH = stripeH*7;
+  ctx.fillStyle = '#3c3b6e';
+  ctx.fillRect(0, 0, cantonW, cantonH);
+  // 50 stars, 9 rows alternating 6/5, each 5-star row offset half a column to interleave — the same
+  // arrangement as the real flag.
+  const rows = 9, rowSpacing = cantonH/rows, colSpacing = cantonW/6, starR = colSpacing*0.32;
+  ctx.fillStyle = '#ffffff';
+  for(let r=0;r<rows;r++){
+    const count = r%2===0 ? 6 : 5;
+    const y = rowSpacing*(r+0.5);
+    for(let c=0;c<count;c++){
+      const x = count===6 ? colSpacing*(c+0.5) : colSpacing*(c+1);
+      drawStar(ctx, x, y, starR, starR*0.38);
+    }
+  }
+  return canvas;
+}
+function getUSFlagMaster(){
+  if(!usFlagMasterCanvas) usFlagMasterCanvas = buildUSFlagMaster();
+  return usFlagMasterCanvas;
+}
+function drawUSFlagCell(ctx,x0,y0,col,row){
+  const master = getUSFlagMaster();
+  const cellW = master.width/US_FLAG_COLS, cellH = master.height/US_FLAG_ROWS;
+  ctx.drawImage(master, col*cellW, row*cellH, cellW, cellH, x0, y0, TILE, TILE);
+}
+const drawUSFlagTL = (ctx,x0,y0)=> drawUSFlagCell(ctx,x0,y0,0,0);
+const drawUSFlagTC = (ctx,x0,y0)=> drawUSFlagCell(ctx,x0,y0,1,0);
+const drawUSFlagTR = (ctx,x0,y0)=> drawUSFlagCell(ctx,x0,y0,2,0);
+const drawUSFlagBL = (ctx,x0,y0)=> drawUSFlagCell(ctx,x0,y0,0,1);
+const drawUSFlagBC = (ctx,x0,y0)=> drawUSFlagCell(ctx,x0,y0,1,1);
+const drawUSFlagBR = (ctx,x0,y0)=> drawUSFlagCell(ctx,x0,y0,2,1);
 function buildAtlas(){
   const canvas = document.createElement('canvas');
   canvas.width = TILE*ATLAS_COLS;
@@ -1348,7 +1419,8 @@ function buildAtlas(){
                 drawWindow, drawWindowOpen, drawDoor, drawDoorOpen, drawSapling, drawFlint, drawFire, drawTorch,
                 drawLadder, drawLeavesSparse, drawLeavesDense,
                 drawTent, drawCampfire, drawLantern, drawFlag, drawBackpack,
-                drawDutchOven, drawPot, drawPan, drawGriddle, drawBearBox, drawFlagPole, drawScoutLawBox];
+                drawDutchOven, drawPot, drawPan, drawGriddle, drawBearBox, drawFlagPole, drawScoutLawBox,
+                drawUSFlagTL, drawUSFlagTC, drawUSFlagTR, drawUSFlagBL, drawUSFlagBC, drawUSFlagBR];
   draw.forEach((fn, i)=> fn(ctx, (i%ATLAS_COLS)*TILE, Math.floor(i/ATLAS_COLS)*TILE));
   const tex = new THREE.CanvasTexture(canvas);
   tex.magFilter = THREE.NearestFilter;
@@ -1398,6 +1470,12 @@ const BLOCK_TILES = {
   [GRIDDLE]: {top:T_GRIDDLE, side:T_GRIDDLE, bottom:T_GRIDDLE},
   [BEAR_BOX]: {top:T_BEAR_BOX, side:T_BEAR_BOX, bottom:T_STONE},
   [SCOUT_LAW_BOX]: {top:T_SCOUT_LAW_BOX, side:T_SCOUT_LAW_BOX, bottom:T_SCOUT_LAW_BOX},
+  [US_FLAG_TL]: {top:T_US_FLAG_TL, side:T_US_FLAG_TL, bottom:T_US_FLAG_TL},
+  [US_FLAG_TC]: {top:T_US_FLAG_TC, side:T_US_FLAG_TC, bottom:T_US_FLAG_TC},
+  [US_FLAG_TR]: {top:T_US_FLAG_TR, side:T_US_FLAG_TR, bottom:T_US_FLAG_TR},
+  [US_FLAG_BL]: {top:T_US_FLAG_BL, side:T_US_FLAG_BL, bottom:T_US_FLAG_BL},
+  [US_FLAG_BC]: {top:T_US_FLAG_BC, side:T_US_FLAG_BC, bottom:T_US_FLAG_BC},
+  [US_FLAG_BR]: {top:T_US_FLAG_BR, side:T_US_FLAG_BR, bottom:T_US_FLAG_BR},
 };
 // per-face-direction UV winding (0/1 flags select u0/u1 and vBottom/vTop), aligned to FACES order below
 const UV_PATTERNS = [
@@ -1530,6 +1608,7 @@ function generateWorld(){
   }
   placeFallenLogs();
   buildCookingArea();
+  buildGiantFlag();
   placeScoutLawBoxes();
 }
 // ---------- Cooking area: a flat, permanent 20x20 camp-cooking clearing ----------
@@ -1569,6 +1648,29 @@ function buildCookingArea(){
   }
   protectFire(x0+10, fy, z0+14); // a fifth, plain campfire
   protect(x0+15, fy, z0+14, BEAR_BOX);
+}
+// A giant American flag towering over the cooking area's far corner, clear of every station above —
+// a very long flagpole (17 stacked segments, topped with the same gold-finial block the little Troop
+// Flag already uses) with a 3-wide x 2-tall mural mounted flush against its hoist side, high enough to
+// see from across the clearing. See buildUSFlagMaster for how the mural's 50 stars actually get drawn.
+const GIANT_FLAG_POLE_HEIGHT = 17;
+function buildGiantFlag(){
+  const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
+  const poleX = x0 + COOKING_AREA_SIZE - 2, poleZ = z0 + COOKING_AREA_SIZE - 2;
+  const baseY = COOKING_AREA_Y + 1;
+  const protect = (x,y,z,block) => { setBlock(x,y,z,block); PROTECTED_CELLS.add(x+','+y+','+z); };
+  for(let i=0;i<GIANT_FLAG_POLE_HEIGHT;i++) protect(poleX, baseY+i, poleZ, FLAG_POLE);
+  protect(poleX, baseY+GIANT_FLAG_POLE_HEIGHT, poleZ, FLAG);
+  const flagTopY = baseY + GIANT_FLAG_POLE_HEIGHT - 4;
+  const grid = [
+    [US_FLAG_TL, US_FLAG_TC, US_FLAG_TR],
+    [US_FLAG_BL, US_FLAG_BC, US_FLAG_BR],
+  ];
+  for(let row=0; row<2; row++){
+    for(let col=0; col<3; col++){
+      protect(poleX-1-col, flagTopY-row, poleZ, grid[row][col]);
+    }
+  }
 }
 // ---------- Scout Law boxes: 12 golden keepsakes, one per point of the Scout Law ----------
 // Scattered once at world-gen with their own seeded RNG (not Math.random()) so every fresh load

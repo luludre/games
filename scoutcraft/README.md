@@ -14,7 +14,7 @@ terrain generation, chunked meshing, day/night cycle, seasons and weather, anima
 wildlife. What's new is everything in [Merit badges](#merit-badges) and [Camp gear](#camp-gear).
 
 Built by Andre Wu, his dad, and an AI to help others discover scouting! Andre scouts with Troop 904
-out of Dublin, CA. If you had fun, please consider supporting his scouting adventures and our
+out of Dublin, CA, USA. If you had fun, please consider supporting his scouting adventures and our
 heroes: [🍿 Andre's Popcorn Sale](https://trails-end.com/store/scout/HQ9SW6MR).
 
 ## Play locally
@@ -250,6 +250,14 @@ permanently indestructible — breaking has no effect on them at all, unlike eve
 yourself. All five campfires there work exactly like any other campfire — see
 [Cooking](#camp-gear) for why cooking on one currently has nothing to cook — the cookware on top is
 purely decorative.
+
+A giant American flag towers over the clearing's far corner, clear of every station above — a
+17-block flagpole (the same thin pole the little Troop Flag uses, just stacked a lot taller, capped
+with its usual gold finial) flying a mural 3 blocks wide and 2 tall, mounted flush against the pole
+partway up. Each of those 6 blocks is really just its own slice of one shared, high-resolution flag
+image — 13 stripes, a blue canton, and all 50 stars individually drawn and actually countable up
+close — cropped and downscaled into that block's texture, so the six line up into one seamless image
+rather than six separately-drawn tiles. Like the cooking fixtures, it's permanently indestructible.
 
 ## Fire & torches
 
