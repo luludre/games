@@ -58,7 +58,7 @@ Then visit `http://localhost:8000`.
 - `B` (or the **🎒 Backpack (B)** button, or the fixed **🎒** quick-access icon) — open your Backpack's own storage directly, without needing to find or place one first
 - `E` (or the fixed **🛠️** quick-access icon) — open/close crafting when standing near a Camp Workbench
 - `M` (or the **🎖️ Badges (M)** button) — open your merit badge sash
-- `K` — sleep through the night, if you're near your tent and it's after dark
+- `K` — sleep through the night to 7am, if you're near your tent, it's after dark, and your Sleeping Bag and Sleeping Pad are out of your Backpack
 - `V` — toggle first-person view (third-person, seeing your own blocky character, is the default)
 - `P` (or the fixed **➕** quick-access icon) — First Aid: an instant 2-heart heal, once every 10 seconds
 - `O` (or the fixed **🐻🚫** quick-access icon) — Stop Bear: see [Health & combat](#health--combat)
@@ -216,11 +216,12 @@ single wall takes the whole shelter down and hands back just one Tent item, not 
   right-clicking again reels the line back in early if you change your mind, and 5 fish caught earns
   the Fishing badge — the second-to-last one on the sash.
 
-**Sleep:** stand near your tent after dark and press `K`. It can't actually fast-forward the real
-clock the world runs on, so — like the `N` key's day/night override — it jumps your own view to
-morning rather than skipping the night outright, but it does fully restore your health and hunger.
-Try it before dark, or too far from any tent, and it just tells you why not instead of doing
-anything.
+**Sleep:** stand near your tent with your Sleeping Bag and Sleeping Pad out of your Backpack and in
+your own inventory, after dark, and press `K`. It can't actually fast-forward the real clock the world
+runs on, so — like the `N` key's day/night override — it jumps your own view straight to 7am rather
+than skipping the night outright, but it does fully restore your health and hunger. Try it before
+dark, too far from any tent, or without your bedding actually unpacked, and it just tells you why not
+instead of doing anything.
 
 **Cooking:** Raw Meat is disabled — it's been pulled from the inventory panel and can no longer be
 selected into a hotbar slot, so the old "hold Raw Meat, aim at a Campfire, right-click" flow (and the

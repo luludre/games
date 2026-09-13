@@ -3374,15 +3374,20 @@ function respawnAfterDeath(){
 // your own view to morning. What it actually gets you: a full rest (HP and hunger both topped up)
 // plus that jump to morning.
 let sleeping = false;
+const WAKE_UP_HOUR = 7; // 7am
 function trySleep(){
   if(sleeping || craftingOpen || itemsOpen || sashOpen || bearBoxOpen || backpackOpen) return;
   if(!nearestTent(4)){ addChatMessage('Camp', '⛺ You need to be near your tent to sleep.'); return; }
+  if(invCount(SLEEPING_BAG)<=0 || invCount(SLEEPING_PAD)<=0){
+    addChatMessage('Camp', "🛏️ You need your Sleeping Bag and Sleeping Pad out to make camp for the night — check your Backpack.");
+    return;
+  }
   if(!isScoutNight()){ addChatMessage('Camp', "☀️ You're not sleepy yet — try again after dark."); return; }
   sleeping = true;
   const el = document.getElementById('sleepOverlay');
   if(el){ el.style.transition = 'none'; el.style.opacity = '1'; }
   setTimeout(()=>{
-    setTimeMode('day');
+    setTimeMode(WAKE_UP_HOUR/24);
     myHP = PLAYER_MAX_HP;
     updateHeartsUI();
     myHunger = PLAYER_MAX_HUNGER;
@@ -3657,12 +3662,15 @@ function lerpColorHex(a,b,t){
   const br=(b>>16)&255, bg=(b>>8)&255, bb=b&255;
   return (Math.round(ar+(br-ar)*t)<<16) | (Math.round(ag+(bg-ag)*t)<<8) | Math.round(ab+(bb-ab)*t);
 }
-// 'regular' (the normal wall-clock cycle), 'day' (frozen at noon), or 'night' (frozen at midnight) —
-// toggled with N (see the keydown handler). Every consumer of currentDayTime() — sky/lighting, the
-// sun/moon, the temperature swing, firefly night visibility, and the HH:MM World Time HUD label
-// — reads it through this one function, so forcing it here is enough to make all of them agree.
+// 'regular' (the normal wall-clock cycle), 'day' (frozen at noon), 'night' (frozen at midnight) — all
+// three toggled with N (see the keydown handler) — or a raw number in [0,1) forcing one exact moment
+// (waking up from sleep lands on 7am, i.e. 7/24, rather than either of the N-cycle's two fixed spots).
+// Every consumer of currentDayTime() — sky/lighting, the sun/moon, the temperature swing, firefly
+// night visibility, and the HH:MM World Time HUD label — reads it through this one function, so
+// forcing it here is enough to make all of them agree.
 let timeMode = 'regular';
 function currentDayTime(){
+  if(typeof timeMode === 'number') return timeMode;
   if(timeMode==='day') return 0.5;
   if(timeMode==='night') return 0;
   return (Date.now()/1000 % DAY_LENGTH_S) / DAY_LENGTH_S;
@@ -3670,7 +3678,7 @@ function currentDayTime(){
 function setTimeMode(mode){
   timeMode = mode;
   const el = document.getElementById('timeModeLabel');
-  if(el) el.textContent = timeMode==='day' ? ' ☀️ forced day' : timeMode==='night' ? ' 🌙 forced night' : '';
+  if(el) el.textContent = mode==='day' ? ' ☀️ forced day' : mode==='night' ? ' 🌙 forced night' : (typeof mode==='number' ? ' ☀️ forced morning' : '');
 }
 function cycleTimeMode(){
   setTimeMode(timeMode==='regular' ? 'day' : timeMode==='day' ? 'night' : 'regular');
