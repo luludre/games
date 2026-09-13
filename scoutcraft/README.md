@@ -4,7 +4,7 @@ Set up camp in the wilderness and earn your merit badges. A single-player voxel 
 entirely in the browser — procedurally generated terrain, block breaking/placing, crafting — built
 with [three.js](https://threejs.org/) — with a scouting layer on top: rope you twist from leaves, a
 walk-in tent you pitch, campfires you cook on, a compass that finds its way back to camp, and
-fourteen merit badges that promote you from Tenderfoot to Eagle Scout.
+sixteen merit badges that promote you from Tenderfoot to Eagle Scout.
 
 No build step, no server-side code, no dependencies to install, no account to make. Everything —
 your world, your inventory, your progress — lives in this browser's `localStorage`.
@@ -53,19 +53,20 @@ Then visit `http://localhost:8000`.
 - Mouse — look (click the page first to lock the pointer)
 - Left click — break block, or attack whatever animal/player you're looking at within range
 - Right click — place block. Or, depending on what you're holding and what you're aiming at: take a bearing with the Compass, cast a Fishing Pole into water, collect a golden Scout Law box, open the Camp Workbench or a placed Backpack, toggle a window/door open or closed, or light a fire with Flint aimed at wood or leaves
-- `Q` `R` `F` `T` `G` `C` `X` `Z` `H` — select a hotbar slot directly (no number keys, no scroll-wheel cycling)
+- `Q` `R` `F` `T` `G` `C` `X` `L` `J` — select a hotbar slot directly (no number keys, no scroll-wheel cycling)
 - `I` (or click the currently-selected hotbar slot again, or the **📦 Inventory (I)** button) — open your inventory and choose what that slot holds
-- `B` (or the **🎒 Backpack (B)** button) — open your Backpack's own storage directly, without needing to find or place one first
-- `E` — open/close crafting when standing near a Camp Workbench
+- `B` (or the **🎒 Backpack (B)** button, or the fixed **🎒** quick-access icon) — open your Backpack's own storage directly, without needing to find or place one first
+- `E` (or the fixed **🛠️** quick-access icon) — open/close crafting when standing near a Camp Workbench
 - `M` (or the **🎖️ Badges (M)** button) — open your merit badge sash
 - `K` — sleep through the night, if you're near your tent and it's after dark
 - `V` — toggle first-person view (third-person, seeing your own blocky character, is the default)
+- `H` — toggle the hotkey list, a panel on the right edge of the screen listing every key above (and this one). Hidden by default so it doesn't clutter the screen; the front-page tutorial still covers the basics before you even start playing.
 - The **❓ How to play** button on the start screen reveals the full tutorial paragraph (chopping trees, crafting, badges) — collapsed by default so the front page stays short; click it again (now **✕ Hide help**) to put it away.
 - The **🚪 Quit** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
 - That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you quit so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
 - The thank-you screen also draws a shareable badge picture on the spot — your current rank plus all 16 merit badges, earned ones lit up in gold and the rest dimmed, regenerated fresh every time you quit just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
 
-On a phone or tablet (iPad included), the game automatically switches to touch controls — no setup needed, just open the page in Safari and tap to play:
+The front page says so directly, but worth repeating here too: ScoutCraft is designed for a desktop or laptop with a real keyboard and mouse — that's where every control above actually applies. On a phone or tablet (iPad included), the game automatically switches to touch controls instead — no setup needed, just open the page in Safari and tap to play — but that's a fallback, not the intended experience:
 
 - Left thumb: on-screen joystick to move (push all the way to the edge to sprint)
 - Right side of the screen: drag to look around
@@ -76,7 +77,14 @@ On a phone or tablet (iPad included), the game automatically switches to touch c
 
 Your inventory — everything you're currently holding, with live counts — is saved to this browser. Open it with `I`, the **📦 Inventory (I)** button, or by clicking a hotbar slot that's already selected. It's split into what you actually have ("Your items", with a count on each) and everything else you could still obtain or craft ("Not yet obtained", grayed out) — tap any tile, held or not, to put it in the currently-selected hotbar slot.
 
-The hotbar itself only shows 9 slots (keys `Q` `R` `F` `T` `G` `C` `X` `Z` `H`, one per slot, left to right) at a time, but any slot can hold any item in the game — materials, structures, tools, all reachable from the same inventory screen. Your hotbar layout is saved per-browser, so it's exactly how you left it next time.
+The hotbar itself only shows 9 slots (keys `Q` `R` `F` `T` `G` `C` `X` `L` `J`, one per slot, left to right) at a time, but any slot can hold any item in the game — materials, structures, tools, all reachable from the same inventory screen. Your hotbar layout is saved per-browser, so it's exactly how you left it next time.
+
+Four more icons sit fixed to the hotbar's left — Backpack, Camp Workbench, First Aid, and Stop Bear — always the same four actions rather than slots you can put items into:
+
+- **🎒 Backpack** — same as pressing `B`
+- **🛠️ Camp Workbench** — same as pressing `E`: opens crafting if you're within 4 blocks of a placed Camp Workbench, otherwise just says so
+- **🩹 First Aid** — an instant heal of 2 hearts, once every 60 seconds — an active option alongside the passive stand-still regen, not a replacement for it
+- **🐻🚫 Stop Bear** — see [Health & combat](#health--combat) below
 
 ## Crafting
 
@@ -141,10 +149,9 @@ Progress is per-browser, saved to `localStorage` alongside your world edits and 
 counts while you're actually playing — nothing accrues while you sit on the start screen or have a
 panel open. Distance ignores teleport-sized jumps, so a respawn doesn't quietly hand you Hiking.
 
-Nature Study deliberately tracks only the six ground animals and only within 9 blocks: birds are
+Nature Study deliberately tracks only the five ground animals and only within 9 blocks: birds are
 spawned to circle wherever the player is and fish fill every pond, so counting them made the badge
-free. Walking up to the black bear or a wolf, on the other hand, is a genuine dare — both attack on
-sight.
+free. Walking up to the black bear, on the other hand, is a genuine dare — it attacks on sight.
 
 Scout Spirit is a scavenger hunt for the real Scout Law: 12 small golden boxes, one for each point
 (Trustworthy, Loyal, Helpful, Friendly, Courteous, Kind, Obedient, Cheerful, Thrifty, Brave, Clean,
@@ -265,7 +272,7 @@ behaves if you already have one. Right-click a wall to place one — a single La
 
 ## Crawling
 
-Hold `Ctrl` (or the CRAWL button on touch) to crawl. It drops you to a much shorter hitbox — short enough to fit through a genuine 1-block-tall gap (open space with a solid floor and a solid ceiling right above it) that you'd otherwise just walk into — at the cost of moving noticeably slower than a normal walk, and your view (and, in third person, your character) drops low to match. Standing back up happens the instant you let go of Ctrl, so don't let go while you're still under something low — there's no "keep crouching until there's headroom" grace period, so you'll just be stuck in place (still able to move again the moment you hold Ctrl back down) until you crawl clear of it. Press `L` to toggle crawl on permanently instead of holding Ctrl — handy for exploring a long stretch of low tunnel (like a gopher's) without holding a key the whole way; press `L` again to stand back up.
+Hold `Ctrl` (or the CRAWL button on touch) to crawl. It drops you to a much shorter hitbox — short enough to fit through a genuine 1-block-tall gap (open space with a solid floor and a solid ceiling right above it) that you'd otherwise just walk into — at the cost of moving noticeably slower than a normal walk, and your view (and, in third person, your character) drops low to match. Standing back up happens the instant you let go of Ctrl, so don't let go while you're still under something low — there's no "keep crouching until there's headroom" grace period, so you'll just be stuck in place (still able to move again the moment you hold Ctrl back down) until you crawl clear of it. Press `Z` to toggle crawl on permanently instead of holding Ctrl — handy for exploring a long stretch of low tunnel (like a gopher's) without holding a key the whole way; press `Z` again to stand back up.
 
 ## Windows & doors
 
@@ -283,26 +290,27 @@ Every human player has 10 hearts (20 HP), shown at the top of the screen. The wo
 | Rabbit   | 1           | No             | No                 |
 | Squirrel | 1           | No             | No                 |
 | Deer     | 4           | No             | No                 |
-| Wolf     | 6           | Yes            | Yes (within ~6 blocks) |
 | Bear     | 16          | Yes            | Yes (within ~6 blocks) |
 | Moose    | 18          | Yes            | No                 |
 
-Rabbits, squirrels, and deer are always harmless — you can hit them but they never fight back. The moose only turns hostile once you attack it. Wolves and the black bear will charge and attack on their own if you wander too close, whether or not you've touched them. Left-click anything in range to attack it (a fixed 1-heart hit, on a short cooldown); a kill is permanent, and dead animals respawn gradually over time (see below), not instantly. You can be badly hurt but you can't actually die — damage floors out at half a heart rather than zero, so a bad fall or an angry bear leaves you critically low, not respawning. Stand still for a couple of seconds (with hunger above empty) and you'll regenerate half a heart at a time back to full, same as always, no matter how close to that floor you got. Your position is saved in this browser every few seconds while you play, so closing the tab and coming back later picks up right where you left off.
+Rabbits, squirrels, and deer are always harmless — you can hit them but they never fight back. The moose only turns hostile once you attack it. The black bear will charge and attack on its own if you wander too close, whether or not you've touched it — and it's fast enough (faster than your own walk speed) to actually catch you if you don't sprint. Left-click anything in range to attack it (a fixed 1-heart hit, on a short cooldown); a kill is permanent, and dead animals respawn gradually over time (see below), not instantly. You can be badly hurt but you can't actually die — damage floors out at half a heart rather than zero, so a bad fall or an angry bear leaves you critically low, not respawning. Stand still for a couple of seconds (with hunger above empty) and you'll regenerate half a heart at a time back to full, same as always, no matter how close to that floor you got. Your position is saved in this browser every few seconds while you play, so closing the tab and coming back later picks up right where you left off.
 
-Climbing onto a short ledge or wading a little into deep water doesn't make a hostile animal give up — if it can't physically walk the rest of the way to you (a real height drop it can't climb, or water it won't cross), it can still lunge and land a hit as long as you're within a generous reach measured in real 3D space, not just flat ground distance. Get far enough away — a real cliff, open water well off the shore — and you're genuinely out of reach; a short obstacle just outside its normal attack range isn't.
+Climbing onto a short ledge doesn't make a hostile animal give up — if it can't physically walk the rest of the way to you (a real height drop it can't climb), it can still lunge and land a hit as long as you're within a generous reach measured in real 3D space, not just flat ground distance. Get far enough away — a real cliff well out of that lunge range — and you're genuinely out of reach; a short obstacle just outside its normal attack range isn't. Water is no obstacle at all: land animals swim, surfacing and paddling once they're out of their depth rather than wading along the bottom out of sight, so wading into a lake only helps if you can out-swim whatever's chasing you.
+
+If a bear's already on you, the **🐻🚫 Stop Bear** quick-access icon (bottom of the screen, next to the hotbar) is the emergency out: click it to shout and clap — a big **GO AWAY! BEAR! GO AWAY!** banner on screen, a burst of deliberately silly noise — and every bear within about 8 blocks turns and runs for a full 6 seconds, aggro cleared, so it doesn't just spin around and resume the charge the moment the fright wears off. It's on a 20-second cooldown so it's a real emergency tool, not a way to make bears harmless outright.
 
 Animals are solid, not something you can walk or fall straight through — jump onto one from above and you land on its back like any other obstacle, instead of clipping through its body onto the ground underneath.
 
 Animals reproduce: whenever two of the same species wander within about 2 blocks of each other, a baby of that type is born right at the midpoint between them, and each of the two parents needs 30 in-game days (30 real hours) to cool down before it can trigger another birth. Left unattended over a long enough session, herds slowly grow on their own.
 
-The world starts out with 10 rabbits, 10 squirrels, 5 deer, 2 wolves, 1 black bear, and 1 moose, and any that die respawn gradually to keep the population back up to those same counts.
+The world starts out with 10 rabbits, 10 squirrels, 5 deer, 1 black bear, and 1 moose, and any that die respawn gradually to keep the population back up to those same counts.
 
 ### Hunger
 
 You also have a hunger bar (10 drumsticks, right under your hearts) that empties slowly over time — about 19 real minutes from full to empty — regardless of what you're doing. While it's above empty, standing still for a couple of seconds regenerates health the same as always; once it hits zero, regen stops and you'll start taking slow damage until you eat something.
 
 Killing an animal still drops Meat internally — bigger animals drop more (1 for a rabbit or
-squirrel, 2 for a deer or wolf, 3 for a bear, 5 for a moose) — but Raw Meat itself is disabled: it's
+squirrel, 2 for a deer, 3 for a bear, 5 for a moose) — but Raw Meat itself is disabled: it's
 gone from the Inventory panel, so there's no way left to select it into a hotbar slot, eat it, or
 cook it into a Cooked Meal. **This currently leaves hunger with no way to be restored at all once it
 empties** — worth flagging if you want that revisited (Fish or Trail Food becoming edible are the
@@ -312,7 +320,7 @@ Every animal is modeled at real-world scale — world units are ~1 unit = 1 mete
 
 Killing off a species doesn't leave the world permanently empty — every animal type slowly respawns over time (checked periodically, replacing at most one missing animal every few seconds, so it never feels like a sudden burst) until each species is back to its starting population.
 
-Animal placement is deterministic (same seed every time), so the herd starts in the same spots on a fresh world. Animals only ever spawn standing on actual ground — never floating in a tree's trunk or canopy — and each species has its own procedurally-drawn hide texture (a deer's reddish coat, a wolf's grey streaks, a moose's leathery wrinkles, etc.), same technique as the block textures.
+Animal placement is deterministic (same seed every time), so the herd starts in the same spots on a fresh world. Animals only ever spawn standing on actual ground — never floating in a tree's trunk or canopy — and each species has its own procedurally-drawn hide texture (a deer's reddish coat, a moose's leathery wrinkles, etc.), same technique as the block textures.
 
 Falling more than 3 blocks also hurts — you take damage roughly proportional to how far you fell beyond that. Taking any damage (from an animal or a fall) flashes a red vignette around the edge of the screen, and every action has a small sound effect synthesized on the fly with the Web Audio API. The black bear lets out a roar the moment it turns hostile — whether that's from you attacking it or just wandering too close — reusing the same public-domain roar recording (trimmed to ~2 seconds) that Blockcraft uses for its lions, since a real bear growl wasn't available; see [`assets/README.md`](assets/README.md) for the source and license. Everything else audio-wise, along with all the textures, is generated procedurally with no external files.
 
