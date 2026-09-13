@@ -3911,6 +3911,17 @@ function findAttackTarget(){
   });
   return best;
 }
+// Small songbirds are off-limits to the player entirely — unlike the ground animals' "nudge, not a
+// rule" warning (see damageAnimal), which still lets the hit land, this actually blocks the damage
+// and just explains why. Big Eagles still hunt them fine (see updateBigEagles/damageBirdOrFish) —
+// this only intercepts the player's own tryAttack, not predation between animals.
+let lastBirdWarningAt = 0;
+const BIRD_WARNING_COOLDOWN_MS = 5000;
+function warnBirdProtected(){
+  if(Date.now()-lastBirdWarningAt < BIRD_WARNING_COOLDOWN_MS) return;
+  lastBirdWarningAt = Date.now();
+  addChatMessage('Camp', "🐦 Birds can't be hurt — a real Scout studies wildlife, not hunts it.");
+}
 let lastPlayerAttack = 0;
 function tryAttack(){
   const target = findAttackTarget();
@@ -3920,13 +3931,16 @@ function tryAttack(){
     lastPlayerAttack = now;
     triggerSwing();
     SFX.swing();
-    SFX.hitAnimal();
-    if(target.type==='animal') damageAnimal(target.ref, PLAYER_ATTACK_DMG);
-    else if(target.type==='bird') damageBirdOrFish(target.ref, PLAYER_ATTACK_DMG, 'bird');
-    else if(target.type==='fish') damageBirdOrFish(target.ref, PLAYER_ATTACK_DMG, 'fish');
-    else if(target.type==='gopher') damageGopher(target.ref, PLAYER_ATTACK_DMG);
-    else if(target.type==='bigeagle') damageBigEagle(target.ref, PLAYER_ATTACK_DMG);
-    else if(target.type==='turtle') damageTurtle(target.ref, PLAYER_ATTACK_DMG);
+    if(target.type==='bird'){
+      warnBirdProtected();
+    } else {
+      SFX.hitAnimal();
+      if(target.type==='animal') damageAnimal(target.ref, PLAYER_ATTACK_DMG);
+      else if(target.type==='fish') damageBirdOrFish(target.ref, PLAYER_ATTACK_DMG, 'fish');
+      else if(target.type==='gopher') damageGopher(target.ref, PLAYER_ATTACK_DMG);
+      else if(target.type==='bigeagle') damageBigEagle(target.ref, PLAYER_ATTACK_DMG);
+      else if(target.type==='turtle') damageTurtle(target.ref, PLAYER_ATTACK_DMG);
+    }
   }
   return true;
 }
