@@ -164,6 +164,106 @@ const HOTBAR_ICON = { [CRAFTING_TABLE]: '🛠️', [WINDOW]: '🪟', [DOOR]: '�
   [POCKETKNIFE]: '🔪', [FIRST_AID_KIT]: '🩹', [EXTRA_CLOTHING]: '🧥', [RAIN_GEAR]: '☂️', [WATER_BOTTLE]: '🥤',
   [FLASHLIGHT]: '🔦', [TRAIL_FOOD]: '🥜', [SUN_PROTECTION]: '🧴', [SCOUTBOOK]: '📘',
   [FISHING_POLE]: '🎣', [FISH]: '🐟', [SLEEPING_BAG]: '🛌', [SLEEPING_PAD]: '🛏️' };
+
+// ---------- Cooking ingredients & dishes ----------
+// 57 more items (31 raw ingredients + 26 finished dishes) generated from one data table instead of
+// hand-written across BLOCK_COLOR/BLOCK_NAME/HOTBAR_ICON/ALL_ITEMS the way the ~13 essentials above
+// are — at this scale a table beats 57x4 nearly-identical manual lines. Ids start right after
+// US_FLAG_BR (57): ingredients first, then dishes, in the order they're listed below.
+const INGREDIENT_DEFS = [
+  ['PASTA','Pasta','🍝',0xe8c887], ['CHEESE','Cheese','🧀',0xf2c14e], ['MILK','Milk','🥛',0xf5f5f0],
+  ['BUTTER','Butter','🧈',0xf7d358], ['BEEF','Beef','🥩',0x8b3a3a], ['VEGETABLES','Vegetables','🥕',0xe07b39],
+  ['POTATOES','Potatoes','🥔',0xc9a06c], ['WATER_JUG','Jug of Water','🚰',0x6fa8dc], ['TOMATOES','Tomatoes','🍅',0xc0392b],
+  ['OATS','Oats','🌾',0xd8c48a], ['SUGAR_SYRUP','Sugar/Syrup','🍯',0xd9a441], ['FRUIT','Fruit','🍎',0xb0281a],
+  ['SAUSAGE','Sausage','🌭',0xa85c3b], ['BEANS','Beans','🫘',0x8a5a3a], ['SAUCE','Sauce','🥫',0xb03a2e],
+  ['TORTILLAS','Tortillas','🫓',0xe8d5a0], ['CHICKEN','Chicken','🐔',0xd9b38c], ['EGGS','Eggs','🥚',0xf0e6d2],
+  ['SEASONING','Seasoning','🧂',0xd8d8d8], ['BREAD','Bread','🍞',0xc68a4e], ['HASH_BROWNS','Hash Browns','🍟',0xd9a441],
+  ['BACON','Bacon','🥓',0xa8453a], ['GROUND_MEAT','Ground Meat','🥩',0x9a3a3a], ['BAKING_MIX','Baking Mix','🥣',0xe8e0c8],
+  ['SODA','Soda','🥤',0x8a5a2a], ['YEAST','Yeast','🫙',0xc9a86b], ['PIZZA_DOUGH','Pizza Dough','🍕',0xe0c898],
+  ['PEPPERONI','Pepperoni','🔴',0xa8302a], ['GRAHAM_CRACKERS','Graham Crackers','🍪',0xc99a5c],
+  ['MARSHMALLOWS','Marshmallows','⚪',0xf5f0e6], ['CHOCOLATE','Chocolate','🍫',0x5a3a26],
+];
+// Recipes, grouped by cookware "wareKey" — matching the 5 real stations in buildCookingArea, plus any
+// player-placed CAMPFIRE (see doInteract/BLOCK_TO_WARE_KEY below). Deliberately NOT shown anywhere in
+// the UI as a required-ingredients list — see openCookware's hint and the design note on tryCookRecipe.
+const COOKWARE_DISH_DEFS = {
+  pot: [
+    ['MAC_CHEESE','Macaroni & Cheese','🧀',0xf2c14e,['PASTA','CHEESE','MILK','BUTTER']],
+    ['CAMPFIRE_STEW','Campfire Stew','🍲',0x8a5a3a,['BEEF','VEGETABLES','POTATOES','WATER_JUG']],
+    ['TOMATO_PASTA','Tomato Pasta','🍝',0xc0392b,['PASTA','TOMATOES','WATER_JUG','CHEESE']],
+    ['SCOUTS_OATMEAL',"Scout's Oatmeal",'🥣',0xd8c48a,['OATS','WATER_JUG','SUGAR_SYRUP','FRUIT']],
+    ['HOT_DOGS_BEANS','Hot Dogs & Beans','🌭',0xa85c3b,['SAUSAGE','BEANS','SAUCE']],
+  ],
+  pan: [
+    ['QUESADILLAS','Campfire Quesadillas','🌮',0xe8d5a0,['TORTILLAS','CHEESE','CHICKEN','SAUCE']],
+    ['EASY_SCRAMBLE','Easy Scramble','🍳',0xf0e6d2,['EGGS','SAUSAGE','BUTTER','SEASONING']],
+    ['GRILLED_CHEESE','Classic Grilled Cheese','🥪',0xc68a4e,['BREAD','CHEESE','BUTTER']],
+    ['QUICK_HASH','Quick Hash','🍽️',0xd9a441,['HASH_BROWNS','BACON','EGGS','VEGETABLES']],
+    ['PAN_FAJITAS','Pan Fajitas','🌯',0xe07b39,['BEEF','VEGETABLES','SEASONING','BUTTER']],
+  ],
+  dutch: [
+    ['MOUNTAIN_BREAKFAST','Mountain Man Breakfast','🍳',0x9a3a3a,['HASH_BROWNS','EGGS','GROUND_MEAT','CHEESE']],
+    ['CHERRY_DUMP_CAKE','Cherry Dump Cake','🍒',0xb0281a,['FRUIT','BAKING_MIX','BUTTER','SODA']],
+    ['DUTCH_CHILI','Dutch Oven Chili','🌶️',0x9a3a3a,['GROUND_MEAT','TOMATOES','BEANS','SEASONING']],
+    ['CAMPFIRE_BREAD','Cast-Iron Campfire Bread','🍞',0xc68a4e,['BAKING_MIX','WATER_JUG','YEAST','SEASONING']],
+    ['DEEP_DISH_PIZZA','Deep Dish Pizza','🍕',0xe0c898,['PIZZA_DOUGH','TOMATOES','CHEESE','PEPPERONI']],
+    ['PEACH_COBBLER','Peach Cobbler','🍑',0xd9a441,['FRUIT','BAKING_MIX','MILK','SUGAR_SYRUP']],
+  ],
+  campfire: [
+    ['SMORES',"Classic S'mores",'🍫',0x5a3a26,['GRAHAM_CRACKERS','MARSHMALLOWS','CHOCOLATE']],
+    ['FOIL_CHICKEN','Foil Packet Chicken','🍗',0xd9b38c,['CHICKEN','VEGETABLES','BUTTER','SEASONING']],
+    ['COAL_POTATOES','Coal-Baked Potatoes','🥔',0xc9a06c,['POTATOES','BUTTER','CHEESE','BACON']],
+    ['ROASTED_CORN','Roasted Corn','🌽',0xe0c840,['VEGETABLES','BUTTER','SEASONING']],
+    ['SAUSAGE_STICK','Sausage on a Stick','🌭',0xa85c3b,['SAUSAGE']],
+  ],
+  griddle: [
+    ['CAMP_PANCAKES','Camp Pancakes','🥞',0xd9a441,['BAKING_MIX','WATER_JUG','BUTTER','SUGAR_SYRUP']],
+    ['SMASH_BURGERS','Smash Burgers','🍔',0x9a3a3a,['GROUND_MEAT','BREAD','CHEESE','SEASONING']],
+    ['FRENCH_TOAST','French Toast','🍞',0xc68a4e,['BREAD','EGGS','MILK','SUGAR_SYRUP']],
+    ['BACON_EGGS','Bacon and Eggs','🥓',0xa8453a,['BACON','EGGS']],
+    ['PHILLY_CHEESESTEAKS','Philly Cheesesteaks','🥖',0xc68a4e,['BEEF','BREAD','CHEESE','VEGETABLES']],
+  ],
+};
+const COOKWARE_INFO = {
+  pot:      { block: POT,        name:'Pot',        emoji:'🍲' },
+  pan:      { block: PAN,        name:'Pan',        emoji:'🍳' },
+  dutch:    { block: DUTCH_OVEN, name:'Dutch Oven', emoji:'🫕' },
+  campfire: { block: CAMPFIRE,   name:'Campfire',   emoji:'🔥' },
+  griddle:  { block: GRIDDLE,    name:'Griddle',    emoji:'🧇' },
+};
+// A clicked block id straight back to its recipe category — the reverse of COOKWARE_INFO[key].block.
+const BLOCK_TO_WARE_KEY = {};
+for(const key in COOKWARE_INFO) BLOCK_TO_WARE_KEY[COOKWARE_INFO[key].block] = key;
+// COOK_ID.PASTA etc. — assigned sequentially right after the last hand-numbered id (US_FLAG_BR),
+// ingredients first, then dishes, and every one of them gets threaded into the exact same lookup
+// tables (BLOCK_COLOR/BLOCK_NAME/HOTBAR_ICON/ALL_ITEMS/CARRY_ONLY_ITEMS) the ~13 essentials go
+// through by hand above.
+const COOK_ID = {};
+const ALL_DISH_IDS = []; // every dish id, across every cookware — FOOD_RESTORE (declared later) loops over this
+let _nextCookItemId = US_FLAG_BR + 1;
+for(const [key, name, emoji, color] of INGREDIENT_DEFS){
+  const id = _nextCookItemId++;
+  COOK_ID[key] = id;
+  BLOCK_COLOR[id] = color;
+  BLOCK_NAME[id] = name;
+  HOTBAR_ICON[id] = emoji;
+  ALL_ITEMS.push(id);
+  CARRY_ONLY_ITEMS.add(id); // raw ingredients: no block form, not eaten raw — only useful in a recipe
+}
+const COOKWARE_RECIPES = {}; // wareKey -> [{id, name, ingredients:[id,...]}, ...]
+for(const wareKey in COOKWARE_DISH_DEFS){
+  COOKWARE_RECIPES[wareKey] = COOKWARE_DISH_DEFS[wareKey].map(([key, name, emoji, color, ingredientKeys]) => {
+    const id = _nextCookItemId++;
+    COOK_ID[key] = id;
+    BLOCK_COLOR[id] = color;
+    BLOCK_NAME[id] = name;
+    HOTBAR_ICON[id] = emoji;
+    ALL_ITEMS.push(id);
+    ALL_DISH_IDS.push(id);
+    return { id, name, ingredients: ingredientKeys.map(k => COOK_ID[k]) };
+  });
+}
+
 // Blocks with an open/closed state: right-clicking one toggles it to the other id in this map.
 const TOGGLE_MAP = { [WINDOW]:WINDOW_OPEN, [WINDOW_OPEN]:WINDOW, [DOOR]:DOOR_OPEN, [DOOR_OPEN]:DOOR };
 // Breaking the open form of a toggleable block gives you back its closed (placeable) form.
@@ -256,7 +356,7 @@ const BADGES = [
   { id:'pioneering', emoji:'🪢', name:'Pioneering',   hint:'Twist 6 lengths of rope.',                     test:()=> scoutStats.rope >= 6 },
   { id:'firecraft',  emoji:'🔥', name:'Firecraft',    hint:'Light your first campfire.',                   test:()=> scoutStats.campfires >= 1 },
   { id:'camping',    emoji:'⛺',          name:'Camping',      hint:'Pitch a tent.',                                test:()=> scoutStats.tents >= 1 },
-  { id:'cooking',    emoji:'🍳', name:'Cooking',      hint:'Cook a meal on a campfire.',                   test:()=> scoutStats.meals >= 1 },
+  { id:'cooking',    emoji:'🍳', name:'Cooking',      hint:'Cook one dish on every kind of cookware.',     test:()=> scoutStats.cookwareUsed.length >= 5 },
   { id:'navigation', emoji:'🧭', name:'Navigation',   hint:'Take a bearing with your compass.',            test:()=> scoutStats.compassUses >= 1 },
   { id:'hiking',     emoji:'🥾', name:'Hiking',       hint:'Hike 1,000 blocks on foot.',                   test:()=> scoutStats.hiked >= 1000 },
   { id:'swimming',   emoji:'🏊', name:'Swimming',     hint:'Swim 60 blocks.',                              test:()=> scoutStats.swam >= 60 },
@@ -271,22 +371,31 @@ const BADGES = [
   { id:'horseback',  emoji:'🐴', name:'Horseback Riding', hint:'Ride 200 blocks on horseback.',            test:()=> scoutStats.horsebackBlocks >= HORSEBACK_BADGE_BLOCKS },
   { id:'scoutspirit',emoji:'🏅', name:'Scout Spirit', hint:'Find all 12 golden Scout Law boxes hidden around camp.', test:()=> scoutStats.lawsCollected.length >= SCOUT_LAW_POINTS.length },
 ];
-// Ranks are purely derived from how many badges you hold — no separate progression to track.
-// Eagle Scout always means "every badge earned," so it's tied to BADGES.length rather than a number
-// that would need updating by hand every time a badge is added.
+// Ranks are purely derived from how many badges you hold — no separate progression to track. A brand
+// new Scout hasn't earned anything yet, so rank starts at "None" rather than jumping straight to
+// "Scout" — every other threshold below is just the old numbers shifted up by one to make room for it.
+// Eagle Scout doesn't need every badge — real Scouting lets you count some from outside the required
+// list, so this is modeled as "more than 3/4 of them" instead of literally all of them, tied to
+// BADGES.length (rounded up) rather than a number that would need updating by hand every time a
+// badge is added.
+const EAGLE_BADGE_FRACTION = 0.75;
 const RANKS = [
-  { min:0,  name:'Scout' },
-  { min:1,  name:'Tenderfoot' },
-  { min:2,  name:'Second Class' },
-  { min:5,  name:'First Class' },
-  { min:8,  name:'Star Scout' },
-  { min:11, name:'Life Scout' },
-  { min:BADGES.length, name:'Eagle Scout' },
+  { min:0,  name:'None' },
+  { min:1,  name:'Scout' },
+  { min:2,  name:'Tenderfoot' },
+  { min:3,  name:'Second Class' },
+  { min:6,  name:'First Class' },
+  { min:9,  name:'Star Scout' },
+  { min:12, name:'Life Scout' },
+  { min: Math.ceil(BADGES.length * EAGLE_BADGE_FRACTION), name:'Eagle Scout' },
 ];
+function rankIndexFor(count){
+  let idx = 0;
+  for(let i=0;i<RANKS.length;i++) if(count >= RANKS[i].min) idx = i;
+  return idx;
+}
 function rankFor(count){
-  let r = RANKS[0];
-  for(const cand of RANKS) if(count >= cand.min) r = cand;
-  return r.name;
+  return RANKS[rankIndexFor(count)].name;
 }
 
 const BADGE_KEY = 'scoutcraft_badges_v1';
@@ -294,9 +403,9 @@ const STATS_KEY = 'scoutcraft_stats_v1';
 const earnedBadges = new Set();
 // species is an array rather than a Set purely so it survives JSON.stringify into localStorage.
 const scoutStats = {
-  wood:0, rope:0, campfires:0, tents:0, flags:0, meals:0, compassUses:0,
+  wood:0, rope:0, campfires:0, tents:0, flags:0, compassUses:0,
   hiked:0, swam:0, highest:0, nightSeconds:0, species:[],
-  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, horsebackBlocks:0, lawsCollected:[],
+  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, horsebackBlocks:0, lawsCollected:[], cookwareUsed:[],
 };
 function saveScoutProgress(){
   try{
@@ -313,6 +422,7 @@ function loadScoutProgress(){
       for(const k in scoutStats) if(k in st) scoutStats[k] = st[k];
       if(!Array.isArray(scoutStats.species)) scoutStats.species = [];
       if(!Array.isArray(scoutStats.lawsCollected)) scoutStats.lawsCollected = [];
+      if(!Array.isArray(scoutStats.cookwareUsed)) scoutStats.cookwareUsed = [];
     }
   }catch(e){}
 }
@@ -396,6 +506,12 @@ const Scout = {
   sawSpecies(name){
     if(!name || scoutStats.species.includes(name)) return;
     scoutStats.species.push(name);
+    checkBadges();
+  },
+  cookedOn(wareKey){
+    if(scoutStats.cookwareUsed.includes(wareKey)) return;
+    scoutStats.cookwareUsed.push(wareKey);
+    saveScoutProgress();
     checkBadges();
   },
   foundDipper(){
@@ -483,6 +599,19 @@ function updateScoutHUD(){
   if(c) c.textContent = `${earnedBadges.size}/${BADGES.length}`;
   const r = document.getElementById('rankLabel');
   if(r) r.textContent = rankFor(earnedBadges.size);
+  updateCharacterRankBadge();
+}
+// Re-draws the shirt's left-pocket rank badge only when the rank itself actually changed — called
+// every time updateScoutHUD is (i.e. whenever the earned badge count changes), same trigger the sash
+// and name tag refresh on.
+function updateCharacterRankBadge(){
+  const u = characterMesh && characterMesh.userData.uniform;
+  if(!u) return;
+  const idx = rankIndexFor(earnedBadges.size);
+  if(u.lastRankIndex === idx) return;
+  u.lastRankIndex = idx;
+  u.shirtFrontMat.map = buildShirtFrontTexture(idx);
+  u.shirtFrontMat.needsUpdate = true;
 }
 
 // ---- The compass: how far, and in which direction, camp is ----
@@ -506,22 +635,6 @@ function useCompass(){
     : `🧭 ${where}: ${Math.round(dist)} blocks ${bearingName(dx,dz)}.`;
   addChatMessage('Camp', msg);
   Scout.bump('compassUses');
-  saveScoutProgress();
-}
-
-// ---- Cooking at a campfire ----
-function tryCookAtCampfire(){
-  if(invCount(MEAT) <= 0){
-    addChatMessage('Camp', '🍳 You need Raw Meat in your pack to cook.');
-    return;
-  }
-  invSub(MEAT, 1);
-  invAdd(COOKED_MEAT, 1);
-  saveInventory();
-  updateHotbarUI();
-  SFX.craft();
-  addChatMessage('Camp', '🍖 You cooked a meal on the campfire.');
-  Scout.bump('meals');
   saveScoutProgress();
 }
 
@@ -642,7 +755,7 @@ function badgeProgress(b){
     pioneering: ()=> [Math.floor(scoutStats.rope), 6, 'rope'],
     firecraft:  ()=> [scoutStats.campfires, 1, 'campfires'],
     camping:    ()=> [scoutStats.tents, 1, 'tents'],
-    cooking:    ()=> [scoutStats.meals, 1, 'meals'],
+    cooking:    ()=> [scoutStats.cookwareUsed.length, 5, 'cookware'],
     navigation: ()=> [scoutStats.compassUses, 1, 'bearings'],
     hiking:     ()=> [Math.floor(scoutStats.hiked), 1000, 'blocks'],
     swimming:   ()=> [Math.floor(scoutStats.swam), 60, 'blocks'],
@@ -667,9 +780,12 @@ function renderSash(){
   const rankEl = document.getElementById('sashRank');
   if(rankEl){
     const next = RANKS.find(r => r.min > earnedBadges.size);
+    // Eagle only needs EAGLE_BADGE_FRACTION of the badges now, not literally all of them, so reaching
+    // it (the last rank with no "next") doesn't necessarily mean every badge is earned anymore —
+    // check that separately rather than assuming the two are still the same thing.
     rankEl.textContent = next
       ? `${rankFor(earnedBadges.size)} — ${next.min - earnedBadges.size} more badge${next.min-earnedBadges.size===1?'':'s'} to ${next.name}`
-      : `${rankFor(earnedBadges.size)} — every badge earned!`;
+      : (earnedBadges.size >= BADGES.length ? `${rankFor(earnedBadges.size)} — every badge earned!` : `${rankFor(earnedBadges.size)} — the highest rank!`);
   }
   const countEl = document.getElementById('sashCount');
   if(countEl) countEl.textContent = `${earnedBadges.size} of ${BADGES.length}`;
@@ -1376,6 +1492,36 @@ function drawStar(ctx,cx,cy,rOuter,rInner){
   }
   ctx.closePath();
   ctx.fill();
+}
+// Rank badge art — an original, simple design (not a reproduction of any real insignia): a colored
+// disc that gets richer per tier, with one star per rank above None. Drawn straight onto whatever 2D
+// context is handed in, so the exact same function puts the same-looking badge on the floating name
+// tag, the shirt's left chest pocket, and the exit screen's achievement card — "what rank am I" always
+// reads the same way wherever it shows up. rankIndex is an index into RANKS (0 = None).
+const RANK_BADGE_COLORS = ['#6b6b6b','#a8825a','#8a9a5a','#7a9a4a','#5a8a4a','#b8b8c0','#c94a3a','#f0c020'];
+function drawRankBadge(ctx, cx, cy, radius, rankIndex){
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI*2);
+  ctx.fillStyle = RANK_BADGE_COLORS[rankIndex] || RANK_BADGE_COLORS[0];
+  ctx.fill();
+  ctx.lineWidth = Math.max(1, radius*0.12);
+  ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+  ctx.stroke();
+  if(rankIndex<=0) return;
+  const n = rankIndex;
+  const starR = radius*0.32, starInner = starR*0.42;
+  const rows = n<=4 ? 1 : 2;
+  const perRow = Math.ceil(n/rows);
+  const rowSpacing = radius*0.7;
+  ctx.fillStyle = '#fff8e0';
+  for(let row=0; row<rows; row++){
+    const count = row===rows-1 ? n-perRow*(rows-1) : perRow;
+    const y = cy + (row-(rows-1)/2)*rowSpacing;
+    for(let i=0;i<count;i++){
+      const x = cx + (i-(count-1)/2)*(starR*1.7);
+      drawStar(ctx, x, y, starR, starInner);
+    }
+  }
 }
 let usFlagMasterCanvas = null;
 function buildUSFlagMaster(){
@@ -2436,7 +2582,9 @@ function pixelTexture(canvas){
 // Two chest pockets and a row of buttons down the placket — drawn onto the torso box's front (-z)
 // face only, same face-array trick as the head's own faceMaterial above.
 const SHIRT_COLOR_HEX = '#a89272'; // must track the shirtMat default a few lines down
-function buildShirtFrontTexture(){
+// rankIndex (0=None) puts your current rank badge on the left chest pocket, same small vector art as
+// drawRankBadge everywhere else — left blank until you've actually earned your way to at least Scout.
+function buildShirtFrontTexture(rankIndex){
   const w=32, h=48;
   const canvas = document.createElement('canvas');
   canvas.width=w; canvas.height=h;
@@ -2451,6 +2599,10 @@ function buildShirtFrontTexture(){
   ctx.fillRect(19,9,10,3);
   ctx.fillStyle = '#5a4a38';
   for(let i=0;i<5;i++) ctx.fillRect(15,5+i*8,2,2);
+  // The canvas's own left (small x) lands on the character's own right once mapped onto the body's
+  // front face and viewed face-on — confirmed by comparing against the right-sleeve flag patch in a
+  // front-view render — so the *character's* left pocket is the second one, at larger x.
+  if(rankIndex>0) drawRankBadge(ctx, 24, 14.5, 5, rankIndex);
   return pixelTexture(canvas);
 }
 // A small US flag patch, sewn-on-sleeve style — just a striped rectangle with a canton block, since
@@ -2550,7 +2702,8 @@ function createCharacterMesh(shirtColor){
   const body = box(0.5,0.75,0.28, shirtMat);
   body.position.set(0, 1.05, 0);
   // Front (-z) face only gets the pockets/buttons texture — same per-face-array trick as the head.
-  const shirtFrontMat = new THREE.MeshLambertMaterial({ map: buildShirtFrontTexture() });
+  const initialRankIndex = rankIndexFor(earnedBadges.size);
+  const shirtFrontMat = new THREE.MeshLambertMaterial({ map: buildShirtFrontTexture(initialRankIndex) });
   body.material = [shirtMat, shirtMat, shirtMat, shirtMat, shirtMat, shirtFrontMat];
   // Short sleeve up top, bare arm (skin) the rest of the way down.
   const armL = makeLimb(0.2,0.2, [{h:0.25,mat:shirtMat},{h:0.45,mat:skinMaterial}]);
@@ -2594,7 +2747,7 @@ function createCharacterMesh(shirtColor){
   group.userData.parts = { armL, armR, legL, legR };
   // Stashed so applyUniformCustomization can update the troop number / neckerchief color live, after
   // the front-page overlay is actually submitted, without rebuilding this whole mesh.
-  group.userData.uniform = { troopPatchMat, neckerchief, backpack };
+  group.userData.uniform = { troopPatchMat, neckerchief, backpack, shirtFrontMat, lastRankIndex: initialRankIndex };
   group.traverse(o => { if(o.isMesh){ o.castShadow = true; } });
   return group;
 }
@@ -2620,7 +2773,9 @@ function animateWalk(group, state, dt, moving, sprinting){
   legR.rotation.x = -swing;
 }
 // ---------- Floating name/HP tag (drawn on a canvas, shown as a billboard sprite above the head) ----------
-function buildNameTagCanvas(name, rank){
+function buildNameTagCanvas(name, badgeCount){
+  const rankIndex = rankIndexFor(badgeCount);
+  const rankName = RANKS[rankIndex].name;
   const canvas = document.createElement('canvas');
   canvas.width = 256; canvas.height = 64;
   const ctx = canvas.getContext('2d');
@@ -2630,23 +2785,30 @@ function buildNameTagCanvas(name, rank){
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 24px sans-serif';
   ctx.fillText(name, 128, 28);
+  // Rank badge + name, centered together as one unit — the badge sized/measured against the text
+  // width so it never looks off-center regardless of how long the rank name is.
   ctx.font = '18px sans-serif';
   ctx.fillStyle = '#f0dfa8';
-  ctx.fillText(rank, 128, 52);
+  const badgeD = 20, gap = 6;
+  const textW = ctx.measureText(rankName).width;
+  const startX = 128 - (badgeD+gap+textW)/2;
+  drawRankBadge(ctx, startX+badgeD/2, 50, badgeD/2, rankIndex);
+  ctx.textAlign = 'left';
+  ctx.fillText(rankName, startX+badgeD+gap, 56);
   return canvas;
 }
 function createNameTagSprite(){
-  const tex = new THREE.CanvasTexture(buildNameTagCanvas('', rankFor(0)));
+  const tex = new THREE.CanvasTexture(buildNameTagCanvas('', 0));
   const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
   sprite.scale.set(1.6, 0.4, 1);
   sprite.position.set(0, 2.05, 0);
   return { sprite, tex, lastKey: null };
 }
-function updateNameTag(tag, name, rank){
-  const key = name + ':' + rank;
+function updateNameTag(tag, name, badgeCount){
+  const key = name + ':' + badgeCount;
   if(tag.lastKey === key) return;
   tag.lastKey = key;
-  const canvas = buildNameTagCanvas(name, rank);
+  const canvas = buildNameTagCanvas(name, badgeCount);
   tag.tex.dispose();
   tag.tex = new THREE.CanvasTexture(canvas);
   tag.sprite.material.map = tag.tex;
@@ -3520,7 +3682,7 @@ function respawnAfterDeath(){
 let sleeping = false;
 const WAKE_UP_HOUR = 7; // 7am
 function trySleep(){
-  if(sleeping || craftingOpen || itemsOpen || sashOpen || bearBoxOpen || backpackOpen) return;
+  if(sleeping || craftingOpen || itemsOpen || sashOpen || bearBoxOpen || backpackOpen || cookwareOpen) return;
   if(!nearestTent(4)){ addChatMessage('Camp', '⛺ You need to be near your tent to sleep.'); return; }
   if(invCount(SLEEPING_BAG)<=0 || invCount(SLEEPING_PAD)<=0){
     addChatMessage('Camp', "🛏️ You need your Sleeping Bag and Sleeping Pad out to make camp for the night — check your Backpack.");
@@ -3640,7 +3802,7 @@ function updateCharacterAnim(dt, moving, sprinting){
   // Cheap third-person "crawling" tell: squash the whole body toward the ground rather than building a
   // separate prone pose. The group's origin is at the feet, so this alone keeps it planted correctly.
   characterMesh.scale.y = player.crawling ? 0.42 : 1;
-  updateNameTag(myNameTag, myName, rankFor(earnedBadges.size));
+  updateNameTag(myNameTag, myName, earnedBadges.size);
 }
 
 // ---------- World edits ----------
@@ -7234,11 +7396,12 @@ window.addEventListener('keydown', e=>{
     if(itemsOpen){ closeItems(false); return; }
     if(bearBoxOpen){ closeBearBox(false); return; }
     if(backpackOpen){ closeBackpackStorage(false); return; }
+    if(cookwareOpen){ closeCookware(false); return; }
     if(sashOpen){ closeSash(false); return; }
   }
   if(e.code==='KeyM'){
     if(sashOpen){ closeSash(true); return; }
-    if(craftingOpen || itemsOpen || bearBoxOpen || backpackOpen) return;
+    if(craftingOpen || itemsOpen || bearBoxOpen || backpackOpen || cookwareOpen) return;
     if(locked && !isDead) openSash();
     return;
   }
@@ -7255,7 +7418,7 @@ window.addEventListener('keydown', e=>{
   }
   if(e.code==='KeyB'){
     if(backpackOpen){ closeBackpackStorage(true); return; }
-    if(craftingOpen || itemsOpen || bearBoxOpen || sashOpen) return;
+    if(craftingOpen || itemsOpen || bearBoxOpen || sashOpen || cookwareOpen) return;
     if(locked && !isDead) openBackpackStorage();
     return;
   }
@@ -7291,17 +7454,17 @@ function tryEatFood(id){
   updateHungerUI();
   SFX.eat();
 }
-function tryEatMeat(){ tryEatFood(MEAT); }
 function doInteract(){
   const hit = raycastBlock();
   const hitBlock = hit ? getBlock(hit.x,hit.y,hit.z) : null;
   const held = HOTBAR[selectedSlot];
-  // Raw meat pointed at a campfire cooks it rather than eating it where you stand.
-  if(hitBlock===CAMPFIRE && held===MEAT){ tryCookAtCampfire(); return; }
+  // Any cookware — Pot/Pan/Dutch Oven/Griddle at the fixed camp stations, or any Campfire anywhere,
+  // fixed or player-placed — opens its recipe window regardless of what's in hand, same priority a
+  // Crafting Table or the Bear Box already gets below.
+  if(hitBlock in BLOCK_TO_WARE_KEY){ openCookware(BLOCK_TO_WARE_KEY[hitBlock]); return; }
   if(held===FLINT){ tryIgniteFire(hit); return; }
   if(held===FIREWORK){ launchFirework(); return; }
-  if(held===MEAT){ tryEatMeat(); return; }
-  if(held===COOKED_MEAT){ tryEatFood(COOKED_MEAT); return; }
+  if(FOOD_RESTORE[held]!=null){ tryEatFood(held); return; }
   if(held===COMPASS){ useCompass(); return; }
   if(held===FISHING_POLE){ tryFish(); return; }
   // Carried items with no block form at all — without this they'd place as an untextured cube,
@@ -7395,7 +7558,7 @@ overlay.addEventListener('click', ()=>{
 document.addEventListener('pointerlockchange', ()=>{
   if(isTouchDevice) return;
   locked = document.pointerLockElement === document.body;
-  overlay.hidden = locked || craftingOpen || itemsOpen || bearBoxOpen || backpackOpen;
+  overlay.hidden = locked || craftingOpen || itemsOpen || bearBoxOpen || backpackOpen || cookwareOpen;
 });
 document.addEventListener('mousemove', e=>{
   if(!locked || isTouchDevice) return;
@@ -7685,8 +7848,9 @@ if(sashModalEl){
 
 // ---------- Quit / thank-you screen ----------
 // A deliberate in-game "I'm done for now" action, not tied to actually closing the tab (a page can't
-// intercept that with anything beyond a native browser prompt) — clicking Quit unlocks the mouse and
-// swaps in a full-screen thank-you screen with Andre's popcorn fundraiser link. World/inventory/badge
+// intercept that with anything beyond a native browser prompt) — clicking the "Share My Achievements"
+// button unlocks the mouse and swaps in a full-screen thank-you screen with Andre's popcorn fundraiser
+// link. World/inventory/badge
 // progress is already saved continuously during play, so there's nothing extra to do on the way out;
 // "Keep playing instead" just puts the overlay away again.
 const thankYouScreen = document.getElementById('thankYouScreen');
@@ -7732,17 +7896,18 @@ function buildAchievementCanvas(){
 
   ctx.textAlign = 'center';
   ctx.fillStyle = '#f2e9d8';
-  ctx.font = 'bold 40px sans-serif';
-  ctx.fillText('🏕️ ScoutCraft', width/2, 62);
+  ctx.font = 'bold 36px sans-serif';
+  ctx.fillText('🏕️ ScoutCraft', width/2, 46);
 
   const count = earnedBadges.size, total = BADGES.length;
+  drawRankBadge(ctx, width/2, 96, 30, rankIndexFor(count));
   ctx.fillStyle = '#e8c46a';
-  ctx.font = 'bold 56px sans-serif';
-  ctx.fillText(rankFor(count), width/2, 128);
+  ctx.font = 'bold 52px sans-serif';
+  ctx.fillText(rankFor(count), width/2, 160);
 
   ctx.fillStyle = '#c8e0a8';
   ctx.font = '26px sans-serif';
-  ctx.fillText(`${count} of ${total} Merit Badges Earned`, width/2, 168);
+  ctx.fillText(`${count} of ${total} Merit Badges Earned`, width/2, 195);
 
   BADGES.forEach((b,i)=>{
     const col = i%cols, row = Math.floor(i/cols);
@@ -7932,8 +8097,10 @@ function renderItemsGrid(){
 // ---------- Bear box (fixed camp food storage, up to 100 items total) ----------
 // A single shared stash, independent of your own pack, sitting at the cooking area — click an item
 // on either side to move one across. Capacity is a combined total across every item type, not
-// per-type, same as "100 items" reads literally.
-const BEAR_BOX_CAPACITY = 100;
+// per-type, same as "1,000 items" reads literally — raised well past its original 100 once the box
+// became the camp's whole cooking pantry too (see the pre-stock below: 10 of every raw ingredient per
+// recipe that calls for it, ~950 items total before a single player deposit).
+const BEAR_BOX_CAPACITY = 1000;
 const BEAR_BOX_KEY = 'scoutcraft_bearbox_v1';
 const bearBoxStorage = {}; // id -> qty
 let bearBoxOpen = false;
@@ -7943,9 +8110,25 @@ function saveBearBox(){
 }
 function loadBearBox(){
   try{
-    const obj = JSON.parse(localStorage.getItem(BEAR_BOX_KEY) || '{}');
-    for(const k in obj) bearBoxStorage[k] = obj[k];
+    const raw = localStorage.getItem(BEAR_BOX_KEY);
+    if(raw){
+      const obj = JSON.parse(raw);
+      for(const k in obj) bearBoxStorage[k] = obj[k];
+      return;
+    }
   }catch(e){}
+  // First time ever: stock the pantry with every raw ingredient every camp recipe needs — 10 per
+  // recipe that calls for it, so something used in 3 different dishes starts with 30 (see
+  // COOKWARE_RECIPES). Doesn't touch a bear box that's already been saved once, same "first run only"
+  // gate as the Backpack's own starter gear below.
+  const counts = {};
+  for(const wareKey in COOKWARE_RECIPES){
+    for(const recipe of COOKWARE_RECIPES[wareKey]){
+      for(const ing of recipe.ingredients) counts[ing] = (counts[ing]||0)+1;
+    }
+  }
+  for(const id in counts) bearBoxStorage[id] = counts[id]*10;
+  saveBearBox();
 }
 function depositToBearBox(id){
   if(invCount(id)<=0 || bearBoxTotal()>=BEAR_BOX_CAPACITY) return;
@@ -8028,6 +8211,117 @@ function openBearBox(){
 function closeBearBox(relock){
   bearBoxOpen = false;
   bearBoxModal.hidden = true;
+  if(relock){
+    if(isTouchDevice) locked = true;
+    else document.body.requestPointerLock();
+  } else if(!isTouchDevice) overlay.hidden = false;
+}
+
+// ---------- Cookware: click any Pot/Pan/Dutch Oven/Griddle/Campfire (see BLOCK_TO_WARE_KEY) to try
+// cooking one of its secret recipes. Up to 4 ingredients you're already holding go into fixed slots
+// (a small array, not a free-form dict like the Bear Box/Backpack above — there's nowhere to browse a
+// stash from here, just your own pack on one side and the 4 slots on the other), then Cook! checks
+// them against COOKWARE_RECIPES for that cookware as an unordered exact set — extra or missing
+// ingredients both miss. Deliberately no ingredient list shown anywhere; opening the window drops one
+// hint in the camp chat instead (see openCookware) and the rest is trial and error.
+let cookwareOpen = false;
+let cookwareWareKey = null;
+const cookwareSlots = [null, null, null, null]; // each an item id or null
+const DISH_HUNGER_RESTORE = 6; // every dish restores the same amount — a real meal, better than a snack
+for(const id of ALL_DISH_IDS) FOOD_RESTORE[id] = DISH_HUNGER_RESTORE;
+function addToCookware(id){
+  const slot = cookwareSlots.indexOf(null);
+  if(slot<0 || invCount(id)<=0) return;
+  invSub(id,1);
+  cookwareSlots[slot] = id;
+  saveInventory();
+  updateHotbarUI();
+  renderCookware();
+}
+function removeFromCookware(slotIdx){
+  const id = cookwareSlots[slotIdx];
+  if(id==null) return;
+  invAdd(id,1);
+  cookwareSlots[slotIdx] = null;
+  saveInventory();
+  updateHotbarUI();
+  renderCookware();
+}
+function tryCookRecipe(){
+  const used = cookwareSlots.filter(x=>x!=null);
+  if(used.length===0) return;
+  const sortedUsed = [...used].sort((a,b)=>a-b);
+  const match = COOKWARE_RECIPES[cookwareWareKey].find(r=>{
+    const sortedRecipe = [...r.ingredients].sort((a,b)=>a-b);
+    return sortedRecipe.length===sortedUsed.length && sortedRecipe.every((v,i)=>v===sortedUsed[i]);
+  });
+  if(!match){
+    addChatMessage('Camp', "🍳 That doesn't look like any recipe anyone's ever heard of.");
+    return;
+  }
+  for(let i=0;i<cookwareSlots.length;i++) cookwareSlots[i] = null; // spent, not returned — unlike closing the window
+  invAdd(match.id, 1);
+  saveInventory();
+  updateHotbarUI();
+  SFX.craft();
+  addChatMessage('Camp', `${HOTBAR_ICON[match.id]} You cooked up ${match.name}!`);
+  Scout.cookedOn(cookwareWareKey);
+  renderCookware();
+}
+function renderCookware(){
+  const info = COOKWARE_INFO[cookwareWareKey];
+  const title = document.getElementById('cookwareTitle');
+  if(title) title.textContent = `${info.emoji} ${info.name}`;
+  const yourGrid = document.getElementById('cookwareYourGrid');
+  const slotsGrid = document.getElementById('cookwareSlotsGrid');
+  yourGrid.innerHTML = '';
+  slotsGrid.innerHTML = '';
+  const held = ALL_ITEMS.filter(id => id!==FIREWORK && invCount(id)>0);
+  if(held.length===0){
+    const note = document.createElement('div'); note.className = 'bearBoxEmptyNote'; note.textContent = "You aren't holding any ingredients.";
+    yourGrid.appendChild(note);
+  } else {
+    held.forEach(id => yourGrid.appendChild(makeBearBoxTile(id, invCount(id), ()=> addToCookware(id))));
+  }
+  for(let i=0;i<cookwareSlots.length;i++){
+    const id = cookwareSlots[i];
+    if(id==null){
+      const empty = document.createElement('div'); empty.className = 'cookwareSlotEmpty'; empty.textContent = '+';
+      slotsGrid.appendChild(empty);
+    } else {
+      slotsGrid.appendChild(makeBearBoxTile(id, 1, ()=> removeFromCookware(i)));
+    }
+  }
+}
+const cookwareModal = document.getElementById('cookwareModal');
+document.getElementById('cookwareClose').addEventListener('click', ()=> closeCookware(true));
+document.getElementById('cookwareCookBtn').addEventListener('click', tryCookRecipe);
+cookwareModal.addEventListener('click', e=>{ if(e.target===cookwareModal) closeCookware(true); });
+function openCookware(wareKey){
+  cookwareOpen = true;
+  cookwareWareKey = wareKey;
+  cookwareModal.hidden = false;
+  if(document.pointerLockElement) document.exitPointerLock();
+  if(isTouchDevice) locked = false;
+  overlay.hidden = true;
+  // One hint per visit, not the recipe itself — a single random ingredient off a random recipe for
+  // this cookware, so checking back in keeps being (a little) useful without spelling anything out.
+  const recipes = COOKWARE_RECIPES[wareKey];
+  const pick = recipes[Math.floor(Math.random()*recipes.length)];
+  const ing = pick.ingredients[Math.floor(Math.random()*pick.ingredients.length)];
+  addChatMessage('Camp', `${COOKWARE_INFO[wareKey].emoji} Hint: one of the ${COOKWARE_INFO[wareKey].name} recipes uses ${BLOCK_NAME[ing]}.`);
+  renderCookware();
+}
+function closeCookware(relock){
+  // The 4 slots are just a staging area, not real storage — anything still sitting in one when you
+  // close goes straight back to your pack instead of being lost.
+  for(let i=0;i<cookwareSlots.length;i++){
+    if(cookwareSlots[i]!=null){ invAdd(cookwareSlots[i],1); cookwareSlots[i]=null; }
+  }
+  saveInventory();
+  updateHotbarUI();
+  cookwareOpen = false;
+  cookwareModal.hidden = true;
   if(relock){
     if(isTouchDevice) locked = true;
     else document.body.requestPointerLock();

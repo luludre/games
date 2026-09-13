@@ -164,6 +164,18 @@
   #backpackClose{background:none;border:none;color:#f2e9d8;font-size:1.1em;cursor:pointer;padding:4px 10px;border-radius:6px;}
   #backpackClose:hover{background:rgba(255,255,255,0.12);}
   #backpackPanel .bearBoxCol:first-child{border-right:1px solid #6b4a2f;}
+  #cookwareModal{position:fixed;inset:0;z-index:31;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;}
+  #cookwarePanel{background:#2b1c12;color:#f2e9d8;width:min(760px,94vw);max-height:82vh;overflow:auto;border-radius:10px;border:2px solid #a8531f;box-shadow:0 10px 40px rgba(0,0,0,0.5);}
+  #cookwareHeader{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #a8531f;position:sticky;top:0;background:#2b1c12;}
+  #cookwareHeader h2{margin:0;font-size:1.2em;}
+  #cookwareHeader p{margin:4px 0 0;font-size:12px;opacity:0.75;max-width:420px;}
+  #cookwareClose{background:none;border:none;color:#f2e9d8;font-size:1.1em;cursor:pointer;padding:4px 10px;border-radius:6px;flex-shrink:0;}
+  #cookwareClose:hover{background:rgba(255,255,255,0.12);}
+  #cookwarePanel .bearBoxCol:first-child{border-right:1px solid #a8531f;}
+  .cookwareSlotsGrid{grid-template-columns:repeat(4,1fr);}
+  .cookwareSlotEmpty{border:2px dashed rgba(255,255,255,0.25);border-radius:8px;min-height:68px;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:0.35;}
+  #cookwareCookBtn{margin-top:12px;width:100%;padding:10px;font-size:1em;font-weight:700;background:#a8531f;color:#fff3e0;border:none;border-radius:8px;cursor:pointer;}
+  #cookwareCookBtn:hover{background:#c4631f;}
   .itemTile{background:rgba(255,255,255,0.06);border:2px solid transparent;border-radius:8px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;position:relative;}
   .itemTile:hover{background:rgba(255,255,255,0.14);}
   .itemTile.active{border-color:#fff;}
@@ -300,7 +312,7 @@
   <button id="btnBackpack">🎒 Backpack (B)</button>
   <button id="btnSash">🎖️ Badges (M)</button>
 </div>
-<button id="btnQuit">🚪 Quit</button>
+<button id="btnQuit">🏅 Share My Achievements</button>
 <div id="thankYouScreen" hidden>
   <h1>🏕️ Thanks for playing ScoutCraft!</h1>
   <p>Hope you had fun setting up camp, earning your badges, and exploring the woods. Come back
@@ -341,7 +353,7 @@
     <div id="bearBoxHeader">
       <div>
         <h2>🐻 Bear Box</h2>
-        <p>Click an item in your pack to store it, or in the box to take it back — <span id="bearBoxCount">0</span>/100 stored.</p>
+        <p>Click an item in your pack to store it, or in the box to take it back — <span id="bearBoxCount">0</span>/1000 stored.</p>
       </div>
       <button id="bearBoxClose" aria-label="Close">Close ✕</button>
     </div>
@@ -374,6 +386,28 @@
       <div class="bearBoxCol">
         <div class="bearBoxColLabel">Backpack</div>
         <div id="backpackStorageGrid" class="bearBoxGrid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="cookwareModal" hidden>
+  <div id="cookwarePanel">
+    <div id="cookwareHeader">
+      <div>
+        <h2 id="cookwareTitle">🍲 Pot</h2>
+        <p>Click ingredients from your pack to load up to 4, then Cook! — no ingredient list here, figure it out (camp chat drops a hint every time you open one).</p>
+      </div>
+      <button id="cookwareClose" aria-label="Close">Close ✕</button>
+    </div>
+    <div class="bearBoxColumns">
+      <div class="bearBoxCol">
+        <div class="bearBoxColLabel">Items in your hands</div>
+        <div id="cookwareYourGrid" class="bearBoxGrid"></div>
+      </div>
+      <div class="bearBoxCol">
+        <div class="bearBoxColLabel">Cooking</div>
+        <div id="cookwareSlotsGrid" class="bearBoxGrid cookwareSlotsGrid"></div>
+        <button id="cookwareCookBtn">🍳 Cook!</button>
       </div>
     </div>
   </div>

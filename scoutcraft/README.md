@@ -1,10 +1,12 @@
 # ScoutCraft
 
+![Camp Merit Ridge, in-game](screenshot.png)
+
 Welcome to **Camp Merit Ridge** — set up camp in the wilderness and earn your merit badges. A single-player voxel world that runs
 entirely in the browser — procedurally generated terrain, block breaking/placing, crafting — built
 with [three.js](https://threejs.org/) — with a scouting layer on top: rope you twist from leaves, a
 walk-in tent you pitch, campfires you cook on, a compass that finds its way back to camp, and
-sixteen merit badges that promote you from Scout to Eagle Scout.
+eighteen merit badges that promote you from Scout to Eagle Scout.
 
 No build step, no server-side code, no dependencies to install, no account to make. Everything —
 your world, your inventory, your progress — lives in this browser's `localStorage`.
@@ -64,10 +66,10 @@ Then visit `http://localhost:8000`.
 - `O` (or the fixed **🐻🚫** quick-access icon) — Stop Bear: see [Health & combat](#health--combat)
 - `H` — toggle the hotkey list, a panel on the right edge of the screen listing every key above (and this one). Hidden by default so it doesn't clutter the screen; the front-page tutorial still covers the basics before you even start playing.
 - The **❓ How to play** button on the start screen reveals the full tutorial paragraph (chopping trees, crafting, badges) — collapsed by default so the front page stays short; click it again (now **✕ Hide help**) to put it away.
-- The **🚪 Quit** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
-- Closing the tab or navigating away without clicking Quit first triggers the browser's own "Leave site?" confirmation instead — a browser won't let a page show its own custom screen at that exact moment, so this is the closest real equivalent, just enough of a pause to reconsider. It only fires once; if you've already seen the actual thank-you screen, closing from there doesn't prompt twice.
-- That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you quit so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
-- The thank-you screen also draws a shareable badge picture on the spot — your current rank plus all 18 merit badges, earned ones lit up in gold and the rest dimmed, regenerated fresh every time you quit just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
+- The **🏅 Share My Achievements** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
+- Closing the tab or navigating away without clicking it first triggers the browser's own "Leave site?" confirmation instead — a browser won't let a page show its own custom screen at that exact moment, so this is the closest real equivalent, just enough of a pause to reconsider. It only fires once; if you've already seen the actual thank-you screen, closing from there doesn't prompt twice.
+- That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you open it so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
+- The thank-you screen also draws a shareable badge picture on the spot — your current rank plus all 18 merit badges, earned ones lit up in gold and the rest dimmed, regenerated fresh every time you open it just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
 
 The front page says so directly, but worth repeating here too: ScoutCraft is designed for a desktop or laptop with a real keyboard and mouse — that's where every control above actually applies. On a phone or tablet (iPad included), the game automatically switches to touch controls instead — no setup needed, just open the page in Safari and tap to play — but that's a fallback, not the intended experience:
 
@@ -132,7 +134,7 @@ want and how far along you are ("14 / 25 wood").
 | 🪢 | Pioneering | Twist 6 lengths of rope |
 | 🔥 | Firecraft | Light your first campfire |
 | ⛺ | Camping | Pitch a tent |
-| 🍳 | Cooking | Cook a meal on a campfire |
+| 🍳 | Cooking | Cook one dish on every kind of cookware |
 | 🧭 | Navigation | Take a bearing with your compass |
 | 🥾 | Hiking | Hike 1,000 blocks on foot |
 | 🏊 | Swimming | Swim 60 blocks |
@@ -147,10 +149,16 @@ want and how far along you are ("14 / 25 wood").
 | 🐴 | Horseback Riding | Ride 200 blocks on horseback |
 | 🏅 | Scout Spirit | Find all 12 golden Scout Law boxes hidden around camp |
 
-Ranks follow from the count alone — **Scout** (0), **Tenderfoot** (1), **Second Class** (2),
-**First Class** (5), **Star Scout** (8), **Life Scout** (11), **Eagle Scout** (all 18) — and your current rank and badge
-count sit in the HUD at the top of the screen. Earning one plays a short bugle call and drops a
+Ranks follow from the count alone — **None** (0, nothing earned yet), **Scout** (1), **Tenderfoot**
+(2), **Second Class** (3), **First Class** (6), **Star Scout** (9), **Life Scout** (12), **Eagle
+Scout** (14 — just over 3/4 of all 18, not literally every one of them) — and your current rank and
+badge count sit in the HUD at the top of the screen. Earning one plays a short bugle call and drops a
 banner telling you what you got, and what rank it just made you.
+
+Your rank also shows up as a small original badge icon — a colored disc with one star per tier, not a
+copy of any real insignia — in three places: next to your rank on the floating name tag over your
+head, stitched onto your shirt's left chest pocket (updates the moment you rank up), and above your
+rank name on the achievement card the exit screen generates for sharing.
 
 Progress is per-browser, saved to `localStorage` alongside your world edits and inventory, and only
 counts while you're actually playing — nothing accrues while you sit on the start screen or have a
@@ -242,9 +250,8 @@ instead of doing anything.
 
 **Cooking:** Raw Meat is disabled — it's been pulled from the inventory panel and can no longer be
 selected into a hotbar slot, so the old "hold Raw Meat, aim at a Campfire, right-click" flow (and the
-double-hunger Cooked Meal it made) isn't reachable through normal play anymore. The Cooking badge
-still exists on the sash but currently has no path to earning it — let us know if you'd like it
-retired, pointed at Fish instead, or something else.
+double-hunger Cooked Meal it made) isn't reachable through normal play anymore. In its place, cooking
+is now a real recipe system — see [Cooking area](#cooking-area) below for how it actually works.
 
 Campfires, lanterns and torches render *unlit* — at full texture brightness, day or night. This is
 deliberate: a block that gives off light shouldn't be shaded by light, and with the normal material
@@ -259,16 +266,66 @@ different piece of cookware sitting on top (Dutch oven, cooking pot, frying pan,
 its own distinct look, so you can tell them apart at a glance), a fifth plain campfire, and a **Bear
 Box** for food storage.
 
-The Bear Box holds up to 100 items total (any kind, not just food) completely separately from your
+The Bear Box holds up to 1,000 items total (any kind, not just food) completely separately from your
 own pack — right-click it to open a two-column panel, click an item on your side to store it, click
-one in the box to take it back. It's a second, larger stash, not a bottomless one: once it's full at
-100, it stops accepting more until you take something out.
+one in the box to take it back. It's a second, larger stash, not a bottomless one: once it's full, it
+stops accepting more until you take something out. The very first time you ever open it, it's already
+stocked with every raw cooking ingredient every recipe below calls for — 10 of an ingredient per
+recipe that uses it, so something that shows up in, say, 3 different dishes starts with 30. After
+that first stocking it's yours to manage like any other storage — nothing restocks it again.
 
 Every one of these ten fixtures (five campfires, four pieces of cookware, one Bear Box) is
 permanently indestructible — breaking has no effect on them at all, unlike everything else you place
-yourself. All five campfires there work exactly like any other campfire — see
-[Cooking](#camp-gear) for why cooking on one currently has nothing to cook — the cookware on top is
-purely decorative and, like every other block here, fully opaque.
+yourself.
+
+**Cooking a dish:** right-click any of the five stations — the four with cookware, or the plain
+campfire (and this works on any campfire you place yourself too, not just this one) — to open its
+recipe window: your held items on one side, 4 empty cooking slots on the other. Click an ingredient
+to load it into the next slot, click a loaded slot to take it back, then hit **Cook!**. Load exactly
+the right ingredients (extras or a wrong one both miss) and you get a named dish back, ready to eat
+for 6 hunger — anything else, and the game just tells you that's not a recipe anyone's heard of, slots
+still loaded so you can swap one ingredient and try again. Closing the window without cooking hands
+back whatever's still sitting in the slots — they're a staging area, not real storage.
+
+Nothing tells you a dish's ingredients up front — that's the point. Camp chat drops one hint (a single
+ingredient from one of that cookware's recipes) every time you open its window, so checking back is
+always at least a little useful, but the rest is figuring it out from what's in the Bear Box. Cook at
+least one dish on all 5 cookware types — pot, pan, Dutch oven, campfire, griddle — to earn the Cooking
+badge.
+
+<details>
+<summary>All 26 recipes, if you'd rather not guess (spoilers)</summary>
+
+| Cookware | Dish | Ingredients |
+| --- | --- | --- |
+| Pot | Macaroni & Cheese | Pasta, Cheese, Milk, Butter |
+| Pot | Campfire Stew | Beef, Vegetables, Potatoes, Jug of Water |
+| Pot | Tomato Pasta | Pasta, Tomatoes, Jug of Water, Cheese |
+| Pot | Scout's Oatmeal | Oats, Jug of Water, Sugar/Syrup, Fruit |
+| Pot | Hot Dogs & Beans | Sausage, Beans, Sauce |
+| Pan | Campfire Quesadillas | Tortillas, Cheese, Chicken, Sauce |
+| Pan | Easy Scramble | Eggs, Sausage, Butter, Seasoning |
+| Pan | Classic Grilled Cheese | Bread, Cheese, Butter |
+| Pan | Quick Hash | Hash Browns, Bacon, Eggs, Vegetables |
+| Pan | Pan Fajitas | Beef, Vegetables, Seasoning, Butter |
+| Dutch Oven | Mountain Man Breakfast | Hash Browns, Eggs, Ground Meat, Cheese |
+| Dutch Oven | Cherry Dump Cake | Fruit, Baking Mix, Butter, Soda |
+| Dutch Oven | Dutch Oven Chili | Ground Meat, Tomatoes, Beans, Seasoning |
+| Dutch Oven | Cast-Iron Campfire Bread | Baking Mix, Jug of Water, Yeast, Seasoning |
+| Dutch Oven | Deep Dish Pizza | Pizza Dough, Tomatoes, Cheese, Pepperoni |
+| Dutch Oven | Peach Cobbler | Fruit, Baking Mix, Milk, Sugar/Syrup |
+| Campfire | Classic S'mores | Graham Crackers, Marshmallows, Chocolate |
+| Campfire | Foil Packet Chicken | Chicken, Vegetables, Butter, Seasoning |
+| Campfire | Coal-Baked Potatoes | Potatoes, Butter, Cheese, Bacon |
+| Campfire | Roasted Corn | Vegetables, Butter, Seasoning |
+| Campfire | Sausage on a Stick | Sausage |
+| Griddle | Camp Pancakes | Baking Mix, Jug of Water, Butter, Sugar/Syrup |
+| Griddle | Smash Burgers | Ground Meat, Bread, Cheese, Seasoning |
+| Griddle | French Toast | Bread, Eggs, Milk, Sugar/Syrup |
+| Griddle | Bacon and Eggs | Bacon, Eggs |
+| Griddle | Philly Cheesesteaks | Beef, Bread, Cheese, Vegetables |
+
+</details>
 
 Every campfire — these five and any you place yourself — has a real flickering flame licking up out
 of the stone ring, not just an invisible glow: the same light that's always come from it now visibly
@@ -358,9 +415,8 @@ You also have a hunger bar (10 drumsticks, right under your hearts) that empties
 Killing an animal still drops Meat internally — bigger animals drop more (1 for a rabbit or
 squirrel, 2 for a deer, 3 for a bear, 5 for a moose) — but Raw Meat itself is disabled: it's
 gone from the Inventory panel, so there's no way left to select it into a hotbar slot, eat it, or
-cook it into a Cooked Meal. **This currently leaves hunger with no way to be restored at all once it
-empties** — worth flagging if you want that revisited (Fish or Trail Food becoming edible are the
-two obvious candidates).
+cook it into a Cooked Meal. Hunger is restored by actually cooking now instead — any of the 26 dishes
+from the [Cooking area](#cooking-area) restores 6 hunger once you've made one.
 
 Every animal is modeled at real-world scale — world units are ~1 unit = 1 meter throughout, the same scale the 1.8-unit-tall player uses. That means a moose, at a good 2.1 blocks at the shoulder before you even count its antlers, towers well over you. Bigger animals also get a proportionally longer attack reach so their size isn't just cosmetic — a moose's kick reaches out a full block.
 
@@ -409,9 +465,10 @@ While you're playing, the game quietly checks every 5 minutes whether `main.js` 
   character freely without moving the camera, so you can spin all the way around to see your own
   face and uniform; stop moving the mouse for a second and a half and the camera eases back to its
   normal spot behind you. `V` switches to the classic first-person view instead.
-- Your name tag floats over your head with your current rank underneath it (Scout, Tenderfoot, Second
-  Class, and so on through Eagle Scout) instead of a health readout — your hearts are already shown
-  in the HUD, so this doubles as a second place to glance at your standing.
+- Your name tag floats over your head with your current rank underneath it (None, Scout, Tenderfoot,
+  Second Class, and so on through Eagle Scout), a small rank badge icon beside the rank text, instead
+  of a health readout — your hearts are already shown in the HUD, so this doubles as a second place to
+  glance at your standing.
 - A small drawn paper map floats in view — a fold crease, a few contour-line squiggles, a dashed
   trail and a north arrow — in place of the arm-and-held-block view most voxel games show. It's a
   fixed prop, not a per-item indicator; it looks the same no matter what's actually selected in your
