@@ -399,7 +399,7 @@ const BADGES = [
   { id:'horseback',  emoji:'🐴', name:'Horseback Riding', hint:'Ride 200 blocks on horseback.',            test:()=> scoutStats.horsebackBlocks >= HORSEBACK_BADGE_BLOCKS },
   { id:'weather',    emoji:'🌦️', name:'Weather',      hint:'Experience 3 different weather conditions.',   test:()=> scoutStats.weatherSeen.length >= 3 },
   { id:'scuba',      emoji:'🤿', name:'Scuba Diving', hint:'Spend 20 seconds fully underwater.',           test:()=> scoutStats.scubaSeconds >= 20 },
-  { id:'camptraditions', emoji:'📜', name:'Camp Traditions', hint:'Recite the Pledge of Allegiance, the Scout Oath, and the Outdoor Code.', test:()=> scoutStats.recitations.length >= 3 },
+  { id:'camptraditions', emoji:'📜', name:'Citizenship', hint:'Recite the Pledge of Allegiance, the Scout Oath, and the Outdoor Code.', test:()=> scoutStats.recitations.length >= 3 },
   { id:'archery',    emoji:'🏹', name:'Archery',       hint:'Hit the target 5 times at the Archery Range.', test:()=> scoutStats.archeryHits >= ARCHERY_HITS_NEEDED },
   { id:'birdstudy',  emoji:'🦅', name:'Bird Study',    hint:'Look at an eagle and 3 other kinds of birds.', test:()=> (scoutStats.birdsSeen.includes('eagle')||scoutStats.birdsSeen.includes('bigeagle')) && scoutStats.birdsSeen.filter(id=>id!=='eagle'&&id!=='bigeagle').length>=3 },
   { id:'scoutspirit',emoji:'🏅', name:'Scout Spirit', hint:'Find all 12 golden Scout Law boxes hidden around camp.', test:()=> scoutStats.lawsCollected.length >= SCOUT_LAW_POINTS.length },
