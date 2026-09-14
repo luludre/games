@@ -8518,6 +8518,9 @@ if(btnHelp && playHint){
   btnHelp.addEventListener('click', e=>{
     e.stopPropagation();
     playHint.hidden = !playHint.hidden;
+    // The same combined hotkey list `H` shows in-game (see toggleHotkeyPanel) doubles as the front
+    // page's own hotkey reference — shown/hidden in lockstep with the walkthrough text above.
+    hotkeyPanel.hidden = playHint.hidden;
     btnHelp.textContent = playHint.hidden ? '❓ How to play' : '✕ Hide help';
   });
 }
