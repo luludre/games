@@ -20,7 +20,7 @@ A field recording of New Year's fireworks heard from a distance in the Belgian c
 
 ## icon-512.png
 
-A 512x512 blocky pixel-art campsite icon — a red A-frame tent, a lit campfire ringed with stones, pine trees, and scattered rocks on a patch of grass — on a transparent background, used as the game's favicon and bookmark/home-screen icon.
+A 512x512 blocky pixel-art scout emblem — a gold fleur-de-lis and banner on a blue circular badge with a gold rim — on a transparent background, used as the game's favicon and bookmark/home-screen icon.
 
 - Source: supplied directly by Andre for this game, downscaled from a 2048x2048 original.
 
