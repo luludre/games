@@ -79,8 +79,9 @@ The front page says so directly, but worth repeating here too: ScoutCraft is des
 
 - Left thumb: on-screen joystick to move (push all the way to the edge to sprint)
 - Right side of the screen: drag to look around
-- ⛏ — break / attack, ▦ — place / interact (open a table, toggle a window or door, light a fire), **JUMP**, **3rd** — third-person camera
-- Tap a hotbar slot to select it, tap it again (or the **📦 Inventory (I)** button) to change what it holds
+- ⛏ — break / attack, ▦ — place / interact (open a table, toggle a window or door, light a fire), **JUMP**, **3rd** — third-person camera, 🕐 — cycle day/night
+- Tap a hotbar slot to select it, tap it again to change what it holds
+- **☰** (top right) opens a small menu with Inventory, Backpack, Badges, and Share Achievements — the same four things that sit as their own always-on-screen buttons on desktop (see below), tucked behind one button here instead so they're never covering the joystick or action buttons underneath. Tapping any row runs that action and closes the menu again.
 
 ## Inventory & hotbar
 

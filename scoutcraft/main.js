@@ -1920,14 +1920,19 @@ const eagleEmblemImg = new Image();
 let eagleEmblemLoaded = false;
 eagleEmblemImg.onload = () => {
   eagleEmblemLoaded = true;
-  // The shirt patch may already have been baked (as a canvas texture) with the fallback art before
-  // this finished loading — force it to redraw now, same as any other rank-change refresh.
+  // The shirt patch and floating name tag may already have been baked (as canvas textures) with the
+  // fallback art before this finished loading — force both to redraw now, same as any other
+  // rank-change refresh. The achievement card needs no such fix: it's rebuilt from scratch every
+  // time the share screen opens, never cached.
   if(rankIndexFor(earnedBadges.size) === 7){
     if(characterMesh && characterMesh.userData.uniform) characterMesh.userData.uniform.lastRankIndex = -1;
     updateCharacterRankBadge();
+    if(myNameTag) myNameTag.lastKey = null;
   }
 };
-eagleEmblemImg.src = 'assets/eagle-scout-emblem.png';
+// ?v=2: bumped when the underlying artwork itself was replaced, so a browser that already cached
+// the old file under this same path picks up the new one instead of serving a stale copy.
+eagleEmblemImg.src = 'assets/eagle-scout-emblem.png?v=2';
 function drawRankBadge(ctx, cx, cy, radius, rankIndex){
   if(rankIndex<=0){
     // No rank yet — a plain disc, nothing earned to put on it.
@@ -8749,6 +8754,17 @@ if(isTouchDevice){
   bindTouchButton('btnCrawl', ()=>{ keys['ControlLeft']=true; crawlBtn.classList.add('active'); }, ()=>{ keys['ControlLeft']=false; crawlBtn.classList.remove('active'); });
   bindTouchButton('btn3p', ()=>{ if(locked) thirdPerson = !thirdPerson; });
   bindTouchButton('btnTime', ()=>{ if(locked) cycleTimeMode(); });
+
+  // The Inventory/Backpack/Badges/Share buttons that sit fixed on screen for desktop (#panelButtons,
+  // #btnQuit — hidden on touch, see CSS) fold into this one on-demand menu on phones instead, so
+  // nothing's left permanently covering the joystick or action buttons. Each row closes the menu
+  // itself right after acting, same as tapping anywhere else while a modal is open would.
+  const touchMenu = document.getElementById('touchMenu');
+  bindTouchButton('btnMenu', ()=>{ touchMenu.hidden = !touchMenu.hidden; });
+  bindTouchButton('tmItems', ()=>{ touchMenu.hidden = true; if(locked && !isDead) openItems(); });
+  bindTouchButton('tmBackpack', ()=>{ touchMenu.hidden = true; if(locked && !isDead) openBackpackStorage(); });
+  bindTouchButton('tmSash', ()=>{ touchMenu.hidden = true; if(locked && !isDead) openSash(); });
+  bindTouchButton('tmQuit', ()=>{ touchMenu.hidden = true; if(locked && !isDead) quitGame(); });
 }
 
 // ---------- Debug panel (Alt+Shift+D) ----------
