@@ -1836,34 +1836,155 @@ function drawStar(ctx,cx,cy,rOuter,rInner){
   ctx.closePath();
   ctx.fill();
 }
-// Rank badge art — an original, simple design (not a reproduction of any real insignia): a colored
-// disc that gets richer per tier, with one star per rank above None. Drawn straight onto whatever 2D
-// context is handed in, so the exact same function puts the same-looking badge on the floating name
-// tag, the shirt's left chest pocket, and the exit screen's achievement card — "what rank am I" always
-// reads the same way wherever it shows up. rankIndex is an index into RANKS (0 = None).
-const RANK_BADGE_COLORS = ['#6b6b6b','#a8825a','#8a9a5a','#7a9a4a','#5a8a4a','#b8b8c0','#c94a3a','#f0c020'];
+// Rank badge art, loosely modeled on the real BSA cloth rank badges: Scout through Life share the
+// same tan oval with a gold emblem building on a fleur-de-lis (the same three-pronged blaze already
+// used for the Troop Flag pennant and the belt buckle stamp), and Eagle Scout breaks from that family
+// entirely with its own red/white/blue circular medallion — same as the real badges do. Drawn straight
+// onto whatever 2D context is handed in, so the exact same function puts the same-looking badge on the
+// floating name tag, the shirt's left chest pocket, and the exit screen's achievement card. rankIndex
+// is an index into RANKS (0 = None, 7 = Eagle Scout).
+const RANK_BADGE_COLORS = ['#6b6b6b','#c9a877','#c9a877','#c9a877','#c9a877','#c9a877','#c9a877','#c23b28'];
+// The fleur-de-lis blaze at the heart of Scout/Tenderfoot/First Class — a vertical stem, two swept
+// side petals, and a base bar, all filled as one flat silhouette.
+function drawFleurDeLis(ctx, cx, cy, scale, color){
+  ctx.fillStyle = color;
+  ctx.fillRect(cx-scale*0.09, cy-scale*0.75, scale*0.18, scale*0.95);
+  ctx.beginPath();
+  ctx.moveTo(cx-scale*0.09, cy-scale*0.75); ctx.lineTo(cx-scale*0.55, cy-scale*0.15); ctx.lineTo(cx-scale*0.09, cy-scale*0.15);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx+scale*0.09, cy-scale*0.75); ctx.lineTo(cx+scale*0.55, cy-scale*0.15); ctx.lineTo(cx+scale*0.09, cy-scale*0.15);
+  ctx.closePath(); ctx.fill();
+  ctx.fillRect(cx-scale*0.45, cy+scale*0.08, scale*0.9, scale*0.16);
+}
+// A small rounded shield — Tenderfoot/First Class's simplified stand-in for the real badges' little
+// eagle-and-shield, too fine a detail to actually read at icon scale.
+function drawSmallShield(ctx, cx, cy, scale, color){
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(cx-scale*0.32, cy-scale*0.3);
+  ctx.lineTo(cx+scale*0.32, cy-scale*0.3);
+  ctx.lineTo(cx+scale*0.32, cy+scale*0.05);
+  ctx.quadraticCurveTo(cx+scale*0.3, cy+scale*0.38, cx, cy+scale*0.55);
+  ctx.quadraticCurveTo(cx-scale*0.3, cy+scale*0.38, cx-scale*0.32, cy+scale*0.05);
+  ctx.closePath();
+  ctx.fill();
+}
+// A short hanging ribbon — Second Class/First Class's stand-in for the real "BE PREPARED" banner,
+// which (like the shield above) is lettering too small to ever actually render legibly here.
+function drawSmallBanner(ctx, cx, cy, scale, color){
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy-scale*0.5);
+  ctx.lineTo(cx+scale*0.24, cy-scale*0.12);
+  ctx.lineTo(cx+scale*0.15, cy+scale*0.4);
+  ctx.lineTo(cx, cy+scale*0.22);
+  ctx.lineTo(cx-scale*0.15, cy+scale*0.4);
+  ctx.lineTo(cx-scale*0.24, cy-scale*0.12);
+  ctx.closePath();
+  ctx.fill();
+}
+function drawHeartShape(ctx, cx, cy, scale, color){
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy+scale*0.55);
+  ctx.bezierCurveTo(cx-scale*0.8, cy+scale*0.05, cx-scale*0.6, cy-scale*0.55, cx, cy-scale*0.18);
+  ctx.bezierCurveTo(cx+scale*0.6, cy-scale*0.55, cx+scale*0.8, cy+scale*0.05, cx, cy+scale*0.55);
+  ctx.closePath();
+  ctx.fill();
+}
+// A flat, top-down eagle silhouette for the Eagle Scout medallion — round body, small head, and a
+// pair of swept wings, the same kind of simplified silhouette the totem eagle/Giant Eagles use, just
+// drawn as one flat 2D shape instead of a 3D mesh.
+function drawEagleSilhouette(ctx, cx, cy, scale, color){
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy+scale*0.08, scale*0.13, scale*0.24, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx, cy-scale*0.28, scale*0.1, 0, Math.PI*2);
+  ctx.fill();
+  for(const side of [-1,1]){
+    ctx.beginPath();
+    ctx.moveTo(cx+side*scale*0.06, cy-scale*0.02);
+    ctx.quadraticCurveTo(cx+side*scale*0.6, cy-scale*0.28, cx+side*scale*0.95, cy+scale*0.02);
+    ctx.quadraticCurveTo(cx+side*scale*0.55, cy+scale*0.08, cx+side*scale*0.1, cy+scale*0.14);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
 function drawRankBadge(ctx, cx, cy, radius, rankIndex){
+  if(rankIndex<=0){
+    // No rank yet — a plain disc, nothing earned to put on it.
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI*2);
+    ctx.fillStyle = RANK_BADGE_COLORS[0];
+    ctx.fill();
+    ctx.lineWidth = Math.max(1, radius*0.12);
+    ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+    ctx.stroke();
+    return;
+  }
+  if(rankIndex===7){
+    // Eagle Scout: a red/white/blue circular medallion instead of the tan cloth oval every rank
+    // below it shares — the real Eagle badge breaks from that family the exact same way.
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI*2);
+    ctx.fillStyle = '#c23b28';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius*0.78, 0, Math.PI*2);
+    ctx.fillStyle = '#f2f2ec';
+    ctx.fill();
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius*0.78, 0, Math.PI*2);
+    ctx.clip();
+    ctx.translate(cx, cy);
+    ctx.rotate(-Math.PI/4);
+    ctx.fillStyle = '#2a4a8a';
+    ctx.fillRect(-radius, -radius*0.22, radius*2, radius*0.44);
+    ctx.restore();
+    ctx.lineWidth = Math.max(1, radius*0.1);
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.stroke();
+    drawEagleSilhouette(ctx, cx, cy-radius*0.1, radius*1.05, '#3a3a3a');
+    return;
+  }
+  // Scout through Life: the shared tan cloth-oval background every one of these ranks builds on.
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, Math.PI*2);
-  ctx.fillStyle = RANK_BADGE_COLORS[rankIndex] || RANK_BADGE_COLORS[0];
+  ctx.fillStyle = RANK_BADGE_COLORS[rankIndex];
   ctx.fill();
   ctx.lineWidth = Math.max(1, radius*0.12);
   ctx.strokeStyle = 'rgba(0,0,0,0.4)';
   ctx.stroke();
-  if(rankIndex<=0) return;
-  const n = rankIndex;
-  const starR = radius*0.32, starInner = starR*0.42;
-  const rows = n<=4 ? 1 : 2;
-  const perRow = Math.ceil(n/rows);
-  const rowSpacing = radius*0.7;
-  ctx.fillStyle = '#fff8e0';
-  for(let row=0; row<rows; row++){
-    const count = row===rows-1 ? n-perRow*(rows-1) : perRow;
-    const y = cy + (row-(rows-1)/2)*rowSpacing;
-    for(let i=0;i<count;i++){
-      const x = cx + (i-(count-1)/2)*(starR*1.7);
-      drawStar(ctx, x, y, starR, starInner);
-    }
+  const gold = '#8a6a1a';
+  switch(rankIndex){
+    case 1: // Scout: the fleur-de-lis alone.
+      drawFleurDeLis(ctx, cx, cy, radius*0.85, gold);
+      break;
+    case 2: // Tenderfoot: fleur-de-lis over a small shield.
+      drawFleurDeLis(ctx, cx, cy-radius*0.1, radius*0.7, gold);
+      drawSmallShield(ctx, cx, cy+radius*0.32, radius*0.4, gold);
+      break;
+    case 3: // Second Class: the hanging banner alone.
+      drawSmallBanner(ctx, cx, cy, radius*0.9, gold);
+      break;
+    case 4: // First Class: fleur-de-lis, shield, and banner all together, the same combination the
+      // real First Class badge itself builds from.
+      drawFleurDeLis(ctx, cx, cy-radius*0.28, radius*0.55, gold);
+      drawSmallShield(ctx, cx, cy+radius*0.02, radius*0.32, gold);
+      drawSmallBanner(ctx, cx, cy+radius*0.42, radius*0.48, gold);
+      break;
+    case 5: // Star Scout: a 5-point star.
+      ctx.fillStyle = gold;
+      drawStar(ctx, cx, cy, radius*0.85, radius*0.85*0.42);
+      break;
+    case 6: // Life Scout: a heart with a small fleur-de-lis on it.
+      drawHeartShape(ctx, cx, cy, radius*0.85, '#b8352a');
+      drawFleurDeLis(ctx, cx, cy+radius*0.05, radius*0.32, gold);
+      break;
   }
 }
 let usFlagMasterCanvas = null;
