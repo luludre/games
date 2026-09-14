@@ -572,5 +572,5 @@ chat reminds you why: *"Birds can't be hurt — a real Scout studies wildlife, n
 - Anywhere without a clear vertical path up to open sky — inside a building with a roof, a tunnel you've dug, under a dense tree canopy — is noticeably darker than the surface, independent of however bright it is outside. Light a torch if you're building somewhere enclosed.
 - Fireflies drift and blink softly near you after dark (fading in around dusk, out around dawn, same clock as everything else) — a scattering of small glowing lights over open ground, gone again once the sun's up.
 - Block edits and inventory are saved to the browser's `localStorage`, so your progress persists across reloads on the same device/browser.
-- Best played on desktop with a mouse — pointer lock and WASD aren't a good fit for touch screens.
+- Best played on a desktop or laptop with a keyboard and mouse — pointer lock and WASD aren't a good fit for touch screens. It also works on phones and tablets with on-screen touch controls, but that's not what it was designed for.
 - Everything is a single `<script>` tag pulling three.js from a CDN (`jsdelivr`), so there's nothing to install or build.
