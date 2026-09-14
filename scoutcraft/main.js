@@ -8245,6 +8245,7 @@ window.addEventListener('keydown', e=>{
   if(e.code==='KeyH' && locked){ toggleHotkeyPanel(); return; }
   if(e.code==='KeyP'){ useFirstAid(); return; }
   if(e.code==='KeyO'){ useStopBear(); return; }
+  if(e.code==='KeyU'){ useHand(); return; }
   const slotIdx = HOTBAR_KEYS.indexOf(e.code);
   if(slotIdx>=0 && slotIdx<HOTBAR.length){
     selectedSlot = slotIdx; updateHotbarUI(); updateHeldItemColor();
@@ -8270,19 +8271,33 @@ function tryEatFood(id){
   updateHungerUI();
   SFX.eat();
 }
+// Any cookware — Pot/Pan/Dutch Oven/Griddle at the fixed camp stations, or any Campfire anywhere,
+// fixed or player-placed — opens its recipe window regardless of what's in hand, same priority a
+// Crafting Table or the Bear Box already gets below. Split out of doInteract so useHand() (see
+// below) can run this exact same fixture check without also running doInteract's held-item branches.
+function interactWithUnconditionalFixture(hit, hitBlock){
+  if(hitBlock in BLOCK_TO_WARE_KEY){ openCookware(BLOCK_TO_WARE_KEY[hitBlock]); return true; }
+  if(hit && ALL_TOTEM_BLOCKS.includes(hitBlock)){
+    const totem = totemAt(hit.x, hit.z);
+    if(totem){ totem.play(); return true; }
+  }
+  return false;
+}
+// The fixtures doInteract only reaches once none of the held-item-specific branches below have
+// claimed the click — also reusable on its own by useHand(), see below.
+function interactWithHeldIndependentFixture(hit, hitBlock){
+  if(hitBlock===CRAFTING_TABLE){ openCrafting(); return true; }
+  if(hitBlock===BACKPACK){ openBackpackStorage(); return true; }
+  if(hitBlock===BEAR_BOX){ openBearBox(); return true; }
+  if(hitBlock===SCOUT_LAW_BOX){ collectScoutLawBox(hit.x, hit.y, hit.z); return true; }
+  if(hitBlock in TOGGLE_MAP){ toggleOpenable(hit.x, hit.y, hit.z, hitBlock); return true; }
+  return false;
+}
 function doInteract(){
   const hit = raycastBlock();
   const hitBlock = hit ? getBlock(hit.x,hit.y,hit.z) : null;
   const held = HOTBAR[selectedSlot];
-  // Any cookware — Pot/Pan/Dutch Oven/Griddle at the fixed camp stations, or any Campfire anywhere,
-  // fixed or player-placed — opens its recipe window regardless of what's in hand, same priority a
-  // Crafting Table or the Bear Box already gets below.
-  if(hitBlock in BLOCK_TO_WARE_KEY){ openCookware(BLOCK_TO_WARE_KEY[hitBlock]); return; }
-  if(hit && ALL_TOTEM_BLOCKS.includes(hitBlock)){
-    const totem = totemAt(hit.x, hit.z);
-    if(totem) totem.play();
-    return;
-  }
+  if(interactWithUnconditionalFixture(hit, hitBlock)) return;
   if(held===FLINT){ tryIgniteFire(hit); return; }
   if(held===FIREWORK){ launchFirework(); return; }
   if(FOOD_RESTORE[held]!=null){ tryEatFood(held); return; }
@@ -8292,12 +8307,21 @@ function doInteract(){
   // Carried items with no block form at all — without this they'd place as an untextured cube,
   // since none of them has a BLOCK_TILES entry.
   if(CARRY_ONLY_ITEMS.has(held)) return;
-  if(hitBlock===CRAFTING_TABLE) openCrafting();
-  else if(hitBlock===BACKPACK) openBackpackStorage();
-  else if(hitBlock===BEAR_BOX) openBearBox();
-  else if(hitBlock===SCOUT_LAW_BOX) collectScoutLawBox(hit.x, hit.y, hit.z);
-  else if(hitBlock in TOGGLE_MAP) toggleOpenable(hit.x, hit.y, hit.z, hitBlock);
-  else placeBlock();
+  if(interactWithHeldIndependentFixture(hit, hitBlock)) return;
+  placeBlock();
+}
+// Quick-access "empty hand" interact — the same fixture checks doInteract runs, but skipping every
+// held-item branch (Flint, Firework, Compass, Fishing Pole, Bow, food) entirely, so whatever's
+// currently selected in the hotbar never gets in the way of just opening/using what you're looking
+// at. Handy since several of those held items (the Compass especially, likely to be equipped most of
+// the time) would otherwise take over a plain right-click aimed at a nearby fixture instead.
+function useHand(){
+  if(!locked || isDead) return;
+  const hit = raycastBlock();
+  const hitBlock = hit ? getBlock(hit.x,hit.y,hit.z) : null;
+  if(interactWithUnconditionalFixture(hit, hitBlock)) return;
+  if(interactWithHeldIndependentFixture(hit, hitBlock)) return;
+  addChatMessage('Camp', "🖐️ Nothing to open or interact with here.");
 }
 
 const overlay = document.getElementById('overlay');
@@ -9332,6 +9356,7 @@ document.getElementById('btnQuickBackpack').addEventListener('click', useQuickBa
 document.getElementById('btnQuickWorkbench').addEventListener('click', useQuickWorkbench);
 document.getElementById('btnQuickFirstAid').addEventListener('click', useFirstAid);
 document.getElementById('btnStopBear').addEventListener('click', useStopBear);
+document.getElementById('btnQuickHand').addEventListener('click', useHand);
 
 // ---------- Camp log ----------
 // A small on-screen message log for local feedback (cooking hints, sleep, badge-adjacent tips) —
