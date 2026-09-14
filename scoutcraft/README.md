@@ -11,7 +11,7 @@ twenty-three merit badges that promote you from Scout to Eagle Scout.
 No build step, no server-side code, no dependencies to install, no account to make. Everything —
 your world, your inventory, your progress — lives in this browser's `localStorage`.
 
-ScoutCraft began as a fork of [Blockcraft](../blockcraft) and keeps its whole engine: the same
+ScoutCraft began as a fork of the multiplayer single webpage game, [Blockcraft](../blockcraft), and keeps its whole engine: the same
 terrain generation, chunked meshing, day/night cycle, seasons and weather, animals, birds, fish and
 wildlife. What's new is everything in [Merit badges](#merit-badges) and [Camp gear](#camp-gear).
 
