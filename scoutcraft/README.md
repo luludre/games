@@ -17,9 +17,9 @@ ScoutCraft began as a fork of the multiplayer single webpage game, [Blockcraft](
 terrain generation, chunked meshing, day/night cycle, seasons and weather, animals, birds, fish and
 wildlife. What's new is everything in [Merit badges](#merit-badges) and [Camp gear](#camp-gear).
 
-Built by Andre Wu, his dad, and an AI to help others discover scouting! Andre scouts with Troop 904
-out of Dublin, CA, USA. If you had fun, please consider supporting his scouting adventures and our
-heroes: [🍿 Andre's Popcorn Sale](https://trails-end.com/store/scout/HQ9SW6MR).
+Built by Andre Wu (Troop 904, Dublin, California), his dad, and an AI to share the adventure of
+Scouting. If you had fun, please consider supporting Andre's Scouting journey and our
+heroes: [🍿 Andre's Popcorn Fundraising](https://trails-end.com/store/scout/HQ9SW6MR).
 
 ## Play locally
 
@@ -69,7 +69,7 @@ Then visit `http://localhost:8000`.
 - `U` (or the fixed **🖐️** quick-access icon) — Use Hand: open/interact with whatever you're aiming at as if your hands were empty, ignoring what's actually in your selected hotbar slot. A plain right-click while holding the Compass, Fishing Pole, Bow, Flint, or food always uses *that* item first — reasonable most of the time, but inconvenient if you'd rather just open a nearby Bear Box, Backpack, Crafting Table, cookware station, Scout Law box, door, or window without switching away from whatever's already selected. Says so in camp chat if you're not actually aiming at anything openable.
 - `H` — toggle the hotkey list, a panel on the right edge of the screen listing every key above (and this one). Hidden by default so it doesn't clutter the screen; the front-page tutorial still covers the basics before you even start playing.
 - The **❓ How to play** button on the start screen reveals the full tutorial paragraph (chopping trees, crafting, badges) together with that same `H` hotkey panel on the right — both collapsed by default so the front page stays short; click it again (now **✕ Hide help**) to put them away.
-- The **🏅 Share My Achievements** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
+- The **🏅 Share My Achievements** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn fundraising. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
 - Closing the tab or navigating away without clicking it first triggers the browser's own "Leave site?" confirmation instead — a browser won't let a page show its own custom screen at that exact moment, so this is the closest real equivalent, just enough of a pause to reconsider. It only fires once; if you've already seen the actual thank-you screen, closing from there doesn't prompt twice.
 - That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you open it so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
 - The thank-you screen also draws a shareable badge picture on the spot — your name, current rank, and all 23 merit badges (earned ones lit up in gold, the rest dimmed), laid out beside the share buttons rather than stacked above them so the whole screen reads as one card instead of a long scroll, and regenerated fresh every time you open it just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
