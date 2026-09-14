@@ -2,11 +2,13 @@
 
 ![Camp Merit Ridge, in-game](screenshot.png)
 
-Welcome to **Camp Merit Ridge** — set up camp in the wilderness and earn your merit badges. A single-player voxel world that runs
-entirely in the browser — procedurally generated terrain, block breaking/placing, crafting — built
-with [three.js](https://threejs.org/) — with a scouting layer on top: rope you twist from leaves, a
-walk-in tent you pitch, campfires you cook on, a compass that finds its way back to camp, and
-twenty-three merit badges that promote you from Scout to Eagle Scout.
+Welcome to **Camp Merit Ridge** — set up camp in the wilderness and earn your merit badges, a
+browser voxel world where woodcraft, firecraft and a good tent actually count for something. A
+single-player game that runs entirely in the browser — procedurally generated terrain, block
+breaking/placing, crafting — built with [three.js](https://threejs.org/) — with a scouting layer on
+top: rope you twist from leaves, a walk-in tent you pitch, campfires you cook on, a compass that
+finds its way back to camp, and twenty-three merit badges that promote you from Scout to Eagle
+Scout.
 
 No build step, no server-side code, no dependencies to install, no account to make. Everything —
 your world, your inventory, your progress — lives in this browser's `localStorage`.
@@ -15,9 +17,9 @@ ScoutCraft began as a fork of the multiplayer single webpage game, [Blockcraft](
 terrain generation, chunked meshing, day/night cycle, seasons and weather, animals, birds, fish and
 wildlife. What's new is everything in [Merit badges](#merit-badges) and [Camp gear](#camp-gear).
 
-Built by Andre Wu, his dad, and an AI to help others discover scouting! Andre scouts with Troop 904
-out of Dublin, CA, USA. If you had fun, please consider supporting his scouting adventures and our
-heroes: [🍿 Andre's Popcorn Sale](https://trails-end.com/store/scout/HQ9SW6MR).
+Built by Andre Wu (Troop 904, Dublin, California), his dad, and an AI to share the adventure of
+Scouting. If you had fun, please consider supporting Andre's Scouting journey and our
+heroes: [🍿 Andre's Popcorn Fundraising](https://trails-end.com/store/scout/HQ9SW6MR).
 
 ## Play locally
 
@@ -66,9 +68,10 @@ Then visit `http://localhost:8000`.
 - `O` (or the fixed **🐻🚫** quick-access icon) — Stop Bear: see [Health & combat](#health--combat)
 - `U` (or the fixed **🖐️** quick-access icon) — Use Hand: open/interact with whatever you're aiming at as if your hands were empty, ignoring what's actually in your selected hotbar slot. A plain right-click while holding the Compass, Fishing Pole, Bow, Flint, or food always uses *that* item first — reasonable most of the time, but inconvenient if you'd rather just open a nearby Bear Box, Backpack, Crafting Table, cookware station, Scout Law box, door, or window without switching away from whatever's already selected. Says so in camp chat if you're not actually aiming at anything openable.
 - `H` — toggle the hotkey list, a panel on the right edge of the screen listing every key above (and this one). Hidden by default so it doesn't clutter the screen; the front-page tutorial still covers the basics before you even start playing.
-- The **❓ How to play** button on the start screen reveals the full tutorial paragraph (chopping trees, crafting, badges) — collapsed by default so the front page stays short; click it again (now **✕ Hide help**) to put it away.
-- The **🏅 Share My Achievements** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
-- Closing the tab or navigating away without clicking it first triggers the browser's own "Leave site?" confirmation instead — a browser won't let a page show its own custom screen at that exact moment, so this is the closest real equivalent, just enough of a pause to reconsider. It only fires once; if you've already seen the actual thank-you screen, closing from there doesn't prompt twice.
+- The **❓ How to play** button on the start screen reveals the full tutorial paragraph (chopping trees, crafting, badges) together with that same `H` hotkey panel on the right — both collapsed by default so the front page stays short; click it again (now **✕ Hide help**) to put them away.
+- The **🏅 Share My Achievements** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn fundraising. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
+- Closing the tab or navigating away without clicking it first triggers the browser's own "Leave site?" confirmation instead — a browser won't let a page show its own custom screen at the exact moment it's torn down, so this is the closest real equivalent, just enough of a pause to reconsider. Cancel that prompt and you land on the real thank-you screen rather than snapping back to raw gameplay. It only fires once; if you've already seen the actual thank-you screen, closing from there doesn't prompt twice.
+- The browser's own **back** button is trapped the same way once you've actually started playing: instead of leaving the page, it shows the thank-you screen — a page can't refuse to navigate back outright, only race it back to where it started, so back stays trapped on repeated presses too. Untouched (works normally) if you back out from the front page having never clicked in to play.
 - That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you open it so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
 - The thank-you screen also draws a shareable badge picture on the spot — your name, current rank, and all 23 merit badges (earned ones lit up in gold, the rest dimmed), laid out beside the share buttons rather than stacked above them so the whole screen reads as one card instead of a long scroll, and regenerated fresh every time you open it just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
 
@@ -166,10 +169,10 @@ Your rank also shows up as a small badge icon, loosely modeled on the real BSA r
 through Life share a tan oval with a gold emblem built from a fleur-de-lis (a small shield and/or
 banner added on for the higher ranks, echoing the real badges' own eagle-and-shield and "Be
 Prepared" banner), a star for Star Scout, a heart for Life Scout, and Eagle Scout breaking from that
-family entirely with its own red/white/blue circular medallion — in three places: next to your rank
-on the floating name tag over your head, stitched onto your shirt's left chest pocket (updates the
-moment you rank up), and above your rank name on the achievement card the exit screen generates for
-sharing.
+family entirely with real crest artwork (see `assets/README.md`) instead of a procedural drawing —
+in three places: next to your rank on the floating name tag over your head, stitched onto your
+shirt's left chest pocket (updates the moment you rank up), and above your rank name on the
+achievement card the exit screen generates for sharing.
 
 Progress is per-browser, saved to `localStorage` alongside your world edits and inventory, and only
 counts while you're actually playing — nothing accrues while you sit on the start screen or have a
@@ -572,5 +575,5 @@ chat reminds you why: *"Birds can't be hurt — a real Scout studies wildlife, n
 - Anywhere without a clear vertical path up to open sky — inside a building with a roof, a tunnel you've dug, under a dense tree canopy — is noticeably darker than the surface, independent of however bright it is outside. Light a torch if you're building somewhere enclosed.
 - Fireflies drift and blink softly near you after dark (fading in around dusk, out around dawn, same clock as everything else) — a scattering of small glowing lights over open ground, gone again once the sun's up.
 - Block edits and inventory are saved to the browser's `localStorage`, so your progress persists across reloads on the same device/browser.
-- Best played on desktop with a mouse — pointer lock and WASD aren't a good fit for touch screens.
+- Best played on a desktop or laptop with a keyboard and mouse — pointer lock and WASD aren't a good fit for touch screens. It also works on phones and tablets with on-screen touch controls, but that's not what it was designed for.
 - Everything is a single `<script>` tag pulling three.js from a CDN (`jsdelivr`), so there's nothing to install or build.

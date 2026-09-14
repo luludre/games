@@ -46,8 +46,6 @@
   #overlay p{max-width:520px;line-height:1.6;opacity:0.92;font-size:15px;}
   #overlay .key{background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:4px;}
   #overlay .small{margin-top:18px;font-size:12px;opacity:0.65;}
-  #desktopNotice{max-width:420px;font-size:12.5px;font-weight:600;background:rgba(255,255,255,0.12);
-    border:1px solid rgba(255,255,255,0.3);border-radius:8px;padding:8px 14px;opacity:1;margin:0 0 16px;}
   #overlay .credits{margin-top:16px;font-size:16px;line-height:1.5;opacity:1;font-weight:600;
     color:#fff3d6;background:rgba(255,204,77,0.14);border:1px solid rgba(255,204,77,0.45);
     border-radius:10px;padding:14px 18px;}
@@ -80,7 +78,7 @@
   #scubaOverlay{position:fixed;inset:0;z-index:13;pointer-events:none;opacity:0;transition:opacity 0.4s ease;background:radial-gradient(ellipse at center, rgba(10,50,60,0.12) 40%, rgba(4,22,32,0.8) 100%);}
   #sleepOverlay{position:fixed;inset:0;z-index:15;pointer-events:none;opacity:0;background:#000;}
   #lightningFlash{position:fixed;inset:0;z-index:13;pointer-events:none;opacity:0;background:#fff;}
-  #hotkeyPanel{position:fixed;top:50%;right:14px;transform:translateY(-50%);z-index:10;background:rgba(0,0,0,0.55);
+  #hotkeyPanel{position:fixed;top:50%;right:14px;transform:translateY(-50%);z-index:21;background:rgba(0,0,0,0.55);
     color:#fff;border-radius:10px;padding:14px 16px;font-size:12px;width:280px;pointer-events:none;
     box-shadow:0 6px 24px rgba(0,0,0,0.4);max-height:calc(100vh - 40px);overflow-y:auto;}
   #hotkeyPanel h3{margin:0 0 8px;font-size:13px;opacity:0.85;text-transform:uppercase;letter-spacing:0.05em;}
@@ -338,8 +336,8 @@
   <h1>🏕️ Thanks for playing ScoutCraft!</h1>
   <p>Hope you had fun setting up camp, earning your badges, and exploring the woods. Come back
   anytime — your camp will be exactly how you left it.</p>
-  <p>If you'd like to support Andre's troop, his popcorn sale is open right now:</p>
-  <a id="popcornLink" href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">🍿 Support Andre's Popcorn Sale</a>
+  <p>If you'd like to support Andre's troop, his popcorn fundraising is open right now:</p>
+  <a id="popcornLink" href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">🍿 Support Andre's Popcorn Fundraising</a>
   <div id="shareSection">
     <p>Show off your camp and your merit badges:</p>
     <div id="shareCard">
@@ -450,12 +448,10 @@
 <div id="overlay">
   <h1>ScoutCraft</h1>
   <p id="campSubtitle">🏕️ Camp Merit Ridge</p>
-  <p id="desktopNotice">💻 Best played on a desktop or laptop with a keyboard and mouse. It also works on phones and tablets with on-screen touch controls, but that's not what it was designed for.</p>
   <p id="controlsText">
-    Set up camp in the wilderness and earn your merit badges — a browser voxel world where
-    woodcraft, firecraft and a good tent actually count for something.<br><br>
     <span class="key">WASD</span> move &nbsp; <span class="key">Mouse</span> look &nbsp;
-    <span class="key">Left click</span> break / attack &nbsp; <span class="key">Right click</span> place / interact<br>
+    <span class="key">Left click</span> break / attack &nbsp; <span class="key">Right click</span> place / interact &nbsp;
+    <span class="key">V</span> 3rd person view<br>
     Press <span class="key">H</span> once you're in for the full hotkey list.
   </p>
   <div id="nameEntry"><input id="nameInput" type="text" maxlength="16" placeholder="Your name" autocomplete="off"></div>
@@ -466,9 +462,9 @@
   <p id="tapToPlay"><strong>Click anywhere to play</strong></p>
   <button id="btnHelp">❓ How to play</button>
   <p id="playHint" class="small" hidden>Press <span class="key">B</span> to open your Backpack — it starts already packed with the real Scout's 10 Essentials plus a tent, sleeping bag, sleeping pad and rope. Pitch your tent (a real shelter you can walk into) and take a bearing with your compass to earn merit badges right away. Chop a tree for wood and leaves, put down your Camp Workbench, and press E beside it to craft — twist leaves into <b>rope</b>, then set up a <b>campfire</b>, a <b>lantern</b> and your <b>troop flag</b> — each one earns a merit badge too, and badges promote you from Scout all the way to Eagle Scout. Press <span class="key">M</span> to see your sash, <span class="key">K</span> near your tent after dark to sleep through the night, or <span class="key">H</span> any time for the full hotkey list. Rabbits and deer are harmless — the moose fights back if provoked, and the black bear attacks on sight. Progress saves automatically in this browser.</p>
-  <p class="credits">Built by Andre Wu, his dad, and an AI to help others discover scouting! Andre scouts
-  with Troop 904 out of Dublin, CA, USA. If you had fun, please consider supporting his scouting adventures
-  and our heroes: <a href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">🍿 Andre's Popcorn Sale</a></p>
+  <p class="credits">Built by Andre Wu (Troop 904, Dublin, California), his dad, and an AI to share
+  the adventure of Scouting. If you had fun, please consider supporting Andre's Scouting journey
+  and our heroes: <a href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">🍿 Andre's Popcorn Fundraising</a></p>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>

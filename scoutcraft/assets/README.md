@@ -45,4 +45,10 @@ A recitation of the Outdoor Code, provided directly by Andre's family for this g
 - Source: supplied as a WAV/AIFF recording, converted to AAC (`.m4a`) with `afconvert`, same as the two clips above.
 - Played in full (~11.5s) when the player right-clicks the 3-tall Scout Totem at the cooking area.
 
-Everything else in the game (textures, other sound effects) is generated procedurally at runtime — these are the only six real asset files.
+## eagle-scout-emblem.png
+
+A 512x517 pixel-art Eagle Scout crest — eagle, "BE PREPARED" banner, and an "EAGLE SCOUT" ribbon — on a transparent background, used as the actual Eagle Scout rank badge everywhere `drawRankBadge` draws one (shirt patch, floating name tag, achievement share card), in place of the procedural medallion every rank below it gets.
+
+- Source: an AI-generated (Gemini) image supplied directly by Andre for this game; background removed and cropped to the crest.
+
+Everything else in the game (textures, other sound effects) is generated procedurally at runtime — these are the only seven real asset files.

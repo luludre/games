@@ -1913,6 +1913,21 @@ function drawEagleSilhouette(ctx, cx, cy, scale, color){
     ctx.fill();
   }
 }
+// Real Eagle Scout artwork (see assets/README.md) — used in place of a procedural drawing since
+// real insignia-style detail like this doesn't reduce well to canvas primitives. Loaded once up
+// front; drawRankBadge falls back to the plain procedural medallion below until it's ready.
+const eagleEmblemImg = new Image();
+let eagleEmblemLoaded = false;
+eagleEmblemImg.onload = () => {
+  eagleEmblemLoaded = true;
+  // The shirt patch may already have been baked (as a canvas texture) with the fallback art before
+  // this finished loading — force it to redraw now, same as any other rank-change refresh.
+  if(rankIndexFor(earnedBadges.size) === 7){
+    if(characterMesh && characterMesh.userData.uniform) characterMesh.userData.uniform.lastRankIndex = -1;
+    updateCharacterRankBadge();
+  }
+};
+eagleEmblemImg.src = 'assets/eagle-scout-emblem.png';
 function drawRankBadge(ctx, cx, cy, radius, rankIndex){
   if(rankIndex<=0){
     // No rank yet — a plain disc, nothing earned to put on it.
@@ -1926,8 +1941,29 @@ function drawRankBadge(ctx, cx, cy, radius, rankIndex){
     return;
   }
   if(rankIndex===7){
+    if(eagleEmblemLoaded){
+      // Cover-fit into the same circular badge shape every rank uses, so it drops into all three
+      // call sites (shirt patch, name tag, achievement card) without any of them needing to know
+      // it's an image instead of vector art.
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI*2);
+      ctx.clip();
+      const iw = eagleEmblemImg.naturalWidth, ih = eagleEmblemImg.naturalHeight;
+      const s = Math.max((radius*2)/iw, (radius*2)/ih);
+      const dw = iw*s, dh = ih*s;
+      ctx.drawImage(eagleEmblemImg, cx-dw/2, cy-dh/2, dw, dh);
+      ctx.restore();
+      ctx.lineWidth = Math.max(1, radius*0.1);
+      ctx.strokeStyle = '#1a1a1a';
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI*2);
+      ctx.stroke();
+      return;
+    }
     // Eagle Scout: a red/white/blue circular medallion instead of the tan cloth oval every rank
-    // below it shares — the real Eagle badge breaks from that family the exact same way.
+    // below it shares — the real Eagle badge breaks from that family the exact same way. Fallback
+    // only, used until the real artwork above finishes loading.
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI*2);
     ctx.fillStyle = '#c23b28';
@@ -8454,6 +8490,10 @@ function useHand(){
 const overlay = document.getElementById('overlay');
 const touchControls = document.getElementById('touchControls');
 let locked = false;
+// One-way flag: true the moment the player actually clicks in to play, unlike `overlay.hidden`
+// (which flips back and forth for every modal). Gates the back-button trap and the close-tab
+// thank-you screen below so neither fires for someone who never got past the front page.
+let everStartedPlaying = false;
 const nameInput = document.getElementById('nameInput');
 nameInput.value = myName==='Player' ? '' : myName;
 nameInput.addEventListener('click', e=> e.stopPropagation());
@@ -8482,6 +8522,9 @@ if(btnHelp && playHint){
   btnHelp.addEventListener('click', e=>{
     e.stopPropagation();
     playHint.hidden = !playHint.hidden;
+    // The same combined hotkey list `H` shows in-game (see toggleHotkeyPanel) doubles as the front
+    // page's own hotkey reference — shown/hidden in lockstep with the walkthrough text above.
+    hotkeyPanel.hidden = playHint.hidden;
     btnHelp.textContent = playHint.hidden ? '❓ How to play' : '✕ Hide help';
   });
 }
@@ -8497,6 +8540,18 @@ if(isTouchDevice){
 overlay.addEventListener('click', ()=>{
   ensureAudio();
   if(craftingOpen) return;
+  if(!everStartedPlaying){
+    everStartedPlaying = true;
+    // Traps the browser's back button once play actually begins: a page can't refuse to navigate
+    // back outright, but pushing one extra same-page history entry — then re-pushing it every time
+    // `popstate` fires — means back/forward never actually leaves; it just lands here again, so this
+    // shows the same thank-you/exit screen Quit does instead of silently vanishing.
+    try{ history.pushState({scoutcraft:true}, '', location.href); }catch(e){}
+    window.addEventListener('popstate', ()=>{
+      try{ history.pushState({scoutcraft:true}, '', location.href); }catch(e){}
+      if(thankYouScreen.hidden) quitGame();
+    });
+  }
   const typedName = nameInput.value.trim().slice(0,16);
   if(typedName) myName = typedName;
   try{ localStorage.setItem('scoutcraft_player_name', myName); }catch(e){}
@@ -8821,12 +8876,12 @@ if(sashModalEl){
 }
 
 // ---------- Quit / thank-you screen ----------
-// A deliberate in-game "I'm done for now" action, not tied to actually closing the tab (a page can't
-// intercept that with anything beyond a native browser prompt) — clicking the "Share My Achievements"
-// button unlocks the mouse and swaps in a full-screen thank-you screen with Andre's popcorn fundraiser
-// link. World/inventory/badge
-// progress is already saved continuously during play, so there's nothing extra to do on the way out;
-// "Keep playing instead" just puts the overlay away again.
+// Clicking "Share My Achievements" unlocks the mouse and swaps in a full-screen thank-you screen with
+// Andre's popcorn fundraiser link. Also reused (see the back-button trap and beforeunload handler
+// below) so pressing back or canceling a close prompt lands on this same screen instead of a page
+// that just silently vanishes or snaps back to raw gameplay. World/inventory/badge progress is
+// already saved continuously during play, so there's nothing extra to do on the way out; "Keep
+// playing instead" just puts the overlay away again.
 const thankYouScreen = document.getElementById('thankYouScreen');
 // ---- Sharing: the game's own URL plus a one-line brag about badges earned so far ----
 // location.origin+pathname (not the full href) so a stray query string or #hash from however the
@@ -9737,12 +9792,16 @@ setInterval(savePosition, POSITION_SAVE_INTERVAL_MS);
 window.addEventListener('beforeunload', savePosition);
 window.addEventListener('pagehide', savePosition);
 // Browsers don't let a page show its own custom UI at the moment of leaving — the tab just tears
-// down — so there's no way to actually pop the thank-you screen open on a close/navigate-away the
-// way clicking Quit does. The closest real equivalent is the browser's own generic "Leave site?"
-// prompt, which at least gives a beat to reconsider before going. Skipped once they've already seen
-// the real thank-you screen (clicked Quit themselves) — no need to prompt twice on the way out.
+// down — so there's no way to actually pop the thank-you screen open on the close itself the way
+// clicking Quit does. The closest real equivalent is the browser's own generic "Leave site?" prompt;
+// swapping in the real thank-you screen here too means that if they cancel that prompt and stay, they
+// land on the same graceful recap instead of snapping back to raw gameplay. Skipped once they've
+// already seen it (clicked Quit themselves, or already canceled once) — no need to prompt twice on
+// the way out, and skipped entirely for someone who closes the tab from the front page having never
+// actually played.
 window.addEventListener('beforeunload', e=>{
   if(!thankYouScreen.hidden) return;
+  if(everStartedPlaying) quitGame();
   e.preventDefault();
   e.returnValue = '';
 });
