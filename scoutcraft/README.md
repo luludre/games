@@ -162,10 +162,14 @@ Scout** (18 — just over 3/4 of all 23, not literally every one of them) — an
 badge count sit in the HUD at the top of the screen. Earning one plays a short bugle call and drops a
 banner telling you what you got, and what rank it just made you.
 
-Your rank also shows up as a small original badge icon — a colored disc with one star per tier, not a
-copy of any real insignia — in three places: next to your rank on the floating name tag over your
-head, stitched onto your shirt's left chest pocket (updates the moment you rank up), and above your
-rank name on the achievement card the exit screen generates for sharing.
+Your rank also shows up as a small badge icon, loosely modeled on the real BSA rank badges — Scout
+through Life share a tan oval with a gold emblem built from a fleur-de-lis (a small shield and/or
+banner added on for the higher ranks, echoing the real badges' own eagle-and-shield and "Be
+Prepared" banner), a star for Star Scout, a heart for Life Scout, and Eagle Scout breaking from that
+family entirely with its own red/white/blue circular medallion — in three places: next to your rank
+on the floating name tag over your head, stitched onto your shirt's left chest pocket (updates the
+moment you rank up), and above your rank name on the achievement card the exit screen generates for
+sharing.
 
 Progress is per-browser, saved to `localStorage` alongside your world edits and inventory, and only
 counts while you're actually playing — nothing accrues while you sit on the start screen or have a
@@ -409,7 +413,7 @@ inside the range, any of the 3 targets counts) and you earn the Archery badge.
 
 ## Fire & torches
 
-Select Flint from your hotbar (open the item picker if it isn't already assigned to a slot) and right-click a wood or leaf block to set it alight — the block you're actually aiming at is what catches, immediately (not some empty space near it), same as anything fire spreads to on its own. Lighting a fire uses up one Flint. Fire burns for 30 real-world minutes — exactly half a ScoutCraft day — then burns itself out and disappears for good; you can also put it out early by breaking the fire block directly. A burning fire gives off a warm flickering light and a soft crackling sound when you're nearby, and is saved like any other world change, so it's still burning (or already out) right where you left it if you reload.
+Select Flint from your hotbar (open the item picker if it isn't already assigned to a slot) and right-click a wood or leaf block to set it alight — the block you're actually aiming at is what catches, immediately (not some empty space near it), same as anything fire spreads to on its own. Flint is unlimited — like Firework, it never runs out no matter how many fires you light or Torches/Campfires/Lanterns you craft, so there's no need to ration it once you've taken it out of your Backpack. Fire burns for 30 real-world minutes — exactly half a ScoutCraft day — then burns itself out and disappears for good; you can also put it out early by breaking the fire block directly. A burning fire gives off a warm flickering light and a soft crackling sound when you're nearby, and is saved like any other world change, so it's still burning (or already out) right where you left it if you reload.
 
 Fire isn't a solid block — it's a flickering, non-solid flame you can walk straight through, not something you can stand on or bump into. Standing in it hurts (both you and any nearby animal), so it's a real hazard, not just decoration. And fire spreads: every few seconds, a burning cell has a chance to catch any adjacent wood or leaves alight too, so a single spark on a tree can genuinely chain through the whole thing — trunk and canopy both burn down to nothing, block by block, given enough time — so keep flammable buildings away from anything you set on fire, or you may lose more than you meant to.
 
