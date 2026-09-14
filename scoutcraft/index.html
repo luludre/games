@@ -81,11 +81,14 @@
   #sleepOverlay{position:fixed;inset:0;z-index:15;pointer-events:none;opacity:0;background:#000;}
   #lightningFlash{position:fixed;inset:0;z-index:13;pointer-events:none;opacity:0;background:#fff;}
   #hotkeyPanel{position:fixed;top:50%;right:14px;transform:translateY(-50%);z-index:10;background:rgba(0,0,0,0.55);
-    color:#fff;border-radius:10px;padding:14px 16px;font-size:12px;width:260px;pointer-events:none;
-    box-shadow:0 6px 24px rgba(0,0,0,0.4);}
+    color:#fff;border-radius:10px;padding:14px 16px;font-size:12px;width:280px;pointer-events:none;
+    box-shadow:0 6px 24px rgba(0,0,0,0.4);max-height:calc(100vh - 40px);overflow-y:auto;}
   #hotkeyPanel h3{margin:0 0 8px;font-size:13px;opacity:0.85;text-transform:uppercase;letter-spacing:0.05em;}
-  #hotkeyPanel .hkRow{display:flex;gap:10px;padding:3px 0;line-height:1.35;}
-  #hotkeyPanel .hkKey{flex:none;min-width:78px;color:#e8c46a;font-weight:600;}
+  #hotkeyPanel .hkRow{display:flex;align-items:baseline;gap:8px;padding:3px 0;line-height:1.35;}
+  /* Same boxed-key look as the front page's own <span class="key"> — a light background chip rather
+     than plain colored text, so "WASD" (and every other key) reads as a distinct little button. */
+  #hotkeyPanel .hkKey{flex:none;background:rgba(255,255,255,0.15);color:#e8c46a;font-weight:600;
+    padding:2px 7px;border-radius:4px;white-space:nowrap;}
   body.touch-device #hotkeyPanel{display:none;}
   #updateBanner{position:fixed;top:36px;left:50%;transform:translateX(-50%);z-index:25;background:#3a2f0f;color:#ffe9a8;border:1px solid rgba(255,220,120,0.5);border-radius:8px;padding:8px 14px;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,0.4);white-space:nowrap;}
   #updateReloadBtn{background:#ffcc4d;color:#2b2100;border:none;border-radius:5px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;}
@@ -280,23 +283,27 @@
 </div>
 <div id="hotkeyPanel" hidden>
   <h3>Hotkeys</h3>
-  <div class="hkRow"><span class="hkKey">Left click</span>break / attack</div>
-  <div class="hkRow"><span class="hkKey">Right click</span>place / interact (compass, fishing pole, tables, backpack, windows, doors, Scout Law boxes)</div>
-  <div class="hkRow"><span class="hkKey">Q R F T G C X L J</span>select hotbar slot</div>
-  <div class="hkRow"><span class="hkKey">I</span>inventory</div>
-  <div class="hkRow"><span class="hkKey">B</span>backpack</div>
-  <div class="hkRow"><span class="hkKey">M</span>badge sash</div>
-  <div class="hkRow"><span class="hkKey">E</span>craft</div>
-  <div class="hkRow"><span class="hkKey">K</span>sleep in tent</div>
-  <div class="hkRow"><span class="hkKey">V</span>3rd person view</div>
-  <div class="hkRow"><span class="hkKey">Ctrl</span>hold to crawl</div>
-  <div class="hkRow"><span class="hkKey">Z</span>toggle crawl</div>
-  <div class="hkRow"><span class="hkKey">N</span>cycle day/night</div>
-  <div class="hkRow"><span class="hkKey">P</span>First Aid (quick heal)</div>
-  <div class="hkRow"><span class="hkKey">O</span>Stop Bear (scare it off)</div>
-  <div class="hkRow"><span class="hkKey">U</span>Use Hand (open/interact without your held item)</div>
-  <div class="hkRow"><span class="hkKey">H</span>toggle this panel</div>
-  <div class="hkRow"><span class="hkKey">Esc</span>release mouse</div>
+  <div class="hkRow"><span class="hkKey">WASD</span>: move</div>
+  <div class="hkRow"><span class="hkKey">Space</span>: jump</div>
+  <div class="hkRow"><span class="hkKey">Shift</span>: sprint</div>
+  <div class="hkRow"><span class="hkKey">Ctrl</span>: hold to crawl</div>
+  <div class="hkRow"><span class="hkKey">Z</span>: toggle crawl</div>
+  <div class="hkRow"><span class="hkKey">Mouse</span>: look</div>
+  <div class="hkRow"><span class="hkKey">Left click</span>: break / attack</div>
+  <div class="hkRow"><span class="hkKey">Right click</span>: place / interact (compass, fishing pole, tables, backpack, windows, doors, Scout Law boxes)</div>
+  <div class="hkRow"><span class="hkKey">Q R F T G C X L J</span>: select hotbar slot</div>
+  <div class="hkRow"><span class="hkKey">I</span>: inventory</div>
+  <div class="hkRow"><span class="hkKey">B</span>: backpack</div>
+  <div class="hkRow"><span class="hkKey">M</span>: badge sash</div>
+  <div class="hkRow"><span class="hkKey">E</span>: craft at workbench</div>
+  <div class="hkRow"><span class="hkKey">K</span>: sleep in tent</div>
+  <div class="hkRow"><span class="hkKey">V</span>: 3rd person view</div>
+  <div class="hkRow"><span class="hkKey">N</span>: cycle day/night</div>
+  <div class="hkRow"><span class="hkKey">P</span>: First Aid (quick heal)</div>
+  <div class="hkRow"><span class="hkKey">O</span>: Stop Bear (scare it off)</div>
+  <div class="hkRow"><span class="hkKey">U</span>: Use Hand (open/interact without your held item)</div>
+  <div class="hkRow"><span class="hkKey">H</span>: toggle this panel</div>
+  <div class="hkRow"><span class="hkKey">Esc</span>: release mouse</div>
 </div>
 <div id="craftHint">Right-click the table (or press E) to craft</div>
 <div id="fishingHint"></div>
@@ -447,9 +454,9 @@
   <p id="controlsText">
     Set up camp in the wilderness and earn your merit badges — a browser voxel world where
     woodcraft, firecraft and a good tent actually count for something.<br><br>
-    <span class="key">WASD</span> move &nbsp; <span class="key">Space</span> jump &nbsp; <span class="key">Shift</span> sprint &nbsp; <span class="key">Ctrl</span> crawl &nbsp; <span class="key">Z</span> toggle crawl<br>
-    <span class="key">Mouse</span> look &nbsp; <span class="key">Left click</span> break / attack &nbsp; <span class="key">Right click</span> place<br>
-    <span class="key">Q R F T G C X L J</span> select item &nbsp; <span class="key">I</span> inventory &nbsp; <span class="key">B</span> backpack &nbsp; <span class="key">M</span> badge sash &nbsp; <span class="key">E</span> craft at workbench &nbsp; <span class="key">K</span> sleep in tent &nbsp; <span class="key">V</span> 3rd person &nbsp; <span class="key">N</span> cycle day/night &nbsp; <span class="key">H</span> hotkeys
+    <span class="key">WASD</span> move &nbsp; <span class="key">Mouse</span> look &nbsp;
+    <span class="key">Left click</span> break / attack &nbsp; <span class="key">Right click</span> place / interact<br>
+    Press <span class="key">H</span> once you're in for the full hotkey list.
   </p>
   <div id="nameEntry"><input id="nameInput" type="text" maxlength="16" placeholder="Your name" autocomplete="off"></div>
   <div id="uniformEntry">
