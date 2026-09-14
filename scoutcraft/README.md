@@ -64,6 +64,7 @@ Then visit `http://localhost:8000`.
 - `V` — toggle first-person view (third-person, seeing your own blocky character, is the default)
 - `P` (or the fixed **➕** quick-access icon) — First Aid: an instant 2-heart heal, once every 10 seconds
 - `O` (or the fixed **🐻🚫** quick-access icon) — Stop Bear: see [Health & combat](#health--combat)
+- `U` (or the fixed **🖐️** quick-access icon) — Use Hand: open/interact with whatever you're aiming at as if your hands were empty, ignoring what's actually in your selected hotbar slot. A plain right-click while holding the Compass, Fishing Pole, Bow, Flint, or food always uses *that* item first — reasonable most of the time, but inconvenient if you'd rather just open a nearby Bear Box, Backpack, Crafting Table, cookware station, Scout Law box, door, or window without switching away from whatever's already selected. Says so in camp chat if you're not actually aiming at anything openable.
 - `H` — toggle the hotkey list, a panel on the right edge of the screen listing every key above (and this one). Hidden by default so it doesn't clutter the screen; the front-page tutorial still covers the basics before you even start playing.
 - The **❓ How to play** button on the start screen reveals the full tutorial paragraph (chopping trees, crafting, badges) — collapsed by default so the front page stays short; click it again (now **✕ Hide help**) to put it away.
 - The **🏅 Share My Achievements** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
@@ -84,14 +85,15 @@ Your inventory — everything you're currently holding, with live counts — is 
 
 The hotbar itself only shows 9 slots (keys `Q` `R` `F` `T` `G` `C` `X` `L` `J`, one per slot, left to right) at a time, but any slot can hold any item in the game — materials, structures, tools, all reachable from the same inventory screen. Your hotbar layout is saved per-browser, so it's exactly how you left it next time.
 
-Four more icons sit fixed to the hotbar's left — Backpack, Camp Workbench, First Aid, and Stop Bear — always the same four actions rather than slots you can put items into:
+Five more icons sit fixed to the hotbar's left — Backpack, Camp Workbench, First Aid, Stop Bear, and Use Hand — always the same five actions rather than slots you can put items into:
 
 - **🎒 Backpack** (`B`)
 - **🛠️ Camp Workbench** (`E`) — opens crafting if you're within 4 blocks of a placed Camp Workbench, otherwise just says so
 - **➕ First Aid** (`P`) — an instant heal of 2 hearts, once every 10 seconds — an active option alongside the passive stand-still regen, not a replacement for it
 - **🐻🚫 Stop Bear** (`O`) — see [Health & combat](#health--combat) below
+- **🖐️ Use Hand** (`U`) — the rightmost icon. Interacts with whatever fixture you're aiming at (Bear Box, Backpack, Crafting Table, any cookware, a Scout Law box, a door or window, cookware stations, camp totems) exactly as if you weren't holding anything, even if your selected hotbar slot is something a plain right-click would normally use instead, like the Compass or a Fishing Pole. Doesn't consume, drop, or switch away from whatever you're actually holding — it just runs the interaction and leaves your hotbar exactly as it was
 
-Every one of the four also has a keyboard shortcut, shown as a small letter in its corner — they work identically whether you click the icon or press the key.
+Every one of the five also has a keyboard shortcut, shown as a small letter in its corner — they work identically whether you click the icon or press the key.
 
 ## Crafting
 
