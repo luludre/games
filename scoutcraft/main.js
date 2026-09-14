@@ -8619,6 +8619,19 @@ if(isTouchDevice){
   if(tapP) tapP.innerHTML = '<strong>Tap anywhere to play</strong>';
   const hintP = document.getElementById('playHint');
   if(hintP) hintP.textContent = 'Tap Backpack (B) for your tent, compass and other starting gear, then break blocks to gather materials and place your Crafting Table to craft a campfire, lantern and troop flag. Rabbits and deer are harmless — the moose will fight back if you attack it, and the black bear will attack on sight if you get too close. Progress is saved automatically in this browser.';
+  // Portrait doesn't leave enough width for the touch controls — the joystick and action buttons
+  // on either side would end up fighting the special-icons row in the middle for the same cramped
+  // space — so rather than trying to squeeze a real layout into it, block the whole page (front
+  // page included) and ask for landscape outright, same as most mobile games do. innerWidth/
+  // innerHeight (not screen.orientation, which iOS Safari doesn't support) so this also reacts
+  // correctly to a tablet's split-screen or a resized window.
+  const rotateOverlay = document.getElementById('rotateOverlay');
+  if(rotateOverlay){
+    const checkOrientation = () => { rotateOverlay.hidden = window.innerWidth >= window.innerHeight; };
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    checkOrientation();
+  }
 }
 overlay.addEventListener('click', ()=>{
   ensureAudio();

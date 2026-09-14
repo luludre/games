@@ -88,6 +88,15 @@
   #hotkeyPanel .hkKey{flex:none;background:rgba(255,255,255,0.15);color:#e8c46a;font-weight:600;
     padding:2px 7px;border-radius:4px;white-space:nowrap;}
   body.touch-device #hotkeyPanel{display:none;}
+  /* Blocks the whole page (front page and in-game alike) on a phone/tablet held in portrait —
+     see the isTouchDevice check in main.js that shows/hides this on load, resize, and rotation.
+     z-index above everything else in the game, including the thank-you screen (40). */
+  #rotateOverlay{position:fixed;inset:0;z-index:100;background:#0e1a0e;color:#f2e9d8;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:32px;gap:18px;}
+  #rotateIcon{font-size:64px;animation:rotateHint 1.6s ease-in-out infinite;}
+  #rotateOverlay p{max-width:320px;font-size:16px;line-height:1.5;margin:0;opacity:0.92;}
+  @keyframes rotateHint{0%,100%{transform:rotate(0deg);}50%{transform:rotate(90deg);}}
   #updateBanner{position:fixed;top:36px;left:50%;transform:translateX(-50%);z-index:25;background:#3a2f0f;color:#ffe9a8;border:1px solid rgba(255,220,120,0.5);border-radius:8px;padding:8px 14px;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,0.4);white-space:nowrap;}
   #updateReloadBtn{background:#ffcc4d;color:#2b2100;border:none;border-radius:5px;padding:4px 10px;font-size:12px;font-weight:700;cursor:pointer;}
   #updateReloadBtn:hover{background:#ffd966;}
@@ -120,6 +129,12 @@
   #touchMenu button{background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.3);
     border-radius:8px;padding:9px 16px;font-size:14px;white-space:nowrap;text-align:left;}
   body.touch-device #panelButtons, body.touch-device #btnQuit{display:none;}
+  /* The full 9-slot hotbar (#hotbar) is sized for a desktop-width screen and, even in landscape,
+     is wider than a phone — it would overlap the joystick and action buttons the same way
+     #panelButtons used to. #specialIcons (the 5 quick-action buttons) is narrow enough to fit on
+     its own and stays put; changing what a touch player is holding goes through the Inventory
+     screen (see the ☰ menu) instead of tapping a hotbar slot directly. */
+  body.touch-device #hotbar{display:none;}
   #chatLog{position:fixed;left:10px;bottom:96px;width:min(420px,calc(100vw - 20px));max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;z-index:12;pointer-events:none;}
   .chatLine{background:rgba(0,0,0,0.45);color:#fff;font-size:13px;padding:3px 8px;border-radius:4px;text-shadow:0 0 3px #000;word-break:break-word;align-self:flex-start;max-width:100%;}
   .chatLine b{color:#8fd0ee;}
@@ -266,6 +281,10 @@
 </style>
 </head>
 <body>
+<div id="rotateOverlay" hidden>
+  <div id="rotateIcon">📱</div>
+  <p>ScoutCraft needs a wider screen to fit its controls — please rotate your device to landscape.</p>
+</div>
 <div id="hud">📍<span id="coordsLabel">0, 0, 0</span> · <span id="fps">0</span>fps · 📅<span id="dateLabel">Jan 1, Y0</span> · 🕐<span id="worldTimeLabel">00:00</span><span id="timeModeLabel"></span> · <span id="weatherLabel">Sunny</span> · <span id="windLabel">Calm</span> · <span id="seasonLabel">Spring</span> <span id="tempLabel">50°F</span> · 🎖️<span id="badgeCount">0/13</span> · <span id="rankLabel">Scout</span><span id="hudHiddenStats" hidden>Edits <span id="blockCount">0</span> 🐛<span id="wormCount">0</span> 🦋<span id="butterflyCount">0</span></span></div>
 <div id="debugPanel" hidden></div>
 <div id="updateBanner" hidden>🔄 A new version of ScoutCraft is available <button id="updateReloadBtn">Reload</button></div>
