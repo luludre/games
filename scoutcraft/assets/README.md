@@ -20,10 +20,9 @@ A field recording of New Year's fireworks heard from a distance in the Belgian c
 
 ## icon-512.png
 
-A 512x512 pixel-art 3D isometric grass block icon with a transparent background and a soft drop shadow, used as the game's favicon and bookmark/home-screen icon.
+A 512x512 voxel-style isometric campsite scene — an A-frame cabin, a lit campfire, a picnic table with a backpack and water bottle, a lantern, a stream, and pine trees — on a transparent background, used as the game's favicon and bookmark/home-screen icon.
 
-- Source: Generated procedurally using a custom Python script rendering hand-crafted 16x16 pixel textures for the grass and dirt faces.
-- License: Released into the **public domain** (CC0) — free to use for any purpose.
+- Source: supplied directly by Andre for this game, downscaled from a 2048x2048 original.
 
 ## pledge-of-allegiance.m4a
 
