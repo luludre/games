@@ -7,7 +7,7 @@ browser voxel world where woodcraft, firecraft and a good tent actually count fo
 single-player game that runs entirely in the browser — procedurally generated terrain, block
 breaking/placing, crafting — built with [three.js](https://threejs.org/) — with a scouting layer on
 top: rope you twist from leaves, a walk-in tent you pitch, campfires you cook on, a compass that
-finds its way back to camp, and twenty-three merit badges that promote you from Scout to Eagle
+finds its way back to camp, and twenty-four merit badges that promote you from Scout to Eagle
 Scout.
 
 No build step, no server-side code, no dependencies to install, no account to make. Everything —
@@ -19,7 +19,7 @@ wildlife. What's new is everything in [Merit badges](#merit-badges) and [Camp ge
 
 Built by Andre Wu (Troop 904, Dublin, California), his dad, and an AI to share the adventure of
 Scouting. If you had fun, please consider supporting Andre's Scouting journey and our
-heroes: [🍿 Andre's Popcorn Fundraising](https://trails-end.com/store/scout/HQ9SW6MR).
+heroes: [🍿 Andre's Popcorn Fundraiser](https://trails-end.com/store/scout/HQ9SW6MR).
 
 ## Play locally
 
@@ -69,11 +69,11 @@ Then visit `http://localhost:8000`.
 - `U` (or the fixed **🖐️** quick-access icon) — Use Hand: open/interact with whatever you're aiming at as if your hands were empty, ignoring what's actually in your selected hotbar slot. A plain right-click while holding the Compass, Fishing Pole, Bow, Flint, or food always uses *that* item first — reasonable most of the time, but inconvenient if you'd rather just open a nearby Bear Box, Backpack, Crafting Table, cookware station, Scout Law box, door, or window without switching away from whatever's already selected. Says so in camp chat if you're not actually aiming at anything openable.
 - `H` — toggle the hotkey list, a panel on the right edge of the screen listing every key above (and this one). Hidden by default so it doesn't clutter the screen; the front-page tutorial still covers the basics before you even start playing.
 - The **❓ How to play** button on the start screen reveals the full tutorial paragraph (chopping trees, crafting, badges) together with that same `H` hotkey panel on the right — both collapsed by default so the front page stays short; click it again (now **✕ Hide help**) to put them away.
-- The **🏅 Share My Achievements** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn fundraising. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
+- The **🏅 Share My Achievements** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn fundraiser. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
 - Closing the tab or navigating away without clicking it first triggers the browser's own "Leave site?" confirmation instead — a browser won't let a page show its own custom screen at the exact moment it's torn down, so this is the closest real equivalent, just enough of a pause to reconsider. Cancel that prompt and you land on the real thank-you screen rather than snapping back to raw gameplay. It only fires once; if you've already seen the actual thank-you screen, closing from there doesn't prompt twice.
 - The browser's own **back** button is trapped the same way once you've actually started playing: instead of leaving the page, it shows the thank-you screen — a page can't refuse to navigate back outright, only race it back to where it started, so back stays trapped on repeated presses too. Untouched (works normally) if you back out from the front page having never clicked in to play.
 - That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you open it so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
-- The thank-you screen also draws a shareable badge picture on the spot — a front-on render of your own character (current uniform, neckerchief color, and rank badge included) beside your name, current rank, and all 23 merit badges (earned ones lit up in gold, the rest dimmed), laid out beside the share buttons rather than stacked above them so the whole screen reads as one card instead of a long scroll, and regenerated fresh every time you open it just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
+- The thank-you screen also draws a shareable badge picture on the spot — a front-on render of your own character (current uniform, neckerchief color, and rank badge included) beside your name, current rank, and all 24 merit badges (earned ones lit up in gold, the rest dimmed), laid out beside the share buttons rather than stacked above them so the whole screen reads as one card instead of a long scroll, and regenerated fresh every time you open it just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
 
 The front page says so directly, but worth repeating here too: ScoutCraft is designed for a desktop or laptop with a real keyboard and mouse — that's where every control above actually applies. On a phone or tablet (iPad included), the game automatically switches to touch controls instead — no setup needed, just open the page in Safari and tap to play — but that's a fallback, not the intended experience. A phone also has to be held in landscape: the touch controls need more width than portrait has to give without them starting to overlap, so a "please rotate your device" screen blocks the front page and the game alike until you turn it sideways, and comes back automatically the instant you do.
 
@@ -159,10 +159,11 @@ want and how far along you are ("14 / 25 wood").
 | 🏹 | Archery | Hit the target 5 times at the Archery Range |
 | 🦅 | Bird Study | Look at an eagle and 3 other kinds of birds |
 | 🏅 | Scout Spirit | Find all 12 golden Scout Law boxes hidden around camp |
+| 🙏 | Duty to God | Meditate at the hilltop reflection circle for 30 seconds |
 
 Ranks follow from the count alone — **None** (0, nothing earned yet), **Scout** (1), **Tenderfoot**
 (2), **Second Class** (3), **First Class** (6), **Star Scout** (9), **Life Scout** (12), **Eagle
-Scout** (18 — just over 3/4 of all 23, not literally every one of them) — and your current rank and
+Scout** (18 — just over 3/4 of all 24, not literally every one of them) — and your current rank and
 badge count sit in the HUD at the top of the screen. Earning one plays a short bugle call and drops a
 banner telling you what you got, and what rank it just made you.
 
@@ -410,6 +411,20 @@ unlimited once you have the Bow, nothing to run out of mid-practice. The catch: 
 this range's own footprint. Try it anywhere else in the world and it doesn't even nock an arrow —
 camp chat just tells you to head to the Archery Range instead. Land 5 hits on a target (from anywhere
 inside the range, any of the 3 targets counts) and you earn the Archery badge.
+
+## Reflection Circle
+
+A freestanding hill rises out of the terrain well clear of the noise of camp, topped with a small
+ring of plain fieldstone flush with the ground — no carved faces, no symbols, nothing tied to any one
+faith. It's the same idea as a real camp's "Council Ring," used for quiet reflection rather than any
+particular practice, and it's a real hill you have to climb to, not a menu — the slope tapers
+naturally back into the surrounding land, and a small floating sign ("🧘 Reflection Circle") marks
+the top once you get there.
+
+Stand anywhere inside the ring for a continuous 30 seconds and you earn the Duty to God badge — a
+"🧘 Meditating…" countdown at the bottom of the screen tracks your progress the whole time. Like the
+Astronomy badge's Big Dipper gaze, briefly stepping just outside the ring doesn't reset the count,
+only actually walking away for a couple of seconds does.
 
 ## Fire & torches
 

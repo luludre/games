@@ -142,6 +142,8 @@
   #craftHint.show{opacity:1;}
   #fishingHint{position:fixed;bottom:150px;left:50%;transform:translateX(-50%);color:#bfe4f0;font-size:13px;font-weight:600;text-shadow:0 0 4px #000;z-index:11;opacity:0;transition:opacity 0.15s;pointer-events:none;background:rgba(0,0,0,0.4);padding:6px 12px;border-radius:6px;}
   #fishingHint.show{opacity:1;}
+  #meditateHint{position:fixed;bottom:150px;left:50%;transform:translateX(-50%);color:#d8c8f0;font-size:13px;font-weight:600;text-shadow:0 0 4px #000;z-index:11;opacity:0;transition:opacity 0.15s;pointer-events:none;background:rgba(0,0,0,0.4);padding:6px 12px;border-radius:6px;}
+  #meditateHint.show{opacity:1;}
   #craftingModal{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;}
   #craftingPanel{background:#2b2320;color:#f2e9d8;width:min(560px,92vw);max-height:82vh;overflow:auto;border-radius:10px;border:2px solid #5a4632;box-shadow:0 10px 40px rgba(0,0,0,0.5);}
   #craftingHeader{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #5a4632;position:sticky;top:0;background:#2b2320;}
@@ -335,6 +337,7 @@
 </div>
 <div id="craftHint">Right-click the table (or press E) to craft</div>
 <div id="fishingHint"></div>
+<div id="meditateHint"></div>
 <div id="chatLog"></div>
 <div id="touchControls" hidden>
   <div id="touchLookZone"></div>
@@ -373,8 +376,8 @@
   <h1>🏕️ Thanks for playing ScoutCraft!</h1>
   <p>Hope you had fun setting up camp, earning your badges, and exploring the woods. Come back
   anytime — your camp will be exactly how you left it.</p>
-  <p>If you'd like to support Andre's troop, his popcorn fundraising is open right now:</p>
-  <a id="popcornLink" href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">🍿 Support Andre's Popcorn Fundraising</a>
+  <p>If you'd like to support Andre's troop, his popcorn fundraiser is open right now:</p>
+  <a id="popcornLink" href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">🍿 Support Andre's Popcorn Fundraiser</a>
   <div id="shareSection">
     <p>Show off your camp and your merit badges:</p>
     <div id="shareCard">
@@ -501,7 +504,7 @@
   <p id="playHint" class="small" hidden>Press <span class="key">B</span> to open your Backpack — it starts already packed with the real Scout's 10 Essentials plus a tent, sleeping bag, sleeping pad and rope. Pitch your tent (a real shelter you can walk into) and take a bearing with your compass to earn merit badges right away. Chop a tree for wood and leaves, put down your Camp Workbench, and press E beside it to craft — twist leaves into <b>rope</b>, then set up a <b>campfire</b>, a <b>lantern</b> and your <b>troop flag</b> — each one earns a merit badge too, and badges promote you from Scout all the way to Eagle Scout. Press <span class="key">M</span> to see your sash, <span class="key">K</span> near your tent after dark to sleep through the night, or <span class="key">H</span> any time for the full hotkey list. Rabbits and deer are harmless — the moose fights back if provoked, and the black bear attacks on sight. Progress saves automatically in this browser.</p>
   <p class="credits">Built by Andre Wu (Troop 904, Dublin, California), his dad, and an AI to share
   the adventure of Scouting. If you had fun, please consider supporting Andre's Scouting journey
-  and our heroes: <a href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">🍿 Andre's Popcorn Fundraising</a></p>
+  and our heroes: <a href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">🍿 Andre's Popcorn Fundraiser</a></p>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>

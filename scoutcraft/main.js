@@ -403,6 +403,7 @@ const BADGES = [
   { id:'archery',    emoji:'🏹', name:'Archery',       hint:'Hit the target 5 times at the Archery Range.', test:()=> scoutStats.archeryHits >= ARCHERY_HITS_NEEDED },
   { id:'birdstudy',  emoji:'🦅', name:'Bird Study',    hint:'Look at an eagle and 3 other kinds of birds.', test:()=> (scoutStats.birdsSeen.includes('eagle')||scoutStats.birdsSeen.includes('bigeagle')) && scoutStats.birdsSeen.filter(id=>id!=='eagle'&&id!=='bigeagle').length>=3 },
   { id:'scoutspirit',emoji:'🏅', name:'Scout Spirit', hint:'Find all 12 golden Scout Law boxes hidden around camp.', test:()=> scoutStats.lawsCollected.length >= SCOUT_LAW_POINTS.length },
+  { id:'dutytogod',  emoji:'🙏', name:'Duty to God',  hint:'Meditate at the hilltop reflection circle for 30 seconds.', test:()=> scoutStats.meditated },
 ];
 // Ranks are purely derived from how many badges you hold — no separate progression to track. A brand
 // new Scout hasn't earned anything yet, so rank starts at "None" rather than jumping straight to
@@ -438,7 +439,7 @@ const earnedBadges = new Set();
 const scoutStats = {
   wood:0, rope:0, campfires:0, tents:0, flags:0, compassUses:0,
   hiked:0, swam:0, highest:0, nightSeconds:0, species:[],
-  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, horsebackBlocks:0, lawsCollected:[], cookwareUsed:[], weatherSeen:[], scubaSeconds:0, recitations:[], archeryHits:0, birdsSeen:[],
+  campX:null, campZ:null, dipperFound:false, fishCaught:0, firstAidUses:0, kayakSeconds:0, horsebackBlocks:0, lawsCollected:[], cookwareUsed:[], weatherSeen:[], scubaSeconds:0, recitations:[], archeryHits:0, birdsSeen:[], meditated:false,
 };
 function saveScoutProgress(){
   try{
@@ -574,6 +575,12 @@ const Scout = {
     saveScoutProgress();
     checkBadges();
   },
+  meditated(){
+    if(scoutStats.meditated) return;
+    scoutStats.meditated = true;
+    saveScoutProgress();
+    checkBadges();
+  },
 };
 
 // ---- Continuous tracking (distance, altitude, night time, wildlife) ----
@@ -581,6 +588,7 @@ let scoutLastX = null, scoutLastZ = null;
 let scoutSpeciesScanTimer = 0;
 let scoutSaveTimer = 0;
 let dipperGazeTimer = 0, dipperGraceTimer = 0;
+let meditateTimer = 0, meditateGraceTimer = 0, nearAltar = false;
 // Night, for badge purposes, is the part of the cycle with no sun at all (see DAY_KEYFRAMES:
 // sunI is 0 from 0.80 through sunrise at 0.25).
 function isScoutNight(){
@@ -597,7 +605,7 @@ const BIRD_SIGHT_COS = Math.cos(20 * Math.PI/180);
 function updateScout(dt){
   pumpBadgeToast(dt);
   // Nothing counts while you're sitting on the start screen or a panel — badges are for playing.
-  if(!locked || isDead){ scoutLastX = null; scoutLastZ = null; dipperGazeTimer = 0; dipperGraceTimer = 0; return; }
+  if(!locked || isDead){ scoutLastX = null; scoutLastZ = null; dipperGazeTimer = 0; dipperGraceTimer = 0; meditateTimer = 0; meditateGraceTimer = 0; nearAltar = false; return; }
 
   // Distance travelled, split between hiking and swimming.
   if(scoutLastX != null){
@@ -628,6 +636,23 @@ function updateScout(dt){
   } else {
     dipperGraceTimer -= dt;
     if(dipperGraceTimer <= 0) dipperGazeTimer = 0;
+  }
+
+  // Duty to God: sit at the hilltop reflection circle for a continuous 30 seconds. Same forgiving
+  // "brief interruption doesn't wipe the streak" shape as the Astronomy gaze above — stepping half
+  // off the platform for a moment doesn't reset it, only actually walking away for
+  // MEDITATE_GRACE_S does.
+  if(altarStandPos){
+    const dx = altarStandPos.x-player.pos.x, dy = altarStandPos.y-(player.pos.y+player.eye), dz = altarStandPos.z-player.pos.z;
+    nearAltar = Math.hypot(dx,dy,dz) <= MEDITATE_RADIUS;
+  }
+  if(nearAltar){
+    meditateTimer += dt;
+    meditateGraceTimer = MEDITATE_GRACE_S;
+    if(meditateTimer >= MEDITATE_SECONDS) Scout.meditated();
+  } else {
+    meditateGraceTimer -= dt;
+    if(meditateGraceTimer <= 0) meditateTimer = 0;
   }
 
   // Nature study: what's within sight right now. Twice a second is plenty and keeps this off the
@@ -2314,6 +2339,7 @@ function generateWorld(){
   buildGiantFlag();
   buildTotems();
   buildArcheryRange();
+  buildMeditationHill();
   placeScoutLawBoxes();
 }
 // ---------- Cooking area: a flat, permanent 20x20 camp-cooking clearing ----------
@@ -2550,6 +2576,64 @@ function buildArcheryRange(){
     protect(tx, groundY+2, targetZ, ARCHERY_TARGET);
   }
 }
+// ---------- Meditation hilltop: a quiet, deliberately non-denominational reflection spot ----------
+// A freestanding hill rises out of the terrain well clear of camp's noise, topped with a small ring
+// of plain fieldstone flush with the ground — no carved faces, no symbols, nothing tied to any one
+// faith, just an open circle to stand inside — the same idea as a real camp's "Council Ring," used
+// for quiet reflection rather than any particular practice. Carved into whatever terrain is already
+// there the same way the cooking area and archery range are, just radial (a cosine falloff from a
+// flat peak back down to the natural height at the rim) instead of another flat rectangle, so it
+// actually reads as a hill instead of a plateau dropped onto the map.
+const ALTAR_ORIGIN = { x: 24, z: 24 };
+const ALTAR_HILL_RADIUS = 13;    // where the slope tapers back into natural terrain
+const ALTAR_PLATEAU_RADIUS = 3;  // flat ground at the peak, and the stone ring's own radius
+const ALTAR_HILL_HEIGHT = 9;     // how far the peak rises above the natural ground right under it
+let altarStandPos = null; // {x,y,z} world position of the ring's center — read by updateScout below
+function inAltarArea(x,z){
+  return Math.hypot(x-ALTAR_ORIGIN.x, z-ALTAR_ORIGIN.z) < ALTAR_HILL_RADIUS + 2;
+}
+function buildMeditationHill(){
+  const { x: x0, z: z0 } = ALTAR_ORIGIN;
+  const R = ALTAR_HILL_RADIUS;
+  let peakY = 0;
+  for(let dx=-R-1; dx<=R+1; dx++){
+    for(let dz=-R-1; dz<=R+1; dz++){
+      const dist = Math.hypot(dx,dz);
+      if(dist > R) continue;
+      const x = x0+dx, z = z0+dz;
+      if(!inBounds(x,0,z)) continue;
+      const base = heightAt(x,z);
+      const t = Math.min(1, Math.max(0, (dist-ALTAR_PLATEAU_RADIUS) / (R-ALTAR_PLATEAU_RADIUS)));
+      const boost = ALTAR_HILL_HEIGHT * (0.5 + 0.5*Math.cos(t*Math.PI));
+      const h = Math.min(WORLD_HEIGHT-4, Math.round(base + boost));
+      for(let y=1; y<=h; y++) setBlock(x,y,z, y===h ? GRASS : (y>h-4 ? DIRT : STONE));
+      for(let y=h+1; y<WORLD_HEIGHT; y++) setBlock(x,y,z,AIR);
+      if(dx===0 && dz===0) peakY = h;
+    }
+  }
+  // The ring itself: plain fieldstone flush with the ground, wide enough to stand inside rather than
+  // an object to look at. RING_POINTS chosen so the gaps between stones stay small enough to still
+  // read as a ring rather than scattered rocks (some points round to the same cell at this radius,
+  // which only makes the ring a bit denser on that side — a real stacked-stone ring isn't perfectly
+  // even either).
+  const protect = (x,y,z,block) => { setBlock(x,y,z,block); PROTECTED_CELLS.add(x+','+y+','+z); };
+  const RING_POINTS = 12;
+  for(let i=0;i<RING_POINTS;i++){
+    const a = (i/RING_POINTS) * Math.PI*2;
+    const rx = Math.round(x0 + Math.cos(a)*ALTAR_PLATEAU_RADIUS);
+    const rz = Math.round(z0 + Math.sin(a)*ALTAR_PLATEAU_RADIUS);
+    protect(rx, peakY, rz, STONE);
+  }
+  // y matches the same "+0.5" convention nearestCraftingTable/nearestTent use for their own fixed
+  // fixtures — the ring's own block height, not a feet or eye position — MEDITATE_RADIUS is generous
+  // enough to cover a Scout actually standing at ground level over it either way.
+  altarStandPos = { x: x0+0.5, y: peakY+0.5, z: z0+0.5 };
+  // Same floating wooden sign technique as the camp's own welcome sign — just enough to tell a
+  // Scout who's found this place what it's for, without any posted text beyond that.
+  const sign = buildCampSignSprite('🧘 Reflection Circle');
+  sign.position.set(x0+0.5, peakY+4, z0+0.5);
+  scene.add(sign);
+}
 // ---------- Scout Law boxes: 12 golden keepsakes, one per point of the Scout Law ----------
 // Scattered once at world-gen with their own seeded RNG (not Math.random()) so every fresh load
 // re-derives the exact same 12 world positions. Unlike the purely ambient wildlife elsewhere in this
@@ -2585,7 +2669,7 @@ function placeScoutLawBoxes(){
     for(let tries=0; tries<300 && !spot; tries++){
       const x = 6 + Math.floor(rng()*(WORLD_SIZE-12));
       const z = 6 + Math.floor(rng()*(WORLD_SIZE-12));
-      if(inCookingArea(x,z) || inArcheryRange(x,z)) continue;
+      if(inCookingArea(x,z) || inArcheryRange(x,z) || inAltarArea(x,z)) continue;
       const h = heightAt(x,z);
       if(h<=SEA_LEVEL+1) continue; // dry land only
       if(getBlock(x,h+1,z)!==AIR) continue; // not already occupied by a tree or other structure
@@ -5025,6 +5109,9 @@ const BIG_DIPPER_DIR = new THREE.Vector3(0, Math.sin(55*Math.PI/180), -Math.cos(
 const DIPPER_GAZE_COS = Math.cos(18 * Math.PI/180); // ~18° cone — roughly the whole drawn shape, forgiving of ordinary mouse drift
 const DIPPER_GAZE_SECONDS = 10;
 const DIPPER_GAZE_GRACE_S = 1.5; // briefly glancing away doesn't wipe out the whole streak, only stopping this long does
+const MEDITATE_SECONDS = 30;
+const MEDITATE_GRACE_S = 2; // stepping half off the ring for a moment doesn't wipe the streak either
+const MEDITATE_RADIUS = 3.2; // comfortably covers the whole stone ring's interior (see ALTAR_PLATEAU_RADIUS)
 // The real ladle asterism in local (right, up) offsets around BIG_DIPPER_DIR — handle tip to bowl:
 // Alkaid, Mizar, Alioth, Megrez, then the bowl itself Megrez-Phecda-Merak-Dubhe back to Megrez.
 const DIPPER_STARS = [
@@ -8914,6 +9001,7 @@ let craftingOpen = false;
 const craftingModal = document.getElementById('craftingModal');
 const craftHint = document.getElementById('craftHint');
 const fishingHint = document.getElementById('fishingHint');
+const meditateHint = document.getElementById('meditateHint');
 document.getElementById('craftingClose').addEventListener('click', ()=> closeCrafting(true));
 craftingModal.addEventListener('click', e=>{ if(e.target===craftingModal) closeCrafting(true); });
 
@@ -9846,6 +9934,12 @@ function animate(now){
     fishingHint.classList.add('show');
   } else {
     fishingHint.classList.remove('show');
+  }
+  if(nearAltar){
+    meditateHint.textContent = `🧘 Meditating... ${Math.max(0, Math.ceil(MEDITATE_SECONDS - meditateTimer))}s`;
+    meditateHint.classList.add('show');
+  } else {
+    meditateHint.classList.remove('show');
   }
 
   const coordsEl = document.getElementById('coordsLabel');
