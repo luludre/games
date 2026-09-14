@@ -359,9 +359,11 @@ rather than six separately-drawn tiles. Like the cooking fixtures, it's permanen
 Left-click it and it plays a full recitation of the Pledge of Allegiance (see
 [`assets/README.md`](assets/README.md)) — one at a time, a second click while it's still playing does
 nothing until it finishes. It sits well above the ordinary ~6-block reach you'd use to break or attack
-something, so aiming at it uses its own much longer line-of-sight check instead of that short reach —
-but you do still have to actually be there: within about 10 blocks of the pole, the same as standing
-in front of it, not clear across the clearing looking up.
+something, so it checks whether you're roughly looking toward the mural (a forgiving cone, not a
+pixel-exact hit — the bare pole shaft stands immediately beside the mural, so an exact raycast could
+clip the shaft and miss by a hair) rather than the short reach everything else uses — but you do
+still have to actually be there: within about 10 blocks of the pole, the same as standing in front
+of it, not clear across the clearing looking up.
 
 Two more fixed monuments sit in the clearing's other free corners, styled after the wooden totems
 real troops carve as camp/Eagle projects rather than any real Indigenous totem-pole tradition. Each

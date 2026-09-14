@@ -7910,27 +7910,29 @@ function raycastBlock(maxDist=6, step=0.02){
   }
   return null;
 }
-// The giant flag's mural sits atop a 12-block pole — well past raycastBlock's normal ~6-block reach,
-// which is deliberately short for ordinary mining/attacking. Reciting the Pledge in front of it isn't
-// that kind of interaction, so it gets its own much longer raycast instead of widening reach for
-// everything else. A coarser 0.1 step is fine here since it only needs to catch a chunky 3x2 target.
-// The long reach is just to handle looking steeply up at the mural from nearby — FLAG_PLEDGE_PROXIMITY
-// below is what actually stops it firing from clear across camp.
+// The giant flag's mural sits high up (near the top of a 12-block pole) and immediately beside the
+// bare pole shaft, which is its own solid column the same height. FLAG_PLEDGE_PROXIMITY below is what
+// stops this firing from clear across camp — this just has to confirm you're actually looking toward
+// the mural once you're that close.
 const FLAG_PLEDGE_MAX_DIST = 40;
 const FLAG_PLEDGE_PROXIMITY = 10; // horizontal blocks from the pole — has to be standing in front of it
+const FLAG_PLEDGE_COS = Math.cos(10 * Math.PI/180); // ~10° cone — deliberate but forgiving of imprecise aim
 function raycastUSFlag(){
   const pole = giantFlagPolePos();
   const dx = player.pos.x-(pole.x+0.5), dz = player.pos.z-(pole.z+0.5);
   if(dx*dx+dz*dz > FLAG_PLEDGE_PROXIMITY*FLAG_PLEDGE_PROXIMITY) return false;
-  const dir = getLookDir(player.yaw, player.pitch);
-  const origin = camera.position;
-  for(let t=0; t<FLAG_PLEDGE_MAX_DIST; t+=0.1){
-    const bx=Math.floor(origin.x+dir.x*t), by=Math.floor(origin.y+dir.y*t), bz=Math.floor(origin.z+dir.z*t);
-    const b = getBlock(bx,by,bz);
-    if(b===AIR || b===WATER) continue;
-    return US_FLAG_BLOCKS.has(b); // first solid thing in the way must actually be the flag, not something in front of it
-  }
-  return false;
+  // A pixel-thin raycast here used to make it easy to instead clip the bare pole shaft standing right
+  // next to the mural and miss by a hair, so this checks the angle to the mural's own center instead
+  // of demanding an exact hit — the same forgiving-cone approach as the Big Dipper gaze check.
+  const { x: poleX, z: poleZ } = pole;
+  const flagTopY = COOKING_AREA_Y + 1 + GIANT_FLAG_POLE_HEIGHT;
+  const muralCenter = new THREE.Vector3(poleX-1.5, flagTopY, poleZ+0.5);
+  const toMural = muralCenter.clone().sub(camera.position);
+  const dist = toMural.length();
+  if(dist > FLAG_PLEDGE_MAX_DIST) return false;
+  toMural.normalize();
+  const lookDir = getLookDir(player.yaw, player.pitch);
+  return lookDir.dot(toMural) > FLAG_PLEDGE_COS;
 }
 let lastTreeWarningAt = 0;
 const TREE_WARNING_COOLDOWN_MS = 5000;
