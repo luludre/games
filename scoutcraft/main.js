@@ -8722,7 +8722,7 @@ function fillWrappedText(ctx, text, cx, y, maxWidth, lineH, maxLines){
 function buildAchievementCanvas(){
   const cols = 6, rows = Math.ceil(BADGES.length/cols);
   const margin = 26, tileW = 148, tileH = 104, gap = 10;
-  const headerH = 172, footerH = 40;
+  const headerH = 222, footerH = 40;
   const width = margin*2 + cols*tileW + (cols-1)*gap;
   const height = headerH + rows*tileH + (rows-1)*gap + footerH;
   const canvas = document.createElement('canvas');
@@ -8735,24 +8735,26 @@ function buildAchievementCanvas(){
   ctx.strokeStyle = '#c8a44d'; ctx.lineWidth = 5;
   ctx.strokeRect(3,3,width-6,height-6);
 
+  // Header text stack — generously spaced (each line's gap sized to the fonts on either side of it)
+  // rather than packed tight, so title/name/rank/count read as separate lines at a glance.
   ctx.textAlign = 'center';
   ctx.fillStyle = '#f2e9d8';
   ctx.font = 'bold 26px sans-serif';
-  ctx.fillText('🏕️ ScoutCraft', width/2, 34);
+  ctx.fillText('🏕️ ScoutCraft', width/2, 32);
 
   ctx.fillStyle = '#c8e0a8';
   ctx.font = 'bold 20px sans-serif';
-  ctx.fillText(myName, width/2, 62);
+  ctx.fillText(myName, width/2, 68);
 
   const count = earnedBadges.size, total = BADGES.length;
-  drawRankBadge(ctx, width/2, 92, 22, rankIndexFor(count));
+  drawRankBadge(ctx, width/2, 110, 22, rankIndexFor(count));
   ctx.fillStyle = '#e8c46a';
   ctx.font = 'bold 34px sans-serif';
-  ctx.fillText(rankFor(count), width/2, 134);
+  ctx.fillText(rankFor(count), width/2, 164);
 
   ctx.fillStyle = '#c8e0a8';
   ctx.font = '17px sans-serif';
-  ctx.fillText(`${count} of ${total} Merit Badges Earned`, width/2, 158);
+  ctx.fillText(`${count} of ${total} Merit Badges Earned`, width/2, 196);
 
   BADGES.forEach((b,i)=>{
     const col = i%cols, row = Math.floor(i/cols);
@@ -8767,11 +8769,11 @@ function buildAchievementCanvas(){
     ctx.globalAlpha = got ? 1 : 0.35;
     ctx.font = '30px sans-serif';
     ctx.fillStyle = '#fff';
-    ctx.fillText(b.emoji, x+tileW/2, y+38);
+    ctx.fillText(b.emoji, x+tileW/2, y+34);
     ctx.globalAlpha = 1;
     ctx.font = 'bold 12px sans-serif';
     ctx.fillStyle = got ? '#f0dfa8' : 'rgba(240,223,168,0.55)';
-    fillWrappedText(ctx, b.name, x+tileW/2, y+72, tileW-16, 15, 2);
+    fillWrappedText(ctx, b.name, x+tileW/2, y+78, tileW-16, 15, 2);
   });
 
   ctx.fillStyle = 'rgba(242,233,216,0.75)';
