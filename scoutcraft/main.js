@@ -3502,6 +3502,67 @@ function applyUniformCustomization(charGroup, troop, neckerchiefColorHex){
   u.troopPatchMat.needsUpdate = true;
   u.neckerchief.userData.mat.color.set(neckerchiefColorHex);
 }
+// Draws a small standalone front-on render of the player's own character into destCtx at
+// (dx,dy,dw,dh) — a completely separate THREE scene/camera/renderer from the main game view (a fresh
+// createCharacterMesh(), not the live characterMesh), so grabbing this snapshot never touches actual
+// gameplay state. The character's own "front" (the shirt-pocket/face textures) is the box geometry's
+// -z face — see createCharacterMesh — so the camera sits on the -z side looking back toward +z at it,
+// the same convention used everywhere else in this file. Everything here is torn down before
+// returning, since the renderer's canvas would go blank the moment it's disposed.
+function drawAvatarPortrait(destCtx, dx, dy, dw, dh){
+  const scene = new THREE.Scene();
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x445533, 1.1));
+  const dir = new THREE.DirectionalLight(0xffffff, 0.9);
+  dir.position.set(1, 2, -2);
+  scene.add(dir);
+
+  const avatar = createCharacterMesh();
+  applyUniformCustomization(avatar, myTroop, myNeckerchiefColor);
+  // Turned 30° off dead-on rather than a straight front view, angling toward the backpack worn on
+  // the back (opposite the front-facing shirt/face textures — see createCharacterMesh). At just 30°
+  // the arms still mostly occlude it — a bigger angle shows more if that's ever wanted.
+  avatar.rotation.y = THREE.MathUtils.degToRad(30);
+  scene.add(avatar);
+
+  const camera = new THREE.PerspectiveCamera(35, dw/dh, 0.1, 10);
+  camera.position.set(0, 0.9, -3.6);
+  camera.lookAt(0, 0.9, 0);
+
+  const renderer = new THREE.WebGLRenderer({ alpha:true, antialias:true });
+  renderer.setSize(dw, dh);
+  renderer.render(scene, camera);
+  // Copied via a scratch canvas + manual alpha blending rather than destCtx.drawImage(renderer.
+  // domElement, ...) directly — reproducibly, once a destination canvas has ever had a gradient
+  // fillStyle used on it (exactly what buildAchievementCanvas's header background is), Chrome fails
+  // to actually composite a WebGL canvas drawn into it afterward: no error, just silently leaves the
+  // destination untouched. Drawing onto a fresh scratch canvas first sidesteps that, and since the
+  // destination here is always fully opaque already, a manual "source over opaque" blend is all
+  // getImageData/putImageData needs to reproduce what drawImage would have done.
+  const scratch = document.createElement('canvas');
+  scratch.width = dw; scratch.height = dh;
+  scratch.getContext('2d').drawImage(renderer.domElement, 0, 0);
+  const src = scratch.getContext('2d').getImageData(0, 0, dw, dh).data;
+  const dst = destCtx.getImageData(dx, dy, dw, dh);
+  const dstData = dst.data;
+  for(let i=0;i<src.length;i+=4){
+    const a = src[i+3]/255;
+    if(a<=0) continue;
+    dstData[i]   = src[i]  *a + dstData[i]  *(1-a);
+    dstData[i+1] = src[i+1]*a + dstData[i+1]*(1-a);
+    dstData[i+2] = src[i+2]*a + dstData[i+2]*(1-a);
+  }
+  destCtx.putImageData(dst, dx, dy);
+
+  avatar.traverse(o=>{
+    if(!o.isMesh) return;
+    o.geometry.dispose();
+    (Array.isArray(o.material) ? o.material : [o.material]).forEach(m=>{
+      if(m.map) m.map.dispose();
+      m.dispose();
+    });
+  });
+  renderer.dispose();
+}
 function animateWalk(group, state, dt, moving, sprinting){
   state.amp += ((moving?1:0) - state.amp) * Math.min(1, dt*8);
   state.phase += dt * (sprinting ? 11 : 7);
@@ -8941,6 +9002,11 @@ function buildAchievementCanvas(){
   ctx.fillStyle = bg; ctx.fillRect(0,0,width,height);
   ctx.strokeStyle = '#c8a44d'; ctx.lineWidth = 5;
   ctx.strokeRect(3,3,width-6,height-6);
+
+  // A front-on render of the player's own character, left of the header text — see
+  // drawAvatarPortrait for why this needs its own throwaway THREE scene rather than reusing the
+  // live characterMesh.
+  drawAvatarPortrait(ctx, margin, (headerH-200)/2, 100, 200);
 
   // Header text stack — generously spaced (each line's gap sized to the fonts on either side of it)
   // rather than packed tight, so title/name/rank/count read as separate lines at a glance.
