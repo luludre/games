@@ -45,10 +45,20 @@ A recitation of the Outdoor Code, provided directly by Andre's family for this g
 - Source: supplied as a WAV/AIFF recording, converted to AAC (`.m4a`) with `afconvert`, same as the two clips above.
 - Played in full (~11.5s) when the player right-clicks the 3-tall Scout Totem at the cooking area.
 
-## eagle-scout-emblem.png
+## Rank emblems
 
-A 512x517 pixel-art Eagle Scout crest — eagle, "BE PREPARED" banner, and an "EAGLE SCOUT" ribbon — on a transparent background, used as the actual Eagle Scout rank badge everywhere `drawRankBadge` draws one (shirt patch, floating name tag, achievement share card), in place of the procedural medallion every rank below it gets.
+Real pixel-art artwork for all seven earned ranks, used as the actual rank badge everywhere `drawRankBadge` draws one — shirt patch, floating name tag, achievement share card — in place of a procedural medallion. Each is on a transparent background, and each falls back to that same procedural medallion for any frame rendered before its image finishes loading.
 
-- Source: an AI-generated (Gemini) image supplied directly by Andre for this game; background removed and cropped to the crest.
+| File | Rank | Design |
+|---|---|---|
+| `scout-emblem.png` | Scout | A gold fleur-de-lis alone |
+| `tenderfoot-scout-emblem.png` | Tenderfoot | Fleur-de-lis over a "ScoutCraft" ribbon |
+| `second-class-emblem.png` | Second Class | Fleur-de-lis over a mountain-and-river scene, on a "ScoutCraft" ribbon |
+| `first-class-emblem.png` | First Class | A layered fleur-de-lis over a "ScoutCraft" ribbon |
+| `star-scout-emblem.png` | Star Scout | A gold star with a fleur-de-lis at its center, on a round badge |
+| `life-scout-emblem.png` | Life Scout | A fleur-de-lis at the center of a heart-shaped badge |
+| `eagle-scout-emblem.png` | Eagle Scout | The full Eagle Scout crest — eagle, "BE PREPARED" banner, and an "EAGLE SCOUT" ribbon |
 
-Everything else in the game (textures, other sound effects) is generated procedurally at runtime — these are the only seven real asset files.
+- Source: AI-generated images supplied directly by Andre for this game; each background-removed and cropped to its badge.
+
+Everything else in the game (textures, other sound effects) is generated procedurally at runtime — these are the only thirteen real asset files.
