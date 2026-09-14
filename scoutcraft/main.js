@@ -8490,6 +8490,10 @@ function useHand(){
 const overlay = document.getElementById('overlay');
 const touchControls = document.getElementById('touchControls');
 let locked = false;
+// One-way flag: true the moment the player actually clicks in to play, unlike `overlay.hidden`
+// (which flips back and forth for every modal). Gates the back-button trap and the close-tab
+// thank-you screen below so neither fires for someone who never got past the front page.
+let everStartedPlaying = false;
 const nameInput = document.getElementById('nameInput');
 nameInput.value = myName==='Player' ? '' : myName;
 nameInput.addEventListener('click', e=> e.stopPropagation());
@@ -8536,6 +8540,18 @@ if(isTouchDevice){
 overlay.addEventListener('click', ()=>{
   ensureAudio();
   if(craftingOpen) return;
+  if(!everStartedPlaying){
+    everStartedPlaying = true;
+    // Traps the browser's back button once play actually begins: a page can't refuse to navigate
+    // back outright, but pushing one extra same-page history entry — then re-pushing it every time
+    // `popstate` fires — means back/forward never actually leaves; it just lands here again, so this
+    // shows the same thank-you/exit screen Quit does instead of silently vanishing.
+    try{ history.pushState({scoutcraft:true}, '', location.href); }catch(e){}
+    window.addEventListener('popstate', ()=>{
+      try{ history.pushState({scoutcraft:true}, '', location.href); }catch(e){}
+      if(thankYouScreen.hidden) quitGame();
+    });
+  }
   const typedName = nameInput.value.trim().slice(0,16);
   if(typedName) myName = typedName;
   try{ localStorage.setItem('scoutcraft_player_name', myName); }catch(e){}
@@ -8860,12 +8876,12 @@ if(sashModalEl){
 }
 
 // ---------- Quit / thank-you screen ----------
-// A deliberate in-game "I'm done for now" action, not tied to actually closing the tab (a page can't
-// intercept that with anything beyond a native browser prompt) — clicking the "Share My Achievements"
-// button unlocks the mouse and swaps in a full-screen thank-you screen with Andre's popcorn fundraiser
-// link. World/inventory/badge
-// progress is already saved continuously during play, so there's nothing extra to do on the way out;
-// "Keep playing instead" just puts the overlay away again.
+// Clicking "Share My Achievements" unlocks the mouse and swaps in a full-screen thank-you screen with
+// Andre's popcorn fundraiser link. Also reused (see the back-button trap and beforeunload handler
+// below) so pressing back or canceling a close prompt lands on this same screen instead of a page
+// that just silently vanishes or snaps back to raw gameplay. World/inventory/badge progress is
+// already saved continuously during play, so there's nothing extra to do on the way out; "Keep
+// playing instead" just puts the overlay away again.
 const thankYouScreen = document.getElementById('thankYouScreen');
 // ---- Sharing: the game's own URL plus a one-line brag about badges earned so far ----
 // location.origin+pathname (not the full href) so a stray query string or #hash from however the
@@ -9776,12 +9792,16 @@ setInterval(savePosition, POSITION_SAVE_INTERVAL_MS);
 window.addEventListener('beforeunload', savePosition);
 window.addEventListener('pagehide', savePosition);
 // Browsers don't let a page show its own custom UI at the moment of leaving — the tab just tears
-// down — so there's no way to actually pop the thank-you screen open on a close/navigate-away the
-// way clicking Quit does. The closest real equivalent is the browser's own generic "Leave site?"
-// prompt, which at least gives a beat to reconsider before going. Skipped once they've already seen
-// the real thank-you screen (clicked Quit themselves) — no need to prompt twice on the way out.
+// down — so there's no way to actually pop the thank-you screen open on the close itself the way
+// clicking Quit does. The closest real equivalent is the browser's own generic "Leave site?" prompt;
+// swapping in the real thank-you screen here too means that if they cancel that prompt and stay, they
+// land on the same graceful recap instead of snapping back to raw gameplay. Skipped once they've
+// already seen it (clicked Quit themselves, or already canceled once) — no need to prompt twice on
+// the way out, and skipped entirely for someone who closes the tab from the front page having never
+// actually played.
 window.addEventListener('beforeunload', e=>{
   if(!thankYouScreen.hidden) return;
+  if(everStartedPlaying) quitGame();
   e.preventDefault();
   e.returnValue = '';
 });
