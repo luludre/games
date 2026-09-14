@@ -20,7 +20,7 @@ A field recording of New Year's fireworks heard from a distance in the Belgian c
 
 ## icon-512.png
 
-A 512x512 voxel-style isometric campsite scene — an A-frame cabin, a lit campfire, a picnic table with a backpack and water bottle, a lantern, a stream, and pine trees — on a transparent background, used as the game's favicon and bookmark/home-screen icon.
+A 512x512 stylized 3D campsite icon — a red A-frame tent, a lit campfire ringed with stones, pine trees, and scattered rocks on a patch of grass — on a transparent background, used as the game's favicon and bookmark/home-screen icon.
 
 - Source: supplied directly by Andre for this game, downscaled from a 2048x2048 original.
 
