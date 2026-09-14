@@ -11,7 +11,7 @@ twenty-three merit badges that promote you from Scout to Eagle Scout.
 No build step, no server-side code, no dependencies to install, no account to make. Everything —
 your world, your inventory, your progress — lives in this browser's `localStorage`.
 
-ScoutCraft began as a fork of [Blockcraft](../blockcraft) and keeps its whole engine: the same
+ScoutCraft began as a fork of the multiplayer single webpage game, [Blockcraft](../blockcraft), and keeps its whole engine: the same
 terrain generation, chunked meshing, day/night cycle, seasons and weather, animals, birds, fish and
 wildlife. What's new is everything in [Merit badges](#merit-badges) and [Camp gear](#camp-gear).
 
@@ -69,7 +69,7 @@ Then visit `http://localhost:8000`.
 - The **🏅 Share My Achievements** button (top-right corner) — shows a thank-you screen with a link to support Andre's troop's popcorn sale. Nothing is lost by clicking it — your world, inventory, and badges are already saved continuously as you play — and "Keep playing instead" puts it away again with no other side effects.
 - Closing the tab or navigating away without clicking it first triggers the browser's own "Leave site?" confirmation instead — a browser won't let a page show its own custom screen at that exact moment, so this is the closest real equivalent, just enough of a pause to reconsider. It only fires once; if you've already seen the actual thank-you screen, closing from there doesn't prompt twice.
 - That same thank-you screen can also share the game itself — Facebook, X, Instagram, Message, and Email buttons, plus a native **Share…** button on phones/browsers that support one. Every link carries the game's own URL and a one-line brag about your current rank and merit badges (skipped if you haven't earned one yet), regenerated fresh each time you open it so it's never stale. Instagram has no actual "share a link" page the way the others do, so on a phone it hands off to the same native share sheet (which lists Instagram as one of its targets); everywhere else it copies the text so you can paste it into a post or story yourself.
-- The thank-you screen also draws a shareable badge picture on the spot — your current rank plus all 23 merit badges, earned ones lit up in gold and the rest dimmed, regenerated fresh every time you open it just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
+- The thank-you screen also draws a shareable badge picture on the spot — your name, current rank, and all 23 merit badges (earned ones lit up in gold, the rest dimmed), laid out beside the share buttons rather than stacked above them so the whole screen reads as one card instead of a long scroll, and regenerated fresh every time you open it just like the text above. On a phone, **Share…** and **Instagram** attach it directly through the native share sheet wherever that's supported; everywhere else, hit **🖼️ Save Image** to download it and attach it by hand, since Facebook, X, and Email's own links have no way to carry a file.
 
 The front page says so directly, but worth repeating here too: ScoutCraft is designed for a desktop or laptop with a real keyboard and mouse — that's where every control above actually applies. On a phone or tablet (iPad included), the game automatically switches to touch controls instead — no setup needed, just open the page in Safari and tap to play — but that's a fallback, not the intended experience:
 
@@ -359,9 +359,11 @@ rather than six separately-drawn tiles. Like the cooking fixtures, it's permanen
 Left-click it and it plays a full recitation of the Pledge of Allegiance (see
 [`assets/README.md`](assets/README.md)) — one at a time, a second click while it's still playing does
 nothing until it finishes. It sits well above the ordinary ~6-block reach you'd use to break or attack
-something, so aiming at it uses its own much longer line-of-sight check instead of that short reach —
-but you do still have to actually be there: within about 10 blocks of the pole, the same as standing
-in front of it, not clear across the clearing looking up.
+something, so it checks whether you're roughly looking toward the mural (a forgiving cone, not a
+pixel-exact hit — the bare pole shaft stands immediately beside the mural, so an exact raycast could
+clip the shaft and miss by a hair) rather than the short reach everything else uses — but you do
+still have to actually be there: within about 10 blocks of the pole, the same as standing in front
+of it, not clear across the clearing looking up.
 
 Two more fixed monuments sit in the clearing's other free corners, styled after the wooden totems
 real troops carve as camp/Eagle projects rather than any real Indigenous totem-pole tradition. Each

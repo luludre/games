@@ -7910,27 +7910,29 @@ function raycastBlock(maxDist=6, step=0.02){
   }
   return null;
 }
-// The giant flag's mural sits atop a 12-block pole — well past raycastBlock's normal ~6-block reach,
-// which is deliberately short for ordinary mining/attacking. Reciting the Pledge in front of it isn't
-// that kind of interaction, so it gets its own much longer raycast instead of widening reach for
-// everything else. A coarser 0.1 step is fine here since it only needs to catch a chunky 3x2 target.
-// The long reach is just to handle looking steeply up at the mural from nearby — FLAG_PLEDGE_PROXIMITY
-// below is what actually stops it firing from clear across camp.
+// The giant flag's mural sits high up (near the top of a 12-block pole) and immediately beside the
+// bare pole shaft, which is its own solid column the same height. FLAG_PLEDGE_PROXIMITY below is what
+// stops this firing from clear across camp — this just has to confirm you're actually looking toward
+// the mural once you're that close.
 const FLAG_PLEDGE_MAX_DIST = 40;
 const FLAG_PLEDGE_PROXIMITY = 10; // horizontal blocks from the pole — has to be standing in front of it
+const FLAG_PLEDGE_COS = Math.cos(10 * Math.PI/180); // ~10° cone — deliberate but forgiving of imprecise aim
 function raycastUSFlag(){
   const pole = giantFlagPolePos();
   const dx = player.pos.x-(pole.x+0.5), dz = player.pos.z-(pole.z+0.5);
   if(dx*dx+dz*dz > FLAG_PLEDGE_PROXIMITY*FLAG_PLEDGE_PROXIMITY) return false;
-  const dir = getLookDir(player.yaw, player.pitch);
-  const origin = camera.position;
-  for(let t=0; t<FLAG_PLEDGE_MAX_DIST; t+=0.1){
-    const bx=Math.floor(origin.x+dir.x*t), by=Math.floor(origin.y+dir.y*t), bz=Math.floor(origin.z+dir.z*t);
-    const b = getBlock(bx,by,bz);
-    if(b===AIR || b===WATER) continue;
-    return US_FLAG_BLOCKS.has(b); // first solid thing in the way must actually be the flag, not something in front of it
-  }
-  return false;
+  // A pixel-thin raycast here used to make it easy to instead clip the bare pole shaft standing right
+  // next to the mural and miss by a hair, so this checks the angle to the mural's own center instead
+  // of demanding an exact hit — the same forgiving-cone approach as the Big Dipper gaze check.
+  const { x: poleX, z: poleZ } = pole;
+  const flagTopY = COOKING_AREA_Y + 1 + GIANT_FLAG_POLE_HEIGHT;
+  const muralCenter = new THREE.Vector3(poleX-1.5, flagTopY, poleZ+0.5);
+  const toMural = muralCenter.clone().sub(camera.position);
+  const dist = toMural.length();
+  if(dist > FLAG_PLEDGE_MAX_DIST) return false;
+  toMural.normalize();
+  const lookDir = getLookDir(player.yaw, player.pitch);
+  return lookDir.dot(toMural) > FLAG_PLEDGE_COS;
 }
 let lastTreeWarningAt = 0;
 const TREE_WARNING_COOLDOWN_MS = 5000;
@@ -8695,13 +8697,32 @@ function roundRectPath(ctx,x,y,w,h,r){
   ctx.arcTo(x,y,x+w,y,r);
   ctx.closePath();
 }
-// A shareable "trading card" of the player's rank and every merit badge, earned ones lit up and the
-// rest dimmed — same visual language as the in-game sash (see renderSash) so it feels like a snapshot
-// of that screen rather than a separate design.
+// Draws text centered on (cx,y), wrapping onto up to maxLines lines of lineH each if it doesn't fit
+// maxWidth — used below so a long badge name (Horseback Riding, Scuba Diving) never overflows its
+// tile now that tiles are narrower than the original 4-column layout.
+function fillWrappedText(ctx, text, cx, y, maxWidth, lineH, maxLines){
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for(const w of words){
+    const test = line ? line+' '+w : w;
+    if(ctx.measureText(test).width > maxWidth && line){ lines.push(line); line = w; }
+    else line = test;
+  }
+  if(line) lines.push(line);
+  if(lines.length > maxLines) lines.length = maxLines;
+  const startY = y - (lines.length-1)*lineH/2;
+  lines.forEach((l,i)=> ctx.fillText(l, cx, startY+i*lineH));
+}
+// A shareable "trading card" of the player's name, rank, and every merit badge, earned ones lit up
+// and the rest dimmed — same visual language as the in-game sash (see renderSash) so it feels like a
+// snapshot of that screen rather than a separate design. A wide, short grid (6 columns) rather than
+// the original narrow, tall one so the card pairs sensibly with a share-button column beside it
+// instead of towering over the page on its own.
 function buildAchievementCanvas(){
-  const cols = 4, rows = Math.ceil(BADGES.length/cols);
-  const margin = 40, tileW = 210, tileH = 140, gap = 14;
-  const headerH = 210, footerH = 50;
+  const cols = 6, rows = Math.ceil(BADGES.length/cols);
+  const margin = 26, tileW = 148, tileH = 104, gap = 10;
+  const headerH = 172, footerH = 40;
   const width = margin*2 + cols*tileW + (cols-1)*gap;
   const height = headerH + rows*tileH + (rows-1)*gap + footerH;
   const canvas = document.createElement('canvas');
@@ -8711,47 +8732,51 @@ function buildAchievementCanvas(){
   const bg = ctx.createLinearGradient(0,0,0,height);
   bg.addColorStop(0,'#24402a'); bg.addColorStop(1,'#0e1a0e');
   ctx.fillStyle = bg; ctx.fillRect(0,0,width,height);
-  ctx.strokeStyle = '#c8a44d'; ctx.lineWidth = 6;
+  ctx.strokeStyle = '#c8a44d'; ctx.lineWidth = 5;
   ctx.strokeRect(3,3,width-6,height-6);
 
   ctx.textAlign = 'center';
   ctx.fillStyle = '#f2e9d8';
-  ctx.font = 'bold 36px sans-serif';
-  ctx.fillText('🏕️ ScoutCraft', width/2, 46);
-
-  const count = earnedBadges.size, total = BADGES.length;
-  drawRankBadge(ctx, width/2, 96, 30, rankIndexFor(count));
-  ctx.fillStyle = '#e8c46a';
-  ctx.font = 'bold 52px sans-serif';
-  ctx.fillText(rankFor(count), width/2, 160);
+  ctx.font = 'bold 26px sans-serif';
+  ctx.fillText('🏕️ ScoutCraft', width/2, 34);
 
   ctx.fillStyle = '#c8e0a8';
-  ctx.font = '26px sans-serif';
-  ctx.fillText(`${count} of ${total} Merit Badges Earned`, width/2, 195);
+  ctx.font = 'bold 20px sans-serif';
+  ctx.fillText(myName, width/2, 62);
+
+  const count = earnedBadges.size, total = BADGES.length;
+  drawRankBadge(ctx, width/2, 92, 22, rankIndexFor(count));
+  ctx.fillStyle = '#e8c46a';
+  ctx.font = 'bold 34px sans-serif';
+  ctx.fillText(rankFor(count), width/2, 134);
+
+  ctx.fillStyle = '#c8e0a8';
+  ctx.font = '17px sans-serif';
+  ctx.fillText(`${count} of ${total} Merit Badges Earned`, width/2, 158);
 
   BADGES.forEach((b,i)=>{
     const col = i%cols, row = Math.floor(i/cols);
     const x = margin + col*(tileW+gap), y = headerH + row*(tileH+gap);
     const got = earnedBadges.has(b.id);
-    roundRectPath(ctx, x, y, tileW, tileH, 12);
+    roundRectPath(ctx, x, y, tileW, tileH, 10);
     ctx.fillStyle = got ? 'rgba(200,164,77,0.18)' : 'rgba(255,255,255,0.05)';
     ctx.fill();
     ctx.lineWidth = 2;
     ctx.strokeStyle = got ? '#c8a44d' : 'rgba(255,255,255,0.12)';
     ctx.stroke();
     ctx.globalAlpha = got ? 1 : 0.35;
-    ctx.font = '40px sans-serif';
+    ctx.font = '30px sans-serif';
     ctx.fillStyle = '#fff';
-    ctx.fillText(b.emoji, x+tileW/2, y+56);
+    ctx.fillText(b.emoji, x+tileW/2, y+38);
     ctx.globalAlpha = 1;
-    ctx.font = 'bold 15px sans-serif';
+    ctx.font = 'bold 12px sans-serif';
     ctx.fillStyle = got ? '#f0dfa8' : 'rgba(240,223,168,0.55)';
-    ctx.fillText(b.name, x+tileW/2, y+90);
+    fillWrappedText(ctx, b.name, x+tileW/2, y+72, tileW-16, 15, 2);
   });
 
   ctx.fillStyle = 'rgba(242,233,216,0.75)';
-  ctx.font = '18px sans-serif';
-  ctx.fillText(shareGameUrl(), width/2, height-22);
+  ctx.font = '14px sans-serif';
+  ctx.fillText(shareGameUrl(), width/2, height-14);
 
   return canvas;
 }

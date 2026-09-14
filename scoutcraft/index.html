@@ -198,25 +198,35 @@
     border:2px solid rgba(255,255,255,0.4);border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;}
   #btnQuit:hover{background:rgba(180,40,30,0.6);}
   #thankYouScreen{position:fixed;inset:0;z-index:40;background:linear-gradient(#1a2e1a,#0e1a0e);color:#f2e9d8;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
+    display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;
+    padding:40px 24px;overflow-y:auto;}
   #thankYouScreen h1{font-size:2.2em;margin:0 0 10px;}
   #thankYouScreen p{max-width:520px;line-height:1.6;font-size:15px;opacity:0.92;margin:8px 0;}
   #popcornLink{display:inline-block;margin-top:18px;background:#c23b28;color:#fff;text-decoration:none;
     font-weight:700;padding:12px 22px;border-radius:8px;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,0.4);}
   #popcornLink:hover{background:#a82f1f;}
-  #btnKeepPlaying{margin-top:28px;background:none;border:1px solid rgba(255,255,255,0.4);color:#f2e9d8;
-    padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;}
+  #btnKeepPlaying{margin-top:28px;margin-bottom:8px;background:none;border:1px solid rgba(255,255,255,0.4);
+    color:#f2e9d8;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;flex-shrink:0;}
   #btnKeepPlaying:hover{background:rgba(255,255,255,0.1);}
   #shareSection{margin-top:22px;}
-  #achievementImg{display:block;max-width:min(420px,90vw);width:100%;height:auto;margin:12px auto 0;
+  /* Image on the left, share buttons in a column to its right — stacks back to image-then-buttons
+     on narrow/mobile screens where there's no room for two side-by-side columns. */
+  #shareCard{display:flex;gap:16px;align-items:flex-start;justify-content:center;margin-top:12px;
+    max-width:600px;}
+  #achievementImg{display:block;max-width:min(340px,58vw);width:100%;height:auto;flex:1 1 auto;min-width:0;
     border-radius:10px;border:2px solid rgba(255,204,77,0.45);box-shadow:0 6px 20px rgba(0,0,0,0.4);}
-  #shareRow{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px;max-width:420px;}
-  .shareBtn{display:inline-block;background:rgba(255,255,255,0.12);color:#f2e9d8;text-decoration:none;
-    font-weight:600;padding:9px 16px;border-radius:8px;font-size:13px;border:1px solid rgba(255,255,255,0.28);
-    cursor:pointer;font-family:inherit;}
+  #shareRow{display:flex;flex-direction:column;gap:8px;flex:0 0 148px;}
+  .shareBtn{display:block;background:rgba(255,255,255,0.12);color:#f2e9d8;text-decoration:none;
+    font-weight:600;padding:9px 14px;border-radius:8px;font-size:13px;border:1px solid rgba(255,255,255,0.28);
+    cursor:pointer;font-family:inherit;text-align:center;}
   .shareBtn:hover{background:rgba(255,255,255,0.24);}
   #shareCopiedNote{font-size:12px;opacity:0.85;margin-top:8px;color:#c8e0a8;}
-  #shareImgHint{font-size:11px;opacity:0.65;margin-top:6px;max-width:420px;}
+  #shareImgHint{font-size:11px;opacity:0.65;margin-top:10px;max-width:420px;}
+  @media (max-width:560px){
+    #shareCard{flex-direction:column;align-items:center;}
+    #achievementImg{max-width:min(420px,90vw);}
+    #shareRow{flex-direction:row;flex-wrap:wrap;justify-content:center;width:100%;max-width:420px;flex:none;}
+  }
   #sashModal{position:fixed;inset:0;z-index:31;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;}
   #sashPanel{background:#2b2320;color:#f2e9d8;width:min(620px,92vw);max-height:82vh;overflow:auto;border-radius:10px;
     border:2px solid #5a4632;box-shadow:0 10px 40px rgba(0,0,0,0.5);}
@@ -323,15 +333,17 @@
   <a id="popcornLink" href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">🍿 Support Andre's Popcorn Sale</a>
   <div id="shareSection">
     <p>Show off your camp and your merit badges:</p>
-    <img id="achievementImg" alt="Your ScoutCraft rank and merit badges earned" />
-    <div id="shareRow">
-      <a id="downloadAchievement" class="shareBtn" download="scoutcraft-badges.png">🖼️ Save Image</a>
-      <button id="shareNative" class="shareBtn" hidden>📤 Share&hellip;</button>
-      <a id="shareFacebook" class="shareBtn" target="_blank" rel="noopener noreferrer">📘 Facebook</a>
-      <a id="shareX" class="shareBtn" target="_blank" rel="noopener noreferrer">✖️ X</a>
-      <button id="shareInstagram" class="shareBtn">📸 Instagram</button>
-      <a id="shareMessage" class="shareBtn">💬 Message</a>
-      <a id="shareEmail" class="shareBtn">✉️ Email</a>
+    <div id="shareCard">
+      <img id="achievementImg" alt="Your ScoutCraft rank and merit badges earned" />
+      <div id="shareRow">
+        <a id="downloadAchievement" class="shareBtn" download="scoutcraft-badges.png">🖼️ Save Image</a>
+        <button id="shareNative" class="shareBtn" hidden>📤 Share&hellip;</button>
+        <a id="shareFacebook" class="shareBtn" target="_blank" rel="noopener noreferrer">📘 Facebook</a>
+        <a id="shareX" class="shareBtn" target="_blank" rel="noopener noreferrer">✖️ X</a>
+        <button id="shareInstagram" class="shareBtn">📸 Instagram</button>
+        <a id="shareMessage" class="shareBtn">💬 Message</a>
+        <a id="shareEmail" class="shareBtn">✉️ Email</a>
+      </div>
     </div>
     <p id="shareImgHint">Facebook, X, and Email can't attach the picture automatically — save it above, then attach it by hand when you post.</p>
     <p id="shareCopiedNote" hidden>Copied! Paste it into Instagram (the badge picture is saved above too).</p>
