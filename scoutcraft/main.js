@@ -3518,6 +3518,10 @@ function drawAvatarPortrait(destCtx, dx, dy, dw, dh){
 
   const avatar = createCharacterMesh();
   applyUniformCustomization(avatar, myTroop, myNeckerchiefColor);
+  // Turned 30° off dead-on rather than a straight front view, angling toward the backpack worn on
+  // the back (opposite the front-facing shirt/face textures — see createCharacterMesh). At just 30°
+  // the arms still mostly occlude it — a bigger angle shows more if that's ever wanted.
+  avatar.rotation.y = THREE.MathUtils.degToRad(30);
   scene.add(avatar);
 
   const camera = new THREE.PerspectiveCamera(35, dw/dh, 0.1, 10);
