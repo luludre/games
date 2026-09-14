@@ -979,7 +979,13 @@ const RECIPES = [
 ];
 const inventory = {};
 // Fireworks are unlimited — no recipe, never consumed, always available regardless of what's saved.
-function invCount(id){ return id===FIREWORK ? Infinity : (inventory[id]||0); }
+// Flint is the same way: it's no longer craftable, the Backpack only ever packs the one starting
+// unit, and running out would permanently lock you out of ever lighting another fire, Torch,
+// Campfire, or Lantern — so once you've got it out of the Backpack at all, it never runs out. Also
+// excluded from the Bear Box/Cookware/Backpack deposit lists below (see UNLIMITED_ITEMS there) —
+// "storing" part of an infinite supply into a finite container doesn't really mean anything.
+const UNLIMITED_ITEMS = new Set([FIREWORK, FLINT]);
+function invCount(id){ return UNLIMITED_ITEMS.has(id) ? Infinity : (inventory[id]||0); }
 function invAdd(id,n){ inventory[id] = (inventory[id]||0)+n; Scout.gained(id,n); }
 function invSub(id,n){ inventory[id] = Math.max(0,(inventory[id]||0)-n); }
 function canCraft(recipe){ return recipe.in.every(ing => invCount(ing.id) >= ing.qty); }
@@ -8654,7 +8660,8 @@ function renderCrafting(){
     held.forEach(id=>{
       const row = document.createElement('div');
       row.className = 'invItem';
-      row.innerHTML = `<span class="sw" style="background:${swatchColor(id)}"></span>${BLOCK_NAME[id]} × ${invCount(id)}`;
+      const countText = invCount(id)===Infinity ? '∞' : invCount(id);
+      row.innerHTML = `<span class="sw" style="background:${swatchColor(id)}"></span>${BLOCK_NAME[id]} × ${countText}`;
       invEl.appendChild(row);
     });
   }
@@ -9035,13 +9042,13 @@ function makeBearBoxTile(id, count, onClick){
   }
   const countEl = document.createElement('div');
   countEl.className = 'itemCount';
-  countEl.textContent = count;
+  countEl.textContent = count===Infinity ? '∞' : count; // an unlimited item (see UNLIMITED_ITEMS)
   tile.appendChild(countEl);
   const label = document.createElement('div');
   label.className = 'itemLabel';
   label.textContent = BLOCK_NAME[id];
   tile.appendChild(label);
-  tile.title = `${BLOCK_NAME[id]} — ${count}`;
+  tile.title = `${BLOCK_NAME[id]} — ${count===Infinity ? 'unlimited' : count}`;
   tile.addEventListener('click', onClick);
   return tile;
 }
@@ -9051,9 +9058,9 @@ function renderBearBox(){
   const boxGrid = document.getElementById('bearBoxStorageGrid');
   yourGrid.innerHTML = '';
   boxGrid.innerHTML = '';
-  // Firework is unlimited/never-consumed — storing it away would just eat the box's real capacity
-  // for nothing, so it's left out of the deposit side entirely.
-  const held = ALL_ITEMS.filter(id => id!==FIREWORK && invCount(id)>0);
+  // UNLIMITED_ITEMS (Firework, Flint) are never-consumed — storing one away would just eat the
+  // box's real capacity for nothing, so they're left out of the deposit side entirely.
+  const held = ALL_ITEMS.filter(id => !UNLIMITED_ITEMS.has(id) && invCount(id)>0);
   if(held.length===0){
     const note = document.createElement('div'); note.className = 'bearBoxEmptyNote'; note.textContent = "You aren't carrying anything.";
     yourGrid.appendChild(note);
@@ -9147,7 +9154,7 @@ function renderCookware(){
   const slotsGrid = document.getElementById('cookwareSlotsGrid');
   yourGrid.innerHTML = '';
   slotsGrid.innerHTML = '';
-  const held = ALL_ITEMS.filter(id => id!==FIREWORK && invCount(id)>0);
+  const held = ALL_ITEMS.filter(id => !UNLIMITED_ITEMS.has(id) && invCount(id)>0);
   if(held.length===0){
     const note = document.createElement('div'); note.className = 'bearBoxEmptyNote'; note.textContent = "You aren't holding any ingredients.";
     yourGrid.appendChild(note);
@@ -9263,7 +9270,7 @@ function renderBackpackStorage(){
   const packGrid = document.getElementById('backpackStorageGrid');
   yourGrid.innerHTML = '';
   packGrid.innerHTML = '';
-  const held = ALL_ITEMS.filter(id => id!==FIREWORK && invCount(id)>0);
+  const held = ALL_ITEMS.filter(id => !UNLIMITED_ITEMS.has(id) && invCount(id)>0);
   if(held.length===0){
     const note = document.createElement('div'); note.className = 'bearBoxEmptyNote'; note.textContent = "You aren't carrying anything.";
     yourGrid.appendChild(note);
