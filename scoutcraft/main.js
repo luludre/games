@@ -1913,26 +1913,59 @@ function drawEagleSilhouette(ctx, cx, cy, scale, color){
     ctx.fill();
   }
 }
-// Real Eagle Scout artwork (see assets/README.md) — used in place of a procedural drawing since
-// real insignia-style detail like this doesn't reduce well to canvas primitives. Loaded once up
-// front; drawRankBadge falls back to the plain procedural medallion below until it's ready.
-const eagleEmblemImg = new Image();
-let eagleEmblemLoaded = false;
-eagleEmblemImg.onload = () => {
-  eagleEmblemLoaded = true;
-  // The shirt patch and floating name tag may already have been baked (as canvas textures) with the
-  // fallback art before this finished loading — force both to redraw now, same as any other
-  // rank-change refresh. The achievement card needs no such fix: it's rebuilt from scratch every
-  // time the share screen opens, never cached.
-  if(rankIndexFor(earnedBadges.size) === 7){
-    if(characterMesh && characterMesh.userData.uniform) characterMesh.userData.uniform.lastRankIndex = -1;
-    updateCharacterRankBadge();
-    if(myNameTag) myNameTag.lastKey = null;
-  }
+// Real rank badge artwork for every earned rank (see assets/README.md) — used in place of the
+// procedural drawings below since real insignia-style detail doesn't reduce well to canvas
+// primitives. Each loads once up front; drawRankBadge falls back to that rank's plain procedural
+// medallion until its own image is ready.
+const RANK_EMBLEM_SRC = {
+  1: 'assets/scout-emblem.png',
+  2: 'assets/tenderfoot-scout-emblem.png',
+  3: 'assets/second-class-emblem.png',
+  4: 'assets/first-class-emblem.png',
+  5: 'assets/star-scout-emblem.png',
+  6: 'assets/life-scout-emblem.png',
+  // ?v=2: bumped when this one's artwork was replaced, so a browser that already cached the old
+  // file under this same path picks up the new one instead of serving a stale copy.
+  7: 'assets/eagle-scout-emblem.png?v=2',
 };
-// ?v=2: bumped when the underlying artwork itself was replaced, so a browser that already cached
-// the old file under this same path picks up the new one instead of serving a stale copy.
-eagleEmblemImg.src = 'assets/eagle-scout-emblem.png?v=2';
+const rankEmblemImg = {}, rankEmblemLoaded = {};
+for(const rankIndex in RANK_EMBLEM_SRC){
+  const img = new Image();
+  rankEmblemImg[rankIndex] = img;
+  rankEmblemLoaded[rankIndex] = false;
+  img.onload = () => {
+    rankEmblemLoaded[rankIndex] = true;
+    // The shirt patch and floating name tag may already have been baked (as canvas textures) with
+    // the fallback art before this finished loading — force both to redraw now, same as any other
+    // rank-change refresh. The achievement card needs no such fix: it's rebuilt from scratch every
+    // time the share screen opens, never cached.
+    if(rankIndexFor(earnedBadges.size) === Number(rankIndex)){
+      if(characterMesh && characterMesh.userData.uniform) characterMesh.userData.uniform.lastRankIndex = -1;
+      updateCharacterRankBadge();
+      if(myNameTag) myNameTag.lastKey = null;
+    }
+  };
+  img.src = RANK_EMBLEM_SRC[rankIndex];
+}
+// Cover-fits img into the same circular badge shape every rank uses, so real artwork drops into all
+// three call sites (shirt patch, name tag, achievement card) without any of them needing to know
+// it's an image instead of vector art.
+function drawEmblemImage(ctx, cx, cy, radius, img){
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI*2);
+  ctx.clip();
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const s = Math.max((radius*2)/iw, (radius*2)/ih);
+  const dw = iw*s, dh = ih*s;
+  ctx.drawImage(img, cx-dw/2, cy-dh/2, dw, dh);
+  ctx.restore();
+  ctx.lineWidth = Math.max(1, radius*0.1);
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI*2);
+  ctx.stroke();
+}
 function drawRankBadge(ctx, cx, cy, radius, rankIndex){
   if(rankIndex<=0){
     // No rank yet — a plain disc, nothing earned to put on it.
@@ -1945,27 +1978,11 @@ function drawRankBadge(ctx, cx, cy, radius, rankIndex){
     ctx.stroke();
     return;
   }
+  if(rankEmblemLoaded[rankIndex]){
+    drawEmblemImage(ctx, cx, cy, radius, rankEmblemImg[rankIndex]);
+    return;
+  }
   if(rankIndex===7){
-    if(eagleEmblemLoaded){
-      // Cover-fit into the same circular badge shape every rank uses, so it drops into all three
-      // call sites (shirt patch, name tag, achievement card) without any of them needing to know
-      // it's an image instead of vector art.
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, Math.PI*2);
-      ctx.clip();
-      const iw = eagleEmblemImg.naturalWidth, ih = eagleEmblemImg.naturalHeight;
-      const s = Math.max((radius*2)/iw, (radius*2)/ih);
-      const dw = iw*s, dh = ih*s;
-      ctx.drawImage(eagleEmblemImg, cx-dw/2, cy-dh/2, dw, dh);
-      ctx.restore();
-      ctx.lineWidth = Math.max(1, radius*0.1);
-      ctx.strokeStyle = '#1a1a1a';
-      ctx.beginPath();
-      ctx.arc(cx, cy, radius, 0, Math.PI*2);
-      ctx.stroke();
-      return;
-    }
     // Eagle Scout: a red/white/blue circular medallion instead of the tan cloth oval every rank
     // below it shares — the real Eagle badge breaks from that family the exact same way. Fallback
     // only, used until the real artwork above finishes loading.

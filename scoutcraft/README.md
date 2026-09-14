@@ -166,14 +166,10 @@ Scout** (18 — just over 3/4 of all 23, not literally every one of them) — an
 badge count sit in the HUD at the top of the screen. Earning one plays a short bugle call and drops a
 banner telling you what you got, and what rank it just made you.
 
-Your rank also shows up as a small badge icon, loosely modeled on the real BSA rank badges — Scout
-through Life share a tan oval with a gold emblem built from a fleur-de-lis (a small shield and/or
-banner added on for the higher ranks, echoing the real badges' own eagle-and-shield and "Be
-Prepared" banner), a star for Star Scout, a heart for Life Scout, and Eagle Scout breaking from that
-family entirely with real crest artwork (see `assets/README.md`) instead of a procedural drawing —
-in three places: next to your rank on the floating name tag over your head, stitched onto your
-shirt's left chest pocket (updates the moment you rank up), and above your rank name on the
-achievement card the exit screen generates for sharing.
+Your rank also shows up as a small badge icon — real artwork for all seven earned ranks (see
+`assets/README.md`), not a procedural drawing — in three places: next to your rank on the floating
+name tag over your head, stitched onto your shirt's left chest pocket (updates the moment you rank
+up), and above your rank name on the achievement card the exit screen generates for sharing.
 
 Progress is per-browser, saved to `localStorage` alongside your world edits and inventory, and only
 counts while you're actually playing — nothing accrues while you sit on the start screen or have a
