@@ -503,7 +503,9 @@ Press `Alt+Shift+D` (`Option+Shift+D` on macOS) to toggle a read-only overlay in
 
 ## Update notifications
 
-While you're playing, the game quietly checks every 5 minutes whether `main.js` on the server has changed since you loaded it (comparing its ETag/Last-Modified HTTP header, not a version number that has to be bumped by hand — so it can't go stale). If a new build has gone out since you opened the tab, a small banner appears near the top of the screen with a Reload button. It's purely informational — nothing about your session forces a reload, and if the check can't get a usable header (some local dev setups) it just stays quiet instead of false-alarming.
+The game's own script is loaded with a fresh cache-busting query string every single page load (a timestamp, not a version number that has to be bumped by hand), so opening or reloading the tab always fetches whatever is actually on the server — never a stale cached copy from before the latest update, which is exactly the kind of thing that's silently broken a feature here before (fireworks that seemed not to sync, a hotkey that quietly did nothing).
+
+That handles a fresh load; it doesn't help a tab you've already had open a while. For that, the game quietly checks every 5 minutes whether `main.js` on the server has changed since you loaded it (comparing its ETag/Last-Modified HTTP header). If a new build has gone out since you opened the tab, a small banner appears near the top of the screen with a Reload button. It's purely informational — nothing about your session forces a reload, and if the check can't get a usable header (some local dev setups) it just stays quiet instead of false-alarming.
 
 ## Notes
 

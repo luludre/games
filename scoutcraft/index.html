@@ -462,6 +462,13 @@
   and our heroes: <a href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">🍿 Andre's Popcorn Sale</a></p>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<script src="main.js"></script>
+<script>
+// main.js is loaded through this cache-busting query param (a fresh timestamp every single page
+// load) rather than a plain <script src="main.js">, because a plain tag can — and has, more than
+// once in this project — leave a returning player silently running a stale cached copy even after a
+// normal reload, with no error, just a feature that quietly doesn't work anymore. No version number
+// to remember to bump by hand: every load is simply guaranteed fresh.
+document.write('<script src="main.js?v=' + Date.now() + '"><\/script>');
+</script>
 </body>
 </html>
