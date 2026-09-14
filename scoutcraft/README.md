@@ -166,10 +166,10 @@ Your rank also shows up as a small badge icon, loosely modeled on the real BSA r
 through Life share a tan oval with a gold emblem built from a fleur-de-lis (a small shield and/or
 banner added on for the higher ranks, echoing the real badges' own eagle-and-shield and "Be
 Prepared" banner), a star for Star Scout, a heart for Life Scout, and Eagle Scout breaking from that
-family entirely with its own red/white/blue circular medallion — in three places: next to your rank
-on the floating name tag over your head, stitched onto your shirt's left chest pocket (updates the
-moment you rank up), and above your rank name on the achievement card the exit screen generates for
-sharing.
+family entirely with real crest artwork (see `assets/README.md`) instead of a procedural drawing —
+in three places: next to your rank on the floating name tag over your head, stitched onto your
+shirt's left chest pocket (updates the moment you rank up), and above your rank name on the
+achievement card the exit screen generates for sharing.
 
 Progress is per-browser, saved to `localStorage` alongside your world edits and inventory, and only
 counts while you're actually playing — nothing accrues while you sit on the start screen or have a

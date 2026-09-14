@@ -1913,6 +1913,21 @@ function drawEagleSilhouette(ctx, cx, cy, scale, color){
     ctx.fill();
   }
 }
+// Real Eagle Scout artwork (see assets/README.md) — used in place of a procedural drawing since
+// real insignia-style detail like this doesn't reduce well to canvas primitives. Loaded once up
+// front; drawRankBadge falls back to the plain procedural medallion below until it's ready.
+const eagleEmblemImg = new Image();
+let eagleEmblemLoaded = false;
+eagleEmblemImg.onload = () => {
+  eagleEmblemLoaded = true;
+  // The shirt patch may already have been baked (as a canvas texture) with the fallback art before
+  // this finished loading — force it to redraw now, same as any other rank-change refresh.
+  if(rankIndexFor(earnedBadges.size) === 7){
+    if(characterMesh && characterMesh.userData.uniform) characterMesh.userData.uniform.lastRankIndex = -1;
+    updateCharacterRankBadge();
+  }
+};
+eagleEmblemImg.src = 'assets/eagle-scout-emblem.png';
 function drawRankBadge(ctx, cx, cy, radius, rankIndex){
   if(rankIndex<=0){
     // No rank yet — a plain disc, nothing earned to put on it.
@@ -1926,8 +1941,29 @@ function drawRankBadge(ctx, cx, cy, radius, rankIndex){
     return;
   }
   if(rankIndex===7){
+    if(eagleEmblemLoaded){
+      // Cover-fit into the same circular badge shape every rank uses, so it drops into all three
+      // call sites (shirt patch, name tag, achievement card) without any of them needing to know
+      // it's an image instead of vector art.
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI*2);
+      ctx.clip();
+      const iw = eagleEmblemImg.naturalWidth, ih = eagleEmblemImg.naturalHeight;
+      const s = Math.max((radius*2)/iw, (radius*2)/ih);
+      const dw = iw*s, dh = ih*s;
+      ctx.drawImage(eagleEmblemImg, cx-dw/2, cy-dh/2, dw, dh);
+      ctx.restore();
+      ctx.lineWidth = Math.max(1, radius*0.1);
+      ctx.strokeStyle = '#1a1a1a';
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI*2);
+      ctx.stroke();
+      return;
+    }
     // Eagle Scout: a red/white/blue circular medallion instead of the tan cloth oval every rank
-    // below it shares — the real Eagle badge breaks from that family the exact same way.
+    // below it shares — the real Eagle badge breaks from that family the exact same way. Fallback
+    // only, used until the real artwork above finishes loading.
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI*2);
     ctx.fillStyle = '#c23b28';
