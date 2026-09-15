@@ -89,7 +89,7 @@
     padding:2px 7px;border-radius:4px;white-space:nowrap;}
   body.touch-device #hotkeyPanel{display:none;}
   /* Blocks the whole page (front page and in-game alike) on a phone/tablet held in portrait —
-     see the isTouchDevice check in main.js that shows/hides this on load, resize, and rotation.
+     see the isTouchDevice check in js/input.js that shows/hides this on load, resize, and rotation.
      z-index above everything else in the game, including the thank-you screen (40). */
   #rotateOverlay{position:fixed;inset:0;z-index:100;background:#0e1a0e;color:#f2e9d8;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -516,12 +516,30 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>
-// main.js is loaded through this cache-busting query param (a fresh timestamp every single page
-// load) rather than a plain <script src="main.js">, because a plain tag can — and has, more than
-// once in this project — leave a returning player silently running a stale cached copy even after a
-// normal reload, with no error, just a feature that quietly doesn't work anymore. No version number
-// to remember to bump by hand: every load is simply guaranteed fresh.
-document.write('<script src="main.js?v=' + Date.now() + '"><\/script>');
+// The game used to be one main.js; it's now split into the files below (see js/ARCHITECTURE.md for
+// what each one does), loaded in this fixed order as plain classic <script> tags sharing one global
+// scope — no bundler, no import/export, so the load order below IS the dependency order. items.js
+// has to come first (it builds the block/item registry everything else reads from); bootstrap.js has
+// to come last (it calls init()).
+//
+// Every file is loaded through this same cache-busting query param (a fresh timestamp every single
+// page load) rather than plain <script src> tags, because a plain tag can — and has, more than once
+// in this project — left a returning player silently running a stale cached copy even after a normal
+// reload, with no error, just a feature that quietly doesn't work anymore. No version number to
+// remember to bump by hand: every load is simply guaranteed fresh, for every file at once. The update
+// checker (js/bootstrap.js) polls this same file list's HTTP headers to notice when a newer build has
+// gone out while a tab is still open.
+window.SCOUTCRAFT_FILES = [
+  'js/items.js', 'js/badges.js', 'js/crafting.js', 'js/textures.js', 'js/worldgen.js',
+  'js/persistence.js', 'js/rendering.js', 'js/player-model.js', 'js/animals.js', 'js/sound.js',
+  'js/combat.js', 'js/world-edits.js', 'js/sky-weather.js', 'js/wildlife-land.js',
+  'js/wildlife-air-water.js', 'js/vehicles.js', 'js/interaction.js', 'js/input.js',
+  'js/ui-menus.js', 'js/ui-storage.js', 'js/bootstrap.js',
+];
+const scoutcraftBuildV = Date.now();
+for(const f of window.SCOUTCRAFT_FILES){
+  document.write('<script src="' + f + '?v=' + scoutcraftBuildV + '"><\/script>');
+}
 </script>
 </body>
 </html>
