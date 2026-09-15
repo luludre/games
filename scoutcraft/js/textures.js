@@ -913,7 +913,14 @@ for(const rankIndex in RANK_EMBLEM_SRC){
     // the fallback art before this finished loading — force both to redraw now, same as any other
     // rank-change refresh. The achievement card needs no such fix: it's rebuilt from scratch every
     // time the share screen opens, never cached.
-    if(rankIndexFor(earnedBadges.size) === Number(rankIndex)){
+    //
+    // This image can finish loading (especially from cache, on a repeat visit) before every js/*.js
+    // file below this one has — characterMesh/myNameTag are declared in combat.js, loaded well after
+    // textures.js. The typeof guard is for that startup race specifically, not for the ordinary
+    // "mesh not built yet" case updateCharacterRankBadge already handles on its own; when it fires,
+    // skipping the forced redraw here is harmless — the very next natural HUD refresh calls
+    // updateCharacterRankBadge() again and picks up the now-loaded image then.
+    if(typeof characterMesh !== 'undefined' && rankIndexFor(earnedBadges.size) === Number(rankIndex)){
       if(characterMesh && characterMesh.userData.uniform) characterMesh.userData.uniform.lastRankIndex = -1;
       updateCharacterRankBadge();
       if(myNameTag) myNameTag.lastKey = null;
