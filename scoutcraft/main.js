@@ -9526,6 +9526,19 @@ function renderCookware(){
   const info = COOKWARE_INFO[cookwareWareKey];
   const title = document.getElementById('cookwareTitle');
   if(title) title.textContent = `${info.emoji} ${info.name}`;
+  // Names only, never ingredients — see COOKWARE_DISH_DEFS's own note on why the recipe itself
+  // stays hidden. Knowing what's possible on this cookware is a fair signpost; how to make it is
+  // still the whole point of poking around the Bear Box and checking back for chat hints.
+  const dishList = document.getElementById('cookwareDishList');
+  if(dishList){
+    dishList.innerHTML = '';
+    for(const dish of COOKWARE_RECIPES[cookwareWareKey]){
+      const chip = document.createElement('span');
+      chip.className = 'dishChip';
+      chip.textContent = `${HOTBAR_ICON[dish.id]||''} ${dish.name}`;
+      dishList.appendChild(chip);
+    }
+  }
   const yourGrid = document.getElementById('cookwareYourGrid');
   const slotsGrid = document.getElementById('cookwareSlotsGrid');
   yourGrid.innerHTML = '';

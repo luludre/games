@@ -202,6 +202,10 @@
   #cookwareClose{background:none;border:none;color:#f2e9d8;font-size:1.1em;cursor:pointer;padding:4px 10px;border-radius:6px;flex-shrink:0;}
   #cookwareClose:hover{background:rgba(255,255,255,0.12);}
   #cookwarePanel .bearBoxCol:first-child{border-right:1px solid #a8531f;}
+  #cookwareDishes{padding:12px 18px;border-bottom:1px solid #a8531f;}
+  #cookwareDishesLabel{display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;opacity:0.65;margin-bottom:8px;}
+  #cookwareDishList{display:flex;flex-wrap:wrap;gap:8px;}
+  .dishChip{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:5px 12px;font-size:12px;}
   .cookwareSlotsGrid{grid-template-columns:repeat(4,1fr);}
   .cookwareSlotEmpty{border:2px dashed rgba(255,255,255,0.25);border-radius:8px;min-height:68px;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:0.35;}
   #cookwareCookBtn{margin-top:12px;width:100%;padding:10px;font-size:1em;font-weight:700;background:#a8531f;color:#fff3e0;border:none;border-radius:8px;cursor:pointer;}
@@ -456,9 +460,13 @@
     <div id="cookwareHeader">
       <div>
         <h2 id="cookwareTitle">🍲 Pot</h2>
-        <p>Click ingredients from your pack to load up to 4, then Cook! — no ingredient list here, figure it out (camp chat drops a hint every time you open one).</p>
+        <p>Click ingredients from your pack to load up to 4, then Cook! — dishes below show what you can make here, not how (camp chat drops an ingredient hint every time you open one).</p>
       </div>
       <button id="cookwareClose" aria-label="Close">Close ✕</button>
+    </div>
+    <div id="cookwareDishes">
+      <span id="cookwareDishesLabel">Dishes you can cook here</span>
+      <div id="cookwareDishList"></div>
     </div>
     <div class="bearBoxColumns">
       <div class="bearBoxCol">

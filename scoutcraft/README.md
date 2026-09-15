@@ -304,18 +304,21 @@ yourself.
 
 **Cooking a dish:** right-click any of the five stations — the four with cookware, or the plain
 campfire (and this works on any campfire you place yourself too, not just this one) — to open its
-recipe window: your held items on one side, 4 empty cooking slots on the other. Click an ingredient
-to load it into the next slot, click a loaded slot to take it back, then hit **Cook!**. Load exactly
-the right ingredients (extras or a wrong one both miss) and you get a named dish back, ready to eat
-for 6 hunger — anything else, and the game just tells you that's not a recipe anyone's heard of, slots
-still loaded so you can swap one ingredient and try again. Closing the window without cooking hands
-back whatever's still sitting in the slots — they're a staging area, not real storage.
+recipe window. A row of named chips across the top ("Dishes you can cook here") lists every dish that
+particular cookware can make — Pot, Pan, Dutch Oven, Campfire, and Griddle each make a different set
+— so you always know what's possible there. Below that: your held items on one side, 4 empty cooking
+slots on the other. Click an ingredient to load it into the next slot, click a loaded slot to take it
+back, then hit **Cook!**. Load exactly the right ingredients (extras or a wrong one both miss) and you
+get a named dish back, ready to eat for 6 hunger — anything else, and the game just tells you that's
+not a recipe anyone's heard of, slots still loaded so you can swap one ingredient and try again.
+Closing the window without cooking hands back whatever's still sitting in the slots — they're a
+staging area, not real storage.
 
-Nothing tells you a dish's ingredients up front — that's the point. Camp chat drops one hint (a single
-ingredient from one of that cookware's recipes) every time you open its window, so checking back is
-always at least a little useful, but the rest is figuring it out from what's in the Bear Box. Cook at
-least one dish on all 5 cookware types — pot, pan, Dutch oven, campfire, griddle — to earn the Cooking
-badge.
+The dish names are the only spoiler — nothing tells you a dish's actual ingredients up front, that's
+still the point. Camp chat drops one hint (a single ingredient from one of that cookware's recipes)
+every time you open its window, so checking back is always at least a little useful, but the rest is
+figuring it out from what's in the Bear Box. Cook at least one dish on all 5 cookware types — pot,
+pan, Dutch oven, campfire, griddle — to earn the Cooking badge.
 
 <details>
 <summary>All 26 recipes, if you'd rather not guess (spoilers)</summary>
