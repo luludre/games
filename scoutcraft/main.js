@@ -5831,6 +5831,10 @@ function updateWorms(dt){
 // ---------- Gophers: dig tunnels underground ----------
 // Gophers spawn underground and slowly dig tunnels through dirt, creating passages large enough
 // for the player to crawl through (2 blocks wide, 2 blocks high).
+// Set to false to turn gophers off entirely — no spawn, no tunneling. See WORMS_ENABLED above for
+// the same idea; gophers have no saved population of their own to preserve, so there's nothing to
+// pick back up later beyond just flipping this on again.
+const GOPHERS_ENABLED = false;
 const GOPHER_COUNT = 4;
 const GOPHER_RADIUS = 40; // recycle a gopher's home once it's this far from player
 const gophers = [];
@@ -5878,6 +5882,7 @@ function spawnGopherHome(g){
   g.digTimer = 1+Math.random()*2; // time before digging next block
 }
 function ensureGophers(){
+  if(!GOPHERS_ENABLED) return;
   if(gophers.length) return;
   for(let i=0; i<GOPHER_COUNT; i++){
     const mesh = buildGopherMesh();
