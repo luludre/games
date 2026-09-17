@@ -40,13 +40,13 @@
   .slot .count{position:absolute;bottom:1px;right:3px;font-size:11px;font-weight:600;color:#fff;text-shadow:0 0 3px #000;}
   .slot .icon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:22px;line-height:1;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,0.5);}
   .slot.empty .icon{opacity:0.35;}
-  #overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:20;cursor:pointer;overflow-y:auto;padding:16px 0;box-sizing:border-box;}
+  #overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:20;cursor:pointer;overflow-y:auto;padding:8px 0;box-sizing:border-box;}
   #overlay h1{font-size:2.4em;margin:0 0 2px;}
   #campSubtitle{font-size:1em;font-weight:600;color:#e8c46a;margin:0 0 10px;letter-spacing:0.03em;}
   #overlay p{max-width:520px;line-height:1.6;opacity:0.92;font-size:15px;}
   #overlay .key{background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:4px;}
   #overlay .small{margin-top:18px;font-size:12px;opacity:0.65;}
-  #overlay .credits{margin-top:16px;font-size:16px;line-height:1.5;opacity:1;font-weight:600;
+  #overlay .credits{margin:8px 0 0;font-size:16px;line-height:1.5;opacity:1;font-weight:600;
     color:#fff3d6;background:rgba(255,204,77,0.14);border:1px solid rgba(255,204,77,0.45);
     border-radius:10px;padding:14px 18px;}
   #overlay .credits a{color:#ffcc4d;font-weight:700;text-decoration:none;}
@@ -235,9 +235,13 @@
     padding:40px 24px;overflow-y:auto;}
   #thankYouScreen h1{font-size:2.2em;margin:0 0 10px;}
   #thankYouScreen p{max-width:520px;line-height:1.6;font-size:15px;opacity:0.92;margin:8px 0;}
-  #popcornLink{display:inline-block;margin-top:18px;background:#c23b28;color:#fff;text-decoration:none;
+  .popcornBtn{display:inline-block;margin-top:18px;background:#c23b28;color:#fff;text-decoration:none;
     font-weight:700;padding:12px 22px;border-radius:8px;font-size:15px;box-shadow:0 4px 14px rgba(0,0,0,0.4);}
-  #popcornLink:hover{background:#a82f1f;}
+  .popcornBtn:hover{background:#a82f1f;}
+  /* Tighter than the thank-you screen's version above — the front page only has ~40px of clearance
+     between the credits box and the Inventory/Backpack/Badges buttons peeking through underneath
+     (#panelButtons, fixed at bottom:104px) before the two visually collide. */
+  #overlay .popcornBtn{margin:6px 0 0;padding:6px 16px;font-size:13px;}
   #btnKeepPlaying{margin-top:28px;margin-bottom:8px;background:none;border:1px solid rgba(255,255,255,0.4);
     color:#f2e9d8;padding:8px 16px;border-radius:6px;font-size:13px;cursor:pointer;flex-shrink:0;}
   #btnKeepPlaying:hover{background:rgba(255,255,255,0.1);}
@@ -381,8 +385,7 @@
   <p>Hope you had fun setting up camp, earning your badges, and exploring the woods. Come back
   anytime — your camp will be exactly how you left it.</p>
   <div id="popcornSection">
-  <p>If you'd like to support Andre's troop, his popcorn fundraiser is open right now:</p>
-  <a id="popcornLink" href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">Andre Wu's Scout profile</a>
+  <a id="popcornLink" class="popcornBtn" href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">Andre Wu's Scout profile</a>
   </div>
   <div id="shareSection">
     <p>Show off your camp and your merit badges:</p>
@@ -513,8 +516,8 @@
   <button id="btnHelp">❓ How to play</button>
   <p id="playHint" class="small" hidden>Press <span class="key">B</span> to open your Backpack — it starts already packed with the real Scout's 10 Essentials plus a tent, sleeping bag, sleeping pad and rope. Pitch your tent (a real shelter you can walk into) and take a bearing with your compass to earn merit badges right away. Chop a tree for wood and leaves, put down your Camp Workbench, and press E beside it to craft — twist leaves into <b>rope</b>, then set up a <b>campfire</b>, a <b>lantern</b> and your <b>troop flag</b> — each one earns a merit badge too, and badges promote you from Scout all the way to Eagle Scout. Press <span class="key">M</span> to see your sash, <span class="key">K</span> near your tent after dark to sleep through the night, or <span class="key">H</span> any time for the full hotkey list. Rabbits and deer are harmless — the moose fights back if provoked, and the black bear attacks on sight. Progress saves automatically in this browser.</p>
   <p class="credits">Built by Andre Wu (Troop 904, Dublin, California), his dad, and an AI to share
-  the adventure of Scouting. <span id="popcornCredit">If you had fun, please consider supporting Andre's Scouting journey
-  and our heroes: <a href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">Andre Wu's Scout profile</a></span></p>
+  the adventure of Scouting.</p>
+  <a id="popcornLinkHome" class="popcornBtn" href="https://trails-end.com/store/scout/HQ9SW6MR" target="_blank" rel="noopener noreferrer">Andre Wu's Scout profile</a>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>
