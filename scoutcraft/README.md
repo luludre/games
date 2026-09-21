@@ -34,10 +34,10 @@ Then visit `http://localhost:8000`.
 ## Deploy to GitHub Pages
 
 1. Create a new GitHub repository (public).
-2. Push this folder's contents (`index.html`, `main.js`, `assets/`) to the repo's default branch:
+2. Push this folder's contents (`index.html`, `js/`, `assets/`) to the repo's default branch:
    ```bash
    git init
-   git add index.html main.js assets README.md
+   git add index.html js assets README.md
    git commit -m "Add ScoutCraft"
    git branch -M main
    git remote add origin https://github.com/<your-username>/<your-repo>.git
@@ -48,6 +48,17 @@ Then visit `http://localhost:8000`.
 5. Set **Branch** to `main` and folder to `/ (root)`, then **Save**.
 6. After a minute or two, your game is live at:
    `https://<your-username>.github.io/<your-repo>/`
+
+## Code layout
+
+The game itself is split across the files in [`js/`](js/) — one per area (world generation, animals,
+weather, UI, and so on), loaded in a fixed order from `index.html` with no build step. See
+[`js/ARCHITECTURE.md`](js/ARCHITECTURE.md) for the file map and the shared rules to know before
+editing any one of them.
+
+[`v1/`](v1/) holds the previous single-file version (one 10,000-line `main.js`), kept playable at
+`/v1/` alongside the current one. It shares this folder's `assets/`, and — since both live on the same
+site — the same saved game in the browser's `localStorage`.
 
 ## Controls
 
@@ -541,9 +552,9 @@ Press `Alt+Shift+D` (`Option+Shift+D` on macOS) to toggle a read-only overlay in
 
 ## Update notifications
 
-The game's own script is loaded with a fresh cache-busting query string every single page load (a timestamp, not a version number that has to be bumped by hand), so opening or reloading the tab always fetches whatever is actually on the server — never a stale cached copy from before the latest update, which is exactly the kind of thing that's silently broken a feature here before (fireworks that seemed not to sync, a hotkey that quietly did nothing).
+The game's own scripts (the `js/` folder — see [`js/ARCHITECTURE.md`](js/ARCHITECTURE.md) for how it's split up) are loaded with a fresh cache-busting query string every single page load (a timestamp, not a version number that has to be bumped by hand), so opening or reloading the tab always fetches whatever is actually on the server — never a stale cached copy from before the latest update, which is exactly the kind of thing that's silently broken a feature here before (fireworks that seemed not to sync, a hotkey that quietly did nothing).
 
-That handles a fresh load; it doesn't help a tab you've already had open a while. For that, the game quietly checks every 5 minutes whether `main.js` on the server has changed since you loaded it (comparing its ETag/Last-Modified HTTP header). If a new build has gone out since you opened the tab, a small banner appears near the top of the screen with a Reload button. It's purely informational — nothing about your session forces a reload, and if the check can't get a usable header (some local dev setups) it just stays quiet instead of false-alarming.
+That handles a fresh load; it doesn't help a tab you've already had open a while. For that, the game quietly checks every 5 minutes whether any of those script files on the server have changed since you loaded them (comparing each one's ETag/Last-Modified HTTP header). If a new build has gone out since you opened the tab, a small banner appears near the top of the screen with a Reload button. It's purely informational — nothing about your session forces a reload, and if the check can't get a usable header for every file (some local dev setups) it just stays quiet instead of false-alarming.
 
 ## Notes
 

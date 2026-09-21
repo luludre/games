@@ -1943,15 +1943,15 @@ function drawEagleSilhouette(ctx, cx, cy, scale, color){
 // primitives. Each loads once up front; drawRankBadge falls back to that rank's plain procedural
 // medallion until its own image is ready.
 const RANK_EMBLEM_SRC = {
-  1: 'assets/scout-emblem.png',
-  2: 'assets/tenderfoot-scout-emblem.png',
-  3: 'assets/second-class-emblem.png',
-  4: 'assets/first-class-emblem.png',
-  5: 'assets/star-scout-emblem.png',
-  6: 'assets/life-scout-emblem.png',
+  1: '../assets/scout-emblem.png',
+  2: '../assets/tenderfoot-scout-emblem.png',
+  3: '../assets/second-class-emblem.png',
+  4: '../assets/first-class-emblem.png',
+  5: '../assets/star-scout-emblem.png',
+  6: '../assets/life-scout-emblem.png',
   // ?v=2: bumped when this one's artwork was replaced, so a browser that already cached the old
   // file under this same path picks up the new one instead of serving a stale copy.
-  7: 'assets/eagle-scout-emblem.png?v=2',
+  7: '../assets/eagle-scout-emblem.png?v=2',
 };
 const rankEmblemImg = {}, rankEmblemLoaded = {};
 for(const rankIndex in RANK_EMBLEM_SRC){
@@ -4334,16 +4334,16 @@ function makeClipPlayer(url, defaultClipDuration, tailFade, offset){
   }
   return { load, play };
 }
-const lionRoarClip = makeClipPlayer('assets/lion-roar.ogg', 2.2, 0.35);
+const lionRoarClip = makeClipPlayer('../assets/lion-roar.ogg', 2.2, 0.35);
 // Public-domain "Fireworks in distance - 3" field recording (see assets/README.md) — pulls just the
 // one clean burst moment (found by scanning the recording for its loudest window) out of the full
 // 46s file rather than needing a separately re-encoded clip.
-const fireworkBurstClip = makeClipPlayer('assets/firework-burst.ogg', 1.5, 0.4, 22.75);
+const fireworkBurstClip = makeClipPlayer('../assets/firework-burst.ogg', 1.5, 0.4, 22.75);
 // A full recitation (see assets/README.md), played end to end rather than trimmed like the clips
 // above — pledgePlaying just blocks a second click from overlapping a recitation already underway,
 // clearing itself once the clip's own length has actually elapsed.
 const PLEDGE_CLIP_DURATION_S = 12;
-const pledgeClip = makeClipPlayer('assets/pledge-of-allegiance.m4a', PLEDGE_CLIP_DURATION_S, 0.3);
+const pledgeClip = makeClipPlayer('../assets/pledge-of-allegiance.m4a', PLEDGE_CLIP_DURATION_S, 0.3);
 let pledgePlaying = false;
 function playPledge(){
   if(pledgePlaying) return;
@@ -4357,7 +4357,7 @@ function playPledge(){
 // buildScoutOathTotem/buildOutdoorCodeTotem/doInteract) — a bit of buffer past each file's real
 // length (14.03s/11.44s) so the "still playing" guard clears a beat after the audio itself finishes.
 const SCOUT_OATH_CLIP_DURATION_S = 15;
-const scoutOathClip = makeClipPlayer('assets/scout-oath.m4a', SCOUT_OATH_CLIP_DURATION_S, 0.3);
+const scoutOathClip = makeClipPlayer('../assets/scout-oath.m4a', SCOUT_OATH_CLIP_DURATION_S, 0.3);
 let scoutOathPlaying = false;
 function playScoutOath(){
   if(scoutOathPlaying) return;
@@ -4368,7 +4368,7 @@ function playScoutOath(){
   Scout.recited('scoutoath');
 }
 const OUTDOOR_CODE_CLIP_DURATION_S = 12;
-const outdoorCodeClip = makeClipPlayer('assets/outdoor-code.m4a', OUTDOOR_CODE_CLIP_DURATION_S, 0.3);
+const outdoorCodeClip = makeClipPlayer('../assets/outdoor-code.m4a', OUTDOOR_CODE_CLIP_DURATION_S, 0.3);
 let outdoorCodePlaying = false;
 function playOutdoorCode(){
   if(outdoorCodePlaying) return;
