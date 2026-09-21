@@ -188,6 +188,7 @@ function trySpawnSapling(){
   for(let tries=0; tries<10; tries++){
     const x = 2 + Math.floor(Math.random()*(WORLD_SIZE-4));
     const z = 2 + Math.floor(Math.random()*(WORLD_SIZE-4));
+    if(inArcheryRange(x,z)) continue; // a sapling growing into a tree would break the lane's flatness
     const h = heightAt(x,z);
     if(h<=SEA_LEVEL) continue;
     if(getBlock(x,h,z)!==GRASS) continue;
@@ -205,6 +206,15 @@ function updateSaplings(dt){
     for(const [key, info] of Array.from(saplings.entries())){
       const [xs,zs] = key.split(',');
       const x = Number(xs), z = Number(zs), y = info.y;
+      if(inArcheryRange(x,z)){
+        // One saved from before spawning skipped the lane — pull it out instead of letting it grow.
+        for(let dy=0; dy<SAPLING_MAX_STAGE; dy++){
+          if(getBlock(x,y+dy,z)===SAPLING) applyWorldEdit(x, y+dy, z, AIR);
+        }
+        saplings.delete(key);
+        saveSaplings();
+        continue;
+      }
       const elapsed = now - info.plantedAt;
       if(elapsed >= SAPLING_MATURE_MS){
         for(let dy=0; dy<SAPLING_MAX_STAGE; dy++){

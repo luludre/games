@@ -415,6 +415,10 @@ this range's own footprint. Try it anywhere else in the world and it doesn't eve
 camp chat just tells you to head to the Archery Range instead. Land 5 hits on a target (from anywhere
 inside the range, any of the 3 targets counts) and you earn the Archery badge.
 
+The lane stays level. Its floor can't be dug up (camp chat says so if you try), and saplings never
+take root in it — the random saplings that sprout across the map's grass skip the range entirely,
+so nothing can grow into a tree in the middle of a shot.
+
 ## Reflection Circle
 
 A freestanding hill rises out of the terrain well clear of the noise of camp, topped with a small
@@ -451,6 +455,16 @@ Fireworks are purely a visual/audio flourish — never saved, never limited — 
 
 No longer craftable (see [Crafting](#crafting)) — this describes how an existing Ladder still
 behaves if you already have one. Right-click a wall to place one — a single Ladder item fills in a run of up to 5 rungs going straight up from wherever you clicked (stopping early if something's in the way), so one item is usually enough to scale a small cliff or the inside of a tower. Ladders aren't solid — walk into one and holding `W` (or `Space`) climbs you straight up along it, `S` climbs back down, and letting go just holds you in place instead of falling. Climbing down never counts as a fall, so you can descend as far as you like without taking fall damage.
+
+## Digging
+
+The ground only gives way two blocks deep — the surface block and the one under it. Anything below
+that is solid, and trying to break it just tells you so in camp chat. "The ground" means the terrain
+as the world generated it (the flat camp clearings and the reflection hill count as their own
+surface), so a mound you build up is still diggable all the way down to that line, and a ladder,
+torch or anything else you place comes out of a hole normally — only natural grass, dirt, stone and
+sand are held back. A pit an older save already dug deeper stays as it is; the limit only stops new
+digging.
 
 ## Crawling
 
