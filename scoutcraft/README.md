@@ -34,10 +34,10 @@ Then visit `http://localhost:8000`.
 ## Deploy to GitHub Pages
 
 1. Create a new GitHub repository (public).
-2. Push this folder's contents (`index.html`, `main.js`, `assets/`) to the repo's default branch:
+2. Push this folder's contents (`index.html`, `js/`, `assets/`) to the repo's default branch:
    ```bash
    git init
-   git add index.html main.js assets README.md
+   git add index.html js assets README.md
    git commit -m "Add ScoutCraft"
    git branch -M main
    git remote add origin https://github.com/<your-username>/<your-repo>.git
@@ -48,6 +48,17 @@ Then visit `http://localhost:8000`.
 5. Set **Branch** to `main` and folder to `/ (root)`, then **Save**.
 6. After a minute or two, your game is live at:
    `https://<your-username>.github.io/<your-repo>/`
+
+## Code layout
+
+The game itself is split across the files in [`js/`](js/) — one per area (world generation, animals,
+weather, UI, and so on), loaded in a fixed order from `index.html` with no build step. See
+[`js/ARCHITECTURE.md`](js/ARCHITECTURE.md) for the file map and the shared rules to know before
+editing any one of them.
+
+[`v1/`](v1/) holds the previous single-file version (one 10,000-line `main.js`), kept playable at
+`/v1/` alongside the current one. It shares this folder's `assets/`, and — since both live on the same
+site — the same saved game in the browser's `localStorage`.
 
 ## Controls
 
@@ -415,6 +426,10 @@ this range's own footprint. Try it anywhere else in the world and it doesn't eve
 camp chat just tells you to head to the Archery Range instead. Land 5 hits on a target (from anywhere
 inside the range, any of the 3 targets counts) and you earn the Archery badge.
 
+The lane stays level. Its floor can't be dug up (camp chat says so if you try), and saplings never
+take root in it — the random saplings that sprout across the map's grass skip the range entirely,
+so nothing can grow into a tree in the middle of a shot.
+
 ## Reflection Circle
 
 A freestanding hill rises out of the terrain well clear of the noise of camp, topped with a small
@@ -451,6 +466,16 @@ Fireworks are purely a visual/audio flourish — never saved, never limited — 
 
 No longer craftable (see [Crafting](#crafting)) — this describes how an existing Ladder still
 behaves if you already have one. Right-click a wall to place one — a single Ladder item fills in a run of up to 5 rungs going straight up from wherever you clicked (stopping early if something's in the way), so one item is usually enough to scale a small cliff or the inside of a tower. Ladders aren't solid — walk into one and holding `W` (or `Space`) climbs you straight up along it, `S` climbs back down, and letting go just holds you in place instead of falling. Climbing down never counts as a fall, so you can descend as far as you like without taking fall damage.
+
+## Digging
+
+The ground only gives way two blocks deep — the surface block and the one under it. Anything below
+that is solid, and trying to break it just tells you so in camp chat. "The ground" means the terrain
+as the world generated it (the flat camp clearings and the reflection hill count as their own
+surface), so a mound you build up is still diggable all the way down to that line, and a ladder,
+torch or anything else you place comes out of a hole normally — only natural grass, dirt, stone and
+sand are held back. A pit an older save already dug deeper stays as it is; the limit only stops new
+digging.
 
 ## Crawling
 
@@ -527,9 +552,9 @@ Press `Alt+Shift+D` (`Option+Shift+D` on macOS) to toggle a read-only overlay in
 
 ## Update notifications
 
-The game's own script is loaded with a fresh cache-busting query string every single page load (a timestamp, not a version number that has to be bumped by hand), so opening or reloading the tab always fetches whatever is actually on the server — never a stale cached copy from before the latest update, which is exactly the kind of thing that's silently broken a feature here before (fireworks that seemed not to sync, a hotkey that quietly did nothing).
+The game's own scripts (the `js/` folder — see [`js/ARCHITECTURE.md`](js/ARCHITECTURE.md) for how it's split up) are loaded with a fresh cache-busting query string every single page load (a timestamp, not a version number that has to be bumped by hand), so opening or reloading the tab always fetches whatever is actually on the server — never a stale cached copy from before the latest update, which is exactly the kind of thing that's silently broken a feature here before (fireworks that seemed not to sync, a hotkey that quietly did nothing).
 
-That handles a fresh load; it doesn't help a tab you've already had open a while. For that, the game quietly checks every 5 minutes whether `main.js` on the server has changed since you loaded it (comparing its ETag/Last-Modified HTTP header). If a new build has gone out since you opened the tab, a small banner appears near the top of the screen with a Reload button. It's purely informational — nothing about your session forces a reload, and if the check can't get a usable header (some local dev setups) it just stays quiet instead of false-alarming.
+That handles a fresh load; it doesn't help a tab you've already had open a while. For that, the game quietly checks every 5 minutes whether any of those script files on the server have changed since you loaded them (comparing each one's ETag/Last-Modified HTTP header). If a new build has gone out since you opened the tab, a small banner appears near the top of the screen with a Reload button. It's purely informational — nothing about your session forces a reload, and if the check can't get a usable header for every file (some local dev setups) it just stays quiet instead of false-alarming.
 
 ## Notes
 

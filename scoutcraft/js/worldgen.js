@@ -128,6 +128,31 @@ function generateWorld(){
   buildArcheryRange();
   buildMeditationHill();
   placeScoutLawBoxes();
+  computeGroundSurface();
+}
+// ---------- Dig depth limit: the ground is only diggable DIG_DEPTH blocks down ----------
+// "Ground" is the terrain exactly as world-gen leaves it — camp clearings, the archery lane and the
+// reflection hill included, which is why this scans the finished world instead of trusting heightAt()
+// (those areas are carved to their own fixed heights). Captured once at the end of generateWorld,
+// before any saved edits replay, so a mound you built or a pit an older save already dug doesn't
+// shift the line. Only natural terrain blocks are limited — a ladder, torch or anything you placed
+// still comes out of a hole normally.
+const DIG_DEPTH = 2; // the surface block plus the one under it
+const DIG_LIMITED_BLOCKS = new Set([GRASS, DIRT, STONE, SAND]);
+const groundSurface = new Int16Array(WORLD_SIZE*WORLD_SIZE); // top terrain y for each x/z column
+function computeGroundSurface(){
+  for(let x=0;x<WORLD_SIZE;x++){
+    for(let z=0;z<WORLD_SIZE;z++){
+      let top = 0;
+      for(let y=WORLD_HEIGHT-1;y>0;y--){
+        if(DIG_LIMITED_BLOCKS.has(getBlock(x,y,z))){ top = y; break; }
+      }
+      groundSurface[x*WORLD_SIZE+z] = top;
+    }
+  }
+}
+function belowDigLimit(x,y,z,b){
+  return DIG_LIMITED_BLOCKS.has(b) && y <= groundSurface[x*WORLD_SIZE+z] - DIG_DEPTH;
 }
 // ---------- Cooking area: a flat, permanent 20x20 camp-cooking clearing ----------
 // A fixed, indestructible set of camp cooking stations near world center: four campfires each with
@@ -345,6 +370,10 @@ function buildArcheryRange(){
       setBlock(x,ARCHERY_RANGE_Y-1,z,DIRT);
       setBlock(x,ARCHERY_RANGE_Y,z,GRASS);
       for(let y=ARCHERY_RANGE_Y+1; y<WORLD_HEIGHT; y++) setBlock(x,y,z,AIR);
+      // The lane's surface can't be dug up, so the floor stays level (nothing can be dug below it
+      // either, since every dig starts by breaking the surface block). No fixture sits on it to
+      // protect, unlike the corner posts and targets below.
+      PROTECTED_CELLS.add(x+','+ARCHERY_RANGE_Y+','+z);
     }
   }
   const groundY = ARCHERY_RANGE_Y + 1;

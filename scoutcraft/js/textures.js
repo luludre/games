@@ -892,15 +892,15 @@ function drawEagleSilhouette(ctx, cx, cy, scale, color){
 // primitives. Each loads once up front; drawRankBadge falls back to that rank's plain procedural
 // medallion until its own image is ready.
 const RANK_EMBLEM_SRC = {
-  1: '../assets/scout-emblem.png',
-  2: '../assets/tenderfoot-scout-emblem.png',
-  3: '../assets/second-class-emblem.png',
-  4: '../assets/first-class-emblem.png',
-  5: '../assets/star-scout-emblem.png',
-  6: '../assets/life-scout-emblem.png',
+  1: 'assets/scout-emblem.png',
+  2: 'assets/tenderfoot-scout-emblem.png',
+  3: 'assets/second-class-emblem.png',
+  4: 'assets/first-class-emblem.png',
+  5: 'assets/star-scout-emblem.png',
+  6: 'assets/life-scout-emblem.png',
   // ?v=2: bumped when this one's artwork was replaced, so a browser that already cached the old
   // file under this same path picks up the new one instead of serving a stale copy.
-  7: '../assets/eagle-scout-emblem.png?v=2',
+  7: 'assets/eagle-scout-emblem.png?v=2',
 };
 const rankEmblemImg = {}, rankEmblemLoaded = {};
 for(const rankIndex in RANK_EMBLEM_SRC){

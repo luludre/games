@@ -1943,15 +1943,15 @@ function drawEagleSilhouette(ctx, cx, cy, scale, color){
 // primitives. Each loads once up front; drawRankBadge falls back to that rank's plain procedural
 // medallion until its own image is ready.
 const RANK_EMBLEM_SRC = {
-  1: 'assets/scout-emblem.png',
-  2: 'assets/tenderfoot-scout-emblem.png',
-  3: 'assets/second-class-emblem.png',
-  4: 'assets/first-class-emblem.png',
-  5: 'assets/star-scout-emblem.png',
-  6: 'assets/life-scout-emblem.png',
+  1: '../assets/scout-emblem.png',
+  2: '../assets/tenderfoot-scout-emblem.png',
+  3: '../assets/second-class-emblem.png',
+  4: '../assets/first-class-emblem.png',
+  5: '../assets/star-scout-emblem.png',
+  6: '../assets/life-scout-emblem.png',
   // ?v=2: bumped when this one's artwork was replaced, so a browser that already cached the old
   // file under this same path picks up the new one instead of serving a stale copy.
-  7: 'assets/eagle-scout-emblem.png?v=2',
+  7: '../assets/eagle-scout-emblem.png?v=2',
 };
 const rankEmblemImg = {}, rankEmblemLoaded = {};
 for(const rankIndex in RANK_EMBLEM_SRC){
@@ -2341,6 +2341,31 @@ function generateWorld(){
   buildArcheryRange();
   buildMeditationHill();
   placeScoutLawBoxes();
+  computeGroundSurface();
+}
+// ---------- Dig depth limit: the ground is only diggable DIG_DEPTH blocks down ----------
+// "Ground" is the terrain exactly as world-gen leaves it — camp clearings, the archery lane and the
+// reflection hill included, which is why this scans the finished world instead of trusting heightAt()
+// (those areas are carved to their own fixed heights). Captured once at the end of generateWorld,
+// before any saved edits replay, so a mound you built or a pit an older save already dug doesn't
+// shift the line. Only natural terrain blocks are limited — a ladder, torch or anything you placed
+// still comes out of a hole normally.
+const DIG_DEPTH = 2; // the surface block plus the one under it
+const DIG_LIMITED_BLOCKS = new Set([GRASS, DIRT, STONE, SAND]);
+const groundSurface = new Int16Array(WORLD_SIZE*WORLD_SIZE); // top terrain y for each x/z column
+function computeGroundSurface(){
+  for(let x=0;x<WORLD_SIZE;x++){
+    for(let z=0;z<WORLD_SIZE;z++){
+      let top = 0;
+      for(let y=WORLD_HEIGHT-1;y>0;y--){
+        if(DIG_LIMITED_BLOCKS.has(getBlock(x,y,z))){ top = y; break; }
+      }
+      groundSurface[x*WORLD_SIZE+z] = top;
+    }
+  }
+}
+function belowDigLimit(x,y,z,b){
+  return DIG_LIMITED_BLOCKS.has(b) && y <= groundSurface[x*WORLD_SIZE+z] - DIG_DEPTH;
 }
 // ---------- Cooking area: a flat, permanent 20x20 camp-cooking clearing ----------
 // A fixed, indestructible set of camp cooking stations near world center: four campfires each with
@@ -2558,6 +2583,10 @@ function buildArcheryRange(){
       setBlock(x,ARCHERY_RANGE_Y-1,z,DIRT);
       setBlock(x,ARCHERY_RANGE_Y,z,GRASS);
       for(let y=ARCHERY_RANGE_Y+1; y<WORLD_HEIGHT; y++) setBlock(x,y,z,AIR);
+      // The lane's surface can't be dug up, so the floor stays level (nothing can be dug below it
+      // either, since every dig starts by breaking the surface block). No fixture sits on it to
+      // protect, unlike the corner posts and targets below.
+      PROTECTED_CELLS.add(x+','+ARCHERY_RANGE_Y+','+z);
     }
   }
   const groundY = ARCHERY_RANGE_Y + 1;
@@ -4305,16 +4334,16 @@ function makeClipPlayer(url, defaultClipDuration, tailFade, offset){
   }
   return { load, play };
 }
-const lionRoarClip = makeClipPlayer('assets/lion-roar.ogg', 2.2, 0.35);
+const lionRoarClip = makeClipPlayer('../assets/lion-roar.ogg', 2.2, 0.35);
 // Public-domain "Fireworks in distance - 3" field recording (see assets/README.md) — pulls just the
 // one clean burst moment (found by scanning the recording for its loudest window) out of the full
 // 46s file rather than needing a separately re-encoded clip.
-const fireworkBurstClip = makeClipPlayer('assets/firework-burst.ogg', 1.5, 0.4, 22.75);
+const fireworkBurstClip = makeClipPlayer('../assets/firework-burst.ogg', 1.5, 0.4, 22.75);
 // A full recitation (see assets/README.md), played end to end rather than trimmed like the clips
 // above — pledgePlaying just blocks a second click from overlapping a recitation already underway,
 // clearing itself once the clip's own length has actually elapsed.
 const PLEDGE_CLIP_DURATION_S = 12;
-const pledgeClip = makeClipPlayer('assets/pledge-of-allegiance.m4a', PLEDGE_CLIP_DURATION_S, 0.3);
+const pledgeClip = makeClipPlayer('../assets/pledge-of-allegiance.m4a', PLEDGE_CLIP_DURATION_S, 0.3);
 let pledgePlaying = false;
 function playPledge(){
   if(pledgePlaying) return;
@@ -4328,7 +4357,7 @@ function playPledge(){
 // buildScoutOathTotem/buildOutdoorCodeTotem/doInteract) — a bit of buffer past each file's real
 // length (14.03s/11.44s) so the "still playing" guard clears a beat after the audio itself finishes.
 const SCOUT_OATH_CLIP_DURATION_S = 15;
-const scoutOathClip = makeClipPlayer('assets/scout-oath.m4a', SCOUT_OATH_CLIP_DURATION_S, 0.3);
+const scoutOathClip = makeClipPlayer('../assets/scout-oath.m4a', SCOUT_OATH_CLIP_DURATION_S, 0.3);
 let scoutOathPlaying = false;
 function playScoutOath(){
   if(scoutOathPlaying) return;
@@ -4339,7 +4368,7 @@ function playScoutOath(){
   Scout.recited('scoutoath');
 }
 const OUTDOOR_CODE_CLIP_DURATION_S = 12;
-const outdoorCodeClip = makeClipPlayer('assets/outdoor-code.m4a', OUTDOOR_CODE_CLIP_DURATION_S, 0.3);
+const outdoorCodeClip = makeClipPlayer('../assets/outdoor-code.m4a', OUTDOOR_CODE_CLIP_DURATION_S, 0.3);
 let outdoorCodePlaying = false;
 function playOutdoorCode(){
   if(outdoorCodePlaying) return;
@@ -7287,6 +7316,7 @@ function trySpawnSapling(){
   for(let tries=0; tries<10; tries++){
     const x = 2 + Math.floor(Math.random()*(WORLD_SIZE-4));
     const z = 2 + Math.floor(Math.random()*(WORLD_SIZE-4));
+    if(inArcheryRange(x,z)) continue; // a sapling growing into a tree would break the lane's flatness
     const h = heightAt(x,z);
     if(h<=SEA_LEVEL) continue;
     if(getBlock(x,h,z)!==GRASS) continue;
@@ -7304,6 +7334,15 @@ function updateSaplings(dt){
     for(const [key, info] of Array.from(saplings.entries())){
       const [xs,zs] = key.split(',');
       const x = Number(xs), z = Number(zs), y = info.y;
+      if(inArcheryRange(x,z)){
+        // One saved from before spawning skipped the lane — pull it out instead of letting it grow.
+        for(let dy=0; dy<SAPLING_MAX_STAGE; dy++){
+          if(getBlock(x,y+dy,z)===SAPLING) applyWorldEdit(x, y+dy, z, AIR);
+        }
+        saplings.delete(key);
+        saveSaplings();
+        continue;
+      }
       const elapsed = now - info.plantedAt;
       if(elapsed >= SAPLING_MATURE_MS){
         for(let dy=0; dy<SAPLING_MAX_STAGE; dy++){
@@ -8274,12 +8313,27 @@ function raycastUSFlag(){
 }
 let lastTreeWarningAt = 0;
 const TREE_WARNING_COOLDOWN_MS = 5000;
+let lastDigWarningAt = 0;
+const DIG_WARNING_COOLDOWN_MS = 5000;
+// Without a word, a block that just won't break reads as a glitch.
+function warnCantDig(msg){
+  if(Date.now()-lastDigWarningAt < DIG_WARNING_COOLDOWN_MS) return;
+  lastDigWarningAt = Date.now();
+  addChatMessage('Camp', msg);
+}
 function breakBlock(){
   const hit = raycastBlock();
   if(!hit) return;
   const b = getBlock(hit.x,hit.y,hit.z);
   if(b===BEDROCK) return;
-  if(PROTECTED_CELLS.has(hit.x+','+hit.y+','+hit.z)) return;
+  if(PROTECTED_CELLS.has(hit.x+','+hit.y+','+hit.z)){
+    if(hit.y===ARCHERY_RANGE_Y && inArcheryRange(hit.x,hit.z)) warnCantDig("🏹 The archery lane is kept level — the ground here can't be dug up.");
+    return;
+  }
+  if(belowDigLimit(hit.x,hit.y,hit.z,b)){
+    warnCantDig("⛏️ That's as deep as you can dig here — the ground below is solid.");
+    return;
+  }
   if(b===DOOR || b===DOOR_OPEN){
     const cells = findDoorCells(hit.x,hit.y,hit.z) || [{x:hit.x,y:hit.y,z:hit.z}];
     for(const c of cells) applyWorldEdit(c.x, c.y, c.z, AIR);

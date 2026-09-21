@@ -516,12 +516,27 @@ function raycastUSFlag(){
 }
 let lastTreeWarningAt = 0;
 const TREE_WARNING_COOLDOWN_MS = 5000;
+let lastDigWarningAt = 0;
+const DIG_WARNING_COOLDOWN_MS = 5000;
+// Without a word, a block that just won't break reads as a glitch.
+function warnCantDig(msg){
+  if(Date.now()-lastDigWarningAt < DIG_WARNING_COOLDOWN_MS) return;
+  lastDigWarningAt = Date.now();
+  addChatMessage('Camp', msg);
+}
 function breakBlock(){
   const hit = raycastBlock();
   if(!hit) return;
   const b = getBlock(hit.x,hit.y,hit.z);
   if(b===BEDROCK) return;
-  if(PROTECTED_CELLS.has(hit.x+','+hit.y+','+hit.z)) return;
+  if(PROTECTED_CELLS.has(hit.x+','+hit.y+','+hit.z)){
+    if(hit.y===ARCHERY_RANGE_Y && inArcheryRange(hit.x,hit.z)) warnCantDig("🏹 The archery lane is kept level — the ground here can't be dug up.");
+    return;
+  }
+  if(belowDigLimit(hit.x,hit.y,hit.z,b)){
+    warnCantDig("⛏️ That's as deep as you can dig here — the ground below is solid.");
+    return;
+  }
   if(b===DOOR || b===DOOR_OPEN){
     const cells = findDoorCells(hit.x,hit.y,hit.z) || [{x:hit.x,y:hit.y,z:hit.z}];
     for(const c of cells) applyWorldEdit(c.x, c.y, c.z, AIR);
