@@ -331,6 +331,16 @@ every time you open its window, so checking back is always at least a little use
 figuring it out from what's in the Bear Box. Cook at least one dish on all 5 cookware types — pot,
 pan, Dutch oven, campfire, griddle — to earn the Cooking badge.
 
+**When you're properly stuck**, the cookware starts helping rather than leaving you guessing forever.
+Three misses in a row at the same station and it names the dish you're closest to, and how many of
+its ingredients you've already got in there. Five, and it names something that dish is still missing.
+Seven, and it just tells you the whole recipe. It stays on that one dish the whole way up, so each
+hint builds on the last instead of sending you somewhere new, and it picks whichever dish your
+attempt was nearest (the simplest one on that cookware, if nothing you tried belonged to anything).
+The hint sits right in the cookware window under the dish names — not only in camp chat, which the
+window covers — and stays there while you keep trying. Cook anything successfully on that station and
+the whole thing resets and goes quiet again, so this only ever shows up when you're genuinely stuck.
+
 <details>
 <summary>All 26 recipes, if you'd rather not guess (spoilers)</summary>
 

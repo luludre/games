@@ -2365,7 +2365,13 @@ function computeGroundSurface(){
   }
 }
 function belowDigLimit(x,y,z,b){
-  return DIG_LIMITED_BLOCKS.has(b) && y <= groundSurface[x*WORLD_SIZE+z] - DIG_DEPTH;
+  if(!DIG_LIMITED_BLOCKS.has(b)) return false;
+  // Anything put down after world-gen is the player's own block, always theirs to take back — even
+  // sitting deep inside a hole an older save dug before this limit existed, where the limit would
+  // otherwise strand it there permanently. `edits` holds exactly the cells changed since world-gen
+  // (see applyWorldEdit), so what's left for the depth rule below is the original ground.
+  if(edits.has(x+','+y+','+z)) return false;
+  return y <= groundSurface[x*WORLD_SIZE+z] - DIG_DEPTH;
 }
 // ---------- Cooking area: a flat, permanent 20x20 camp-cooking clearing ----------
 // A fixed, indestructible set of camp cooking stations near world center: four campfires each with
@@ -9560,6 +9566,47 @@ function removeFromCookware(slotIdx){
   updateHotbarUI();
   renderCookware();
 }
+// Escalating help for a Scout who keeps missing. The recipes stay hidden on purpose (see
+// COOKWARE_DISH_DEFS), but hidden shouldn't mean stuck forever, so consecutive misses at one
+// cookware walk up a ladder: which dish they're closest to, then an ingredient it's still short,
+// then the whole recipe spelled out. Cooking anything on that cookware clears the streak, so the
+// ladder only ever shows up when someone is genuinely stuck rather than just experimenting.
+const COOK_HINT_WARMER = 3, COOK_HINT_INGREDIENT = 5, COOK_HINT_FULL = 7;
+const cookFailStreak = {};  // wareKey -> consecutive misses
+const cookHintTarget = {};  // wareKey -> the dish id the ladder is walking toward
+const cookHintText = {};    // wareKey -> the standing hint, kept on the panel so it's re-readable
+// Locks onto one dish for the whole ladder, so hint 2 builds on hint 1 instead of pointing at a
+// different dish every time. Picks whatever the attempt was closest to; fewest ingredients breaks
+// ties, which doubles as picking the easiest dish on the board when nothing loaded matches anything.
+function cookHintDish(wareKey, used){
+  const recipes = COOKWARE_RECIPES[wareKey];
+  const locked = recipes.find(r => r.id===cookHintTarget[wareKey]);
+  if(locked) return locked;
+  let best = null, bestOverlap = -1;
+  for(const r of recipes){
+    const overlap = r.ingredients.filter(i => used.includes(i)).length;
+    if(overlap > bestOverlap || (overlap===bestOverlap && r.ingredients.length < best.ingredients.length)){
+      best = r; bestOverlap = overlap;
+    }
+  }
+  cookHintTarget[wareKey] = best.id;
+  return best;
+}
+function cookHint(wareKey, used){
+  const dish = cookHintDish(wareKey, used);
+  const icon = HOTBAR_ICON[dish.id] || '';
+  const streak = cookFailStreak[wareKey];
+  const have = dish.ingredients.filter(i => used.includes(i));
+  const missing = dish.ingredients.filter(i => !used.includes(i));
+  if(streak >= COOK_HINT_FULL){
+    return `${icon} Here's the whole thing: ${dish.name} is ${dish.ingredients.map(i=>BLOCK_NAME[i]).join(' + ')}.`;
+  }
+  if(streak >= COOK_HINT_INGREDIENT && missing.length){
+    return `${icon} ${dish.name} still needs ${BLOCK_NAME[missing[0]]}.`;
+  }
+  if(!have.length) return `${icon} Try for ${dish.name} — it takes ${dish.ingredients.length} ingredients.`;
+  return `${icon} Closest to ${dish.name} — ${have.length} of its ${dish.ingredients.length} ingredients are in there.`;
+}
 function tryCookRecipe(){
   const used = cookwareSlots.filter(x=>x!=null);
   if(used.length===0) return;
@@ -9569,9 +9616,18 @@ function tryCookRecipe(){
     return sortedRecipe.length===sortedUsed.length && sortedRecipe.every((v,i)=>v===sortedUsed[i]);
   });
   if(!match){
+    cookFailStreak[cookwareWareKey] = (cookFailStreak[cookwareWareKey]||0) + 1;
     addChatMessage('Camp', "🍳 That doesn't look like any recipe anyone's ever heard of.");
+    if(cookFailStreak[cookwareWareKey] >= COOK_HINT_WARMER){
+      cookHintText[cookwareWareKey] = cookHint(cookwareWareKey, used);
+      addChatMessage('Camp', cookHintText[cookwareWareKey]);
+      renderCookware();
+    }
     return;
   }
+  cookFailStreak[cookwareWareKey] = 0;
+  delete cookHintTarget[cookwareWareKey];
+  delete cookHintText[cookwareWareKey];
   for(let i=0;i<cookwareSlots.length;i++) cookwareSlots[i] = null; // spent, not returned — unlike closing the window
   invAdd(match.id, 1);
   saveInventory();
@@ -9588,6 +9644,12 @@ function renderCookware(){
   // Names only, never ingredients — see COOKWARE_DISH_DEFS's own note on why the recipe itself
   // stays hidden. Knowing what's possible on this cookware is a fair signpost; how to make it is
   // still the whole point of poking around the Bear Box and checking back for chat hints.
+  const hintEl = document.getElementById('cookwareHint');
+  if(hintEl){
+    const standing = cookHintText[cookwareWareKey];
+    hintEl.textContent = standing || '';
+    hintEl.hidden = !standing;
+  }
   const dishList = document.getElementById('cookwareDishList');
   if(dishList){
     dishList.innerHTML = '';

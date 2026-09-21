@@ -152,7 +152,13 @@ function computeGroundSurface(){
   }
 }
 function belowDigLimit(x,y,z,b){
-  return DIG_LIMITED_BLOCKS.has(b) && y <= groundSurface[x*WORLD_SIZE+z] - DIG_DEPTH;
+  if(!DIG_LIMITED_BLOCKS.has(b)) return false;
+  // Anything put down after world-gen is the player's own block, always theirs to take back — even
+  // sitting deep inside a hole an older save dug before this limit existed, where the limit would
+  // otherwise strand it there permanently. `edits` holds exactly the cells changed since world-gen
+  // (see applyWorldEdit), so what's left for the depth rule below is the original ground.
+  if(edits.has(x+','+y+','+z)) return false;
+  return y <= groundSurface[x*WORLD_SIZE+z] - DIG_DEPTH;
 }
 // ---------- Cooking area: a flat, permanent 20x20 camp-cooking clearing ----------
 // A fixed, indestructible set of camp cooking stations near world center: four campfires each with
