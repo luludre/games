@@ -164,6 +164,13 @@ function loadScoutProgress(){
   }catch(e){}
 }
 loadScoutProgress();
+// Fill the counter in the moment the saved count is known — the #hud markup is already parsed above
+// us, and this runs long before init() gets around to its own updateScoutHUD(). index.html ships
+// that span empty on purpose: the hardcoded "0/13" that used to sit there went stale the moment
+// badge fourteen was added, and every player saw the wrong total on every page load until the first
+// update overwrote it. Only the counter, not all of updateScoutHUD — that also repaints the
+// character's rank badge, and characterMesh doesn't exist this early.
+updateBadgeCountLabel();
 
 // A badge announcement, queued so earning two at once doesn't overwrite the first one's toast.
 const badgeToastQueue = [];
@@ -392,9 +399,16 @@ function updateScout(dt){
   }
 }
 
-function updateScoutHUD(){
+// The HUD's "earned/total" badge counter. The total is read off BADGES.length every single time
+// rather than written down anywhere, so adding a badge can't leave a stale number behind. Split out
+// of updateScoutHUD below so it can also be called on its own, at load, before the rest of the
+// game's globals exist.
+function updateBadgeCountLabel(){
   const c = document.getElementById('badgeCount');
   if(c) c.textContent = `${earnedBadges.size}/${BADGES.length}`;
+}
+function updateScoutHUD(){
+  updateBadgeCountLabel();
   const r = document.getElementById('rankLabel');
   if(r) r.textContent = rankFor(earnedBadges.size);
   updateCharacterRankBadge();
