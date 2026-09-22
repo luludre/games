@@ -274,6 +274,40 @@ function keepPlaying(){
 }
 document.getElementById('btnQuit').addEventListener('click', ()=>{ if(locked && !isDead) quitGame(); });
 document.getElementById('btnKeepPlaying').addEventListener('click', keepPlaying);
+
+// ---------- "Start over" confirmation ----------
+// Erasing a camp is the only thing in the game that can't be undone and can't be re-earned by
+// playing on, so it always asks first, spells out item by item what's about to go (a bare "are you
+// sure?" leaves people finding out afterwards what "reset" actually covered), and makes backing out
+// the easy path: Esc, the backdrop and the Cancel button all mean no, and only the one explicitly
+// labelled button goes through with it.
+let resetConfirmOpen = false;
+const resetModal = document.getElementById('resetModal');
+// Whether the front page was up when this was opened, so canceling returns them exactly where they
+// came from: the overlay on desktop (its only entry point there), or straight back into play on
+// touch, where the in-game ☰ menu is the other way in.
+let resetCameFromOverlay = false;
+function openResetConfirm(){
+  if(!resetModal) return;
+  resetCameFromOverlay = !overlay.hidden;
+  resetConfirmOpen = true;
+  resetModal.hidden = false;
+  if(document.pointerLockElement) document.exitPointerLock();
+  if(isTouchDevice) locked = false;
+  overlay.hidden = true;
+}
+function closeResetConfirm(){
+  if(!resetModal) return;
+  resetConfirmOpen = false;
+  resetModal.hidden = true;
+  if(resetCameFromOverlay) overlay.hidden = false;
+  else if(isTouchDevice) locked = true;
+}
+if(resetModal){
+  document.getElementById('resetCancel').addEventListener('click', closeResetConfirm);
+  document.getElementById('resetConfirmBtn').addEventListener('click', resetAllProgress);
+  resetModal.addEventListener('click', e=>{ if(e.target===resetModal) closeResetConfirm(); });
+}
 function openItems(){
   itemsOpen = true;
   itemsModal.hidden = false;

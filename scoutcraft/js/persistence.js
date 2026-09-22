@@ -57,7 +57,7 @@ function loadInventory(){
 const POS_KEY = 'scoutcraft_last_pos_v1';
 const POSITION_SAVE_INTERVAL_MS = 5000; // how often the plain periodic timer below re-saves it
 function savePosition(){
-  if(isDead) return;
+  if(isDead || wipingSave) return;
   try{
     localStorage.setItem(POS_KEY, JSON.stringify({ x: player.pos.x, y: player.pos.y, z: player.pos.z }));
   }catch(e){}
@@ -70,5 +70,38 @@ function loadPosition(){
     if(typeof p.x!=='number' || typeof p.y!=='number' || typeof p.z!=='number') return null;
     return p;
   }catch(e){ return null; }
+}
+
+// ---------- Start over: erase every trace of this camp ----------
+// Every key the game writes is namespaced `scoutcraft_`, so one prefix sweep catches all of them at
+// once — world edits, inventory, hotbar, backpack, bear box, badges and stats, last position,
+// campfires, saplings, worms, butterflies, and the player's name/troop/neckerchief — including keys
+// a future feature adds, which a hand-maintained list here would silently start missing. The prefix
+// rather than a blanket localStorage.clear() matters because localStorage is scoped per *origin*,
+// not per path: on luludre.github.io this exact store is shared with every other game under
+// /games/, and clear() would take their saves down with it.
+const SAVE_KEY_PREFIX = 'scoutcraft_';
+// Set once the wipe begins and never unset — the page is already on its way to reloading by then,
+// and the saves that fire during teardown (savePosition, on both the periodic timer and
+// beforeunload/pagehide) would otherwise write the old camp straight back into the store that was
+// just emptied, leaving the player standing in the same spot wondering why "erase everything" didn't.
+let wipingSave = false;
+function resetAllProgress(){
+  wipingSave = true;
+  try{
+    // Collect first, delete second: removeItem re-indexes the store as it goes, so deleting from
+    // inside a localStorage.key(i) loop walks right past every other match.
+    const doomed = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith(SAVE_KEY_PREFIX)) doomed.push(k);
+    }
+    for(const k of doomed) localStorage.removeItem(k);
+  }catch(e){}
+  // The reload *is* the reset. Terrain comes from a fixed seed, so with nothing left to lay on top
+  // of it the game rebuilds the same Camp Merit Ridge a first-time player sees. Tearing the live
+  // state down in place instead would mean hand-undoing twenty subsystems — meshes, inventory,
+  // badges, critters, weather, the player themselves — and being right about every single one.
+  location.reload();
 }
 

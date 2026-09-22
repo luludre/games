@@ -25,6 +25,9 @@ window.addEventListener('keydown', e=>{
     return;
   }
   if(e.code==='Escape'){
+    // First in the chain: it's the only modal that can open on top of the front page, so it has to
+    // be the one Esc dismisses even when nothing else is showing.
+    if(resetConfirmOpen){ closeResetConfirm(); return; }
     if(craftingOpen){ closeCrafting(false); return; }
     if(itemsOpen){ closeItems(false); return; }
     if(bearBoxOpen){ closeBearBox(false); return; }
@@ -181,6 +184,14 @@ if(btnHelp && playHint){
     hotkeyPanel.hidden = playHint.hidden;
     btnHelp.textContent = playHint.hidden ? '❓ How to play' : '✕ Hide help';
   });
+}
+// Starting a fresh camp lives on the front page rather than in the middle of play, since that's
+// where you'd be deciding how to begin — and it's still reachable mid-game, because Esc brings the
+// front page straight back up over the world. Same stopPropagation reasoning as the name field
+// above: without it, clicking this would ALSO start the game underneath the confirmation.
+const btnReset = document.getElementById('btnReset');
+if(btnReset){
+  btnReset.addEventListener('click', e=>{ e.stopPropagation(); openResetConfirm(); });
 }
 if(isTouchDevice){
   document.body.classList.add('touch-device');
@@ -366,6 +377,10 @@ if(isTouchDevice){
   bindTouchButton('tmBackpack', ()=>{ touchMenu.hidden = true; if(locked && !isDead) openBackpackStorage(); });
   bindTouchButton('tmSash', ()=>{ touchMenu.hidden = true; if(locked && !isDead) openSash(); });
   bindTouchButton('tmQuit', ()=>{ touchMenu.hidden = true; if(locked && !isDead) quitGame(); });
+  // Ungated, unlike the four above: on touch the front page doesn't come back mid-game, so this
+  // menu is the only way in, and wanting a clean start is if anything *more* likely right after
+  // dying than before it.
+  bindTouchButton('tmReset', ()=>{ touchMenu.hidden = true; openResetConfirm(); });
 }
 
 // ---------- Debug panel (Alt+Shift+D) ----------
