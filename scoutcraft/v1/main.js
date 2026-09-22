@@ -2948,7 +2948,7 @@ function loadInventory(){
 const POS_KEY = 'scoutcraft_last_pos_v1';
 const POSITION_SAVE_INTERVAL_MS = 5000; // how often the plain periodic timer below re-saves it
 function savePosition(){
-  if(isDead) return;
+  if(isDead || wipingSave) return;
   try{
     localStorage.setItem(POS_KEY, JSON.stringify({ x: player.pos.x, y: player.pos.y, z: player.pos.z }));
   }catch(e){}
@@ -2961,6 +2961,39 @@ function loadPosition(){
     if(typeof p.x!=='number' || typeof p.y!=='number' || typeof p.z!=='number') return null;
     return p;
   }catch(e){ return null; }
+}
+
+// ---------- Start over: erase every trace of this camp ----------
+// Every key the game writes is namespaced `scoutcraft_`, so one prefix sweep catches all of them at
+// once — world edits, inventory, hotbar, backpack, bear box, badges and stats, last position,
+// campfires, saplings, worms, butterflies, and the player's name/troop/neckerchief — including keys
+// a future feature adds, which a hand-maintained list here would silently start missing. The prefix
+// rather than a blanket localStorage.clear() matters because localStorage is scoped per *origin*,
+// not per path: on luludre.github.io this exact store is shared with every other game under
+// /games/, and clear() would take their saves down with it.
+const SAVE_KEY_PREFIX = 'scoutcraft_';
+// Set once the wipe begins and never unset — the page is already on its way to reloading by then,
+// and the saves that fire during teardown (savePosition, on both the periodic timer and
+// beforeunload/pagehide) would otherwise write the old camp straight back into the store that was
+// just emptied, leaving the player standing in the same spot wondering why "erase everything" didn't.
+let wipingSave = false;
+function resetAllProgress(){
+  wipingSave = true;
+  try{
+    // Collect first, delete second: removeItem re-indexes the store as it goes, so deleting from
+    // inside a localStorage.key(i) loop walks right past every other match.
+    const doomed = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith(SAVE_KEY_PREFIX)) doomed.push(k);
+    }
+    for(const k of doomed) localStorage.removeItem(k);
+  }catch(e){}
+  // The reload *is* the reset. Terrain comes from a fixed seed, so with nothing left to lay on top
+  // of it the game rebuilds the same Camp Merit Ridge a first-time player sees. Tearing the live
+  // state down in place instead would mean hand-undoing twenty subsystems — meshes, inventory,
+  // badges, critters, weather, the player themselves — and being right about every single one.
+  location.reload();
 }
 
 // ---------- Chunked mesh building ----------
@@ -8606,6 +8639,9 @@ window.addEventListener('keydown', e=>{
     return;
   }
   if(e.code==='Escape'){
+    // First in the chain: it's the only modal that can open on top of the front page, so it has to
+    // be the one Esc dismisses even when nothing else is showing.
+    if(resetConfirmOpen){ closeResetConfirm(); return; }
     if(craftingOpen){ closeCrafting(false); return; }
     if(itemsOpen){ closeItems(false); return; }
     if(bearBoxOpen){ closeBearBox(false); return; }
@@ -8762,6 +8798,14 @@ if(btnHelp && playHint){
     hotkeyPanel.hidden = playHint.hidden;
     btnHelp.textContent = playHint.hidden ? '❓ How to play' : '✕ Hide help';
   });
+}
+// Starting a fresh camp lives on the front page rather than in the middle of play, since that's
+// where you'd be deciding how to begin — and it's still reachable mid-game, because Esc brings the
+// front page straight back up over the world. Same stopPropagation reasoning as the name field
+// above: without it, clicking this would ALSO start the game underneath the confirmation.
+const btnReset = document.getElementById('btnReset');
+if(btnReset){
+  btnReset.addEventListener('click', e=>{ e.stopPropagation(); openResetConfirm(); });
 }
 if(isTouchDevice){
   document.body.classList.add('touch-device');
@@ -8947,6 +8991,10 @@ if(isTouchDevice){
   bindTouchButton('tmBackpack', ()=>{ touchMenu.hidden = true; if(locked && !isDead) openBackpackStorage(); });
   bindTouchButton('tmSash', ()=>{ touchMenu.hidden = true; if(locked && !isDead) openSash(); });
   bindTouchButton('tmQuit', ()=>{ touchMenu.hidden = true; if(locked && !isDead) quitGame(); });
+  // Ungated, unlike the four above: on touch the front page doesn't come back mid-game, so this
+  // menu is the only way in, and wanting a clean start is if anything *more* likely right after
+  // dying than before it.
+  bindTouchButton('tmReset', ()=>{ touchMenu.hidden = true; openResetConfirm(); });
 }
 
 // ---------- Debug panel (Alt+Shift+D) ----------
@@ -9333,6 +9381,40 @@ function keepPlaying(){
 }
 document.getElementById('btnQuit').addEventListener('click', ()=>{ if(locked && !isDead) quitGame(); });
 document.getElementById('btnKeepPlaying').addEventListener('click', keepPlaying);
+
+// ---------- "Start over" confirmation ----------
+// Erasing a camp is the only thing in the game that can't be undone and can't be re-earned by
+// playing on, so it always asks first, spells out item by item what's about to go (a bare "are you
+// sure?" leaves people finding out afterwards what "reset" actually covered), and makes backing out
+// the easy path: Esc, the backdrop and the Cancel button all mean no, and only the one explicitly
+// labelled button goes through with it.
+let resetConfirmOpen = false;
+const resetModal = document.getElementById('resetModal');
+// Whether the front page was up when this was opened, so canceling returns them exactly where they
+// came from: the overlay on desktop (its only entry point there), or straight back into play on
+// touch, where the in-game ☰ menu is the other way in.
+let resetCameFromOverlay = false;
+function openResetConfirm(){
+  if(!resetModal) return;
+  resetCameFromOverlay = !overlay.hidden;
+  resetConfirmOpen = true;
+  resetModal.hidden = false;
+  if(document.pointerLockElement) document.exitPointerLock();
+  if(isTouchDevice) locked = false;
+  overlay.hidden = true;
+}
+function closeResetConfirm(){
+  if(!resetModal) return;
+  resetConfirmOpen = false;
+  resetModal.hidden = true;
+  if(resetCameFromOverlay) overlay.hidden = false;
+  else if(isTouchDevice) locked = true;
+}
+if(resetModal){
+  document.getElementById('resetCancel').addEventListener('click', closeResetConfirm);
+  document.getElementById('resetConfirmBtn').addEventListener('click', resetAllProgress);
+  resetModal.addEventListener('click', e=>{ if(e.target===resetModal) closeResetConfirm(); });
+}
 function openItems(){
   itemsOpen = true;
   itemsModal.hidden = false;
@@ -10140,6 +10222,10 @@ window.addEventListener('pagehide', savePosition);
 // the way out, and skipped entirely for someone who closes the tab from the front page having never
 // actually played.
 window.addEventListener('beforeunload', e=>{
+  // A reset's own reload gets no send-off: there's no camp left to say goodbye to, and a "Leave
+  // site?" prompt landing on someone who just confirmed "erase everything" reads like the reset
+  // failed.
+  if(wipingSave) return;
   if(!thankYouScreen.hidden) return;
   if(everStartedPlaying) quitGame();
   e.preventDefault();

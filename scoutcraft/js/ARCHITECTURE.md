@@ -46,7 +46,7 @@ split.
 | `crafting.js` | `RECIPES`, inventory helpers, crafting-table/tent lookups, protected cells. |
 | `textures.js` | The procedural texture atlas — every `draw*` pixel-art function, atlas assembly, rank emblem art, US flag master canvas. |
 | `worldgen.js` | Perlin noise, world storage (`getBlock`/`setBlock`), `generateWorld`, the fixed camp landmarks (cooking area, totems, archery range, meditation hill, scout law boxes), tree/bush planting. |
-| `persistence.js` | Core save/load: world edits, inventory, last position. Other subsystems (worms, butterflies, saplings, fires, bear box, backpack) keep their own save/load next to their own logic. |
+| `persistence.js` | Core save/load: world edits, inventory, last position. Other subsystems (worms, butterflies, saplings, fires, bear box, backpack) keep their own save/load next to their own logic. Also `resetAllProgress` + the `wipingSave` flag, which *do* reach across all of them — see below. |
 | `rendering.js` | Chunked mesh building, tree species/tint, minimap. |
 | `player-model.js` | Player state/spawn, the blocky avatar model + its textures, the floating name/HP tag, and every animal's 3D model. How things *look*. |
 | `animals.js` | Land-animal AI (rabbit/squirrel/deer/bear/moose) — spawn, update, damage, kill. How land animals *behave*. |
@@ -62,6 +62,21 @@ split.
 | `ui-menus.js` | Crafting modal, items panel, quit/thank-you screen, achievement share image. |
 | `ui-storage.js` | Bear box, cookware, backpack storage, quick-action icons, camp log/chat. |
 | `bootstrap.js` | `init()`, the `animate()` loop, the update checker. **Loads last.** |
+
+## Resetting: one flag that crosses every file
+
+`resetAllProgress()` (persistence.js) is the only thing here that has to know about *all* the save
+code at once, and it deliberately doesn't. Rather than calling twelve `clear*` functions it sweeps
+`localStorage` for the `scoutcraft_` prefix every save in the project already uses, then reloads —
+so a new subsystem that stores something gets cleaned up for free, as long as it keeps the prefix.
+**If you add a saved key, prefix it `scoutcraft_`, or the reset will quietly leave it behind.**
+
+The catch is the reload itself, which runs the normal teardown path — and that path *saves*.
+`savePosition` fires on `beforeunload`/`pagehide` and would write the old camp straight back into
+the store that was just emptied. Hence `wipingSave`: set once at the start of the wipe, never
+unset, and checked by `savePosition` and by bootstrap.js's "Leave site?" handler. **Any new
+save-on-exit work needs the same guard**, or resetting will silently half-fail — the worst kind of
+bug here, because the player sees a fresh world and only notices the leftovers much later.
 
 ## Cache-busting
 

@@ -556,6 +556,22 @@ browser's site data for this page (or opening it in a different browser, or inco
 brand-new world. There's nothing to back up or export short of copying the relevant
 `scoutcraft_*` keys out of `localStorage` yourself.
 
+### Starting over
+
+**🔄 Start over** on the front page (or **Start Over** in the ☰ menu on a phone) wipes the save
+deliberately, without having to go digging through browser settings. It asks first, listing exactly
+what's about to go — your camp, your inventory, your badges and rank, your critters, and your
+name/troop/neckerchief — and only the **Erase everything** button goes through with it; Esc, the
+backdrop and **Cancel** all back out harmlessly. Confirming clears every `scoutcraft_*` key and
+reloads, and because the terrain comes from a fixed seed you land back at the same untouched Camp
+Merit Ridge a first-time player sees, with the backpack and bear box restocked to their starting
+contents. There's no undo.
+
+Two things worth knowing. It only touches keys starting with `scoutcraft_`, never the whole store,
+because `localStorage` is shared by every game served from the same origin — a blanket clear would
+take their saves down too. And for the same reason, `v1/` and the current version share one save:
+resetting from either one resets both.
+
 ## Debug panel
 
 Press `Alt+Shift+D` (`Option+Shift+D` on macOS) to toggle a read-only overlay in the top-right corner — it doesn't pause the game or grab the mouse, so you can keep playing with it open. It shows a full census of every block currently in the world (trees, wood, leaves, and water called out up top — "wood if all cut" is exactly how many Wood items chopping down every tree would give you — then every other block type below, most common first), plus a handful of other live numbers: FPS, block edits, chunk meshes actually built, animal/worm/butterfly/fire counts, your position and chunk, and the world's dimensions. "Trees" counts live trunk bases specifically (so a 5x giant tree still counts as one tree, and a felled trunk doesn't), refreshing every 2 seconds while the panel stays open.

@@ -51,9 +51,15 @@
     border-radius:10px;padding:14px 18px;}
   #overlay .credits a{color:#ffcc4d;font-weight:700;text-decoration:none;}
   #overlay .credits a:hover{text-decoration:underline;}
-  #btnHelp{margin-top:8px;background:none;border:1px solid rgba(255,255,255,0.35);color:#f2e9d8;
+  #frontPageActions{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:8px;}
+  #btnHelp, #btnReset{background:none;border:1px solid rgba(255,255,255,0.35);color:#f2e9d8;
     padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;}
   #btnHelp:hover{background:rgba(255,255,255,0.1);}
+  /* Tinted apart from "How to play" beside it so the destructive one never gets clicked by muscle
+     memory — but still an outline button, not a big solid red one, since it's a rare utility and
+     shouldn't compete with "Click anywhere to play" for attention. */
+  #btnReset{border-color:rgba(226,120,100,0.5);color:#f0c9c0;}
+  #btnReset:hover{background:rgba(194,59,40,0.3);}
   #nameEntry{margin-top:14px;}
   #nameInput{font-size:16px;padding:8px 14px;border-radius:6px;border:2px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.1);color:#fff;text-align:center;width:200px;outline:none;}
   #nameInput::placeholder{color:rgba(255,255,255,0.55);}
@@ -266,6 +272,25 @@
     #achievementImg{max-width:min(420px,90vw);}
     #shareRow{flex-direction:row;flex-wrap:wrap;justify-content:center;width:100%;max-width:420px;flex:none;}
   }
+  /* Above every other modal AND above #overlay (z-index 20), because unlike the rest of them this
+     one can be opened from the front page. */
+  #resetModal{position:fixed;inset:0;z-index:32;background:rgba(0,0,0,0.72);display:flex;
+    align-items:center;justify-content:center;padding:16px;box-sizing:border-box;}
+  #resetPanel{background:#2b2320;color:#f2e9d8;width:min(470px,94vw);max-height:88vh;overflow:auto;
+    border-radius:10px;border:2px solid #8a4a3a;box-shadow:0 10px 40px rgba(0,0,0,0.6);
+    padding:20px 22px;text-align:left;}
+  #resetPanel h2{margin:0 0 10px;font-size:1.15em;color:#ffb4a0;}
+  #resetPanel p{margin:0 0 10px;font-size:14px;line-height:1.55;}
+  #resetPanel ul{margin:0 0 12px;padding-left:20px;font-size:13px;line-height:1.6;opacity:0.9;}
+  #resetWarning{color:#ffb4a0;font-weight:700;}
+  #resetButtons{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+  #resetButtons button{font-family:inherit;font-size:13px;padding:9px 16px;border-radius:7px;cursor:pointer;}
+  /* Cancel is the heavier-looking of the two on purpose — the safe way out should be the one your
+     eye lands on, and the destructive button should take a deliberate read to pick. */
+  #resetCancel{background:rgba(255,255,255,0.14);color:#f2e9d8;border:1px solid rgba(255,255,255,0.32);font-weight:600;}
+  #resetCancel:hover{background:rgba(255,255,255,0.24);}
+  #resetConfirmBtn{background:#7a2b1f;color:#fff;border:1px solid #c23b28;font-weight:700;}
+  #resetConfirmBtn:hover{background:#c23b28;}
   #sashModal{position:fixed;inset:0;z-index:31;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;}
   #sashPanel{background:#2b2320;color:#f2e9d8;width:min(620px,92vw);max-height:82vh;overflow:auto;border-radius:10px;
     border:2px solid #5a4632;box-shadow:0 10px 40px rgba(0,0,0,0.5);}
@@ -364,6 +389,7 @@
     <button id="tmBackpack">🎒 Backpack</button>
     <button id="tmSash">🎖️ Badges</button>
     <button id="tmQuit">🏅 Share Achievements</button>
+    <button id="tmReset">🔄 Start Over</button>
   </div>
 </div>
 <div id="craftingModal" hidden>
@@ -504,6 +530,27 @@
     <div id="sashGrid"></div>
   </div>
 </div>
+<!-- Confirmation for the one action in the game that can't be undone (see openResetConfirm). The
+     list is spelled out in full on purpose: "reset" means very different things in different games,
+     and nobody should have to find out which one this was after it already happened. -->
+<div id="resetModal" hidden>
+  <div id="resetPanel">
+    <h2>⚠️ Start a brand-new camp?</h2>
+    <p>This erases <b>everything</b> saved in this browser and starts the game over from scratch:</p>
+    <ul>
+      <li>Every block you've built, dug or chopped — the whole camp goes back to wild forest</li>
+      <li>Your inventory and hotbar — and your backpack and bear box, restocked back to the gear and food a brand-new Scout starts with</li>
+      <li>Every merit badge you've earned, and the rank they earned you</li>
+      <li>Your campfires, planted saplings, and the worms and butterflies around camp</li>
+      <li>Your name, troop number and neckerchief color</li>
+    </ul>
+    <p id="resetWarning">There's no undo. None of this can be brought back.</p>
+    <div id="resetButtons">
+      <button id="resetCancel">Cancel — keep my camp</button>
+      <button id="resetConfirmBtn">Erase everything</button>
+    </div>
+  </div>
+</div>
 <div id="overlay">
   <h1>ScoutCraft</h1>
   <p id="campSubtitle">🏕️ Camp Merit Ridge</p>
@@ -519,7 +566,13 @@
     <label id="neckerchiefLabel" for="neckerchiefColorInput">Neckerchief <input id="neckerchiefColorInput" type="color" value="#c62828"></label>
   </div>
   <p id="tapToPlay"><strong>Click anywhere to play</strong></p>
-  <button id="btnHelp">❓ How to play</button>
+  <!-- Side by side rather than stacked: the front page only has about 40px of clearance left below
+       the credits box (see the #overlay .popcornBtn note in the CSS), so a second row of buttons
+       here would push it into the panel buttons showing through underneath. -->
+  <div id="frontPageActions">
+    <button id="btnHelp">❓ How to play</button>
+    <button id="btnReset">🔄 Start over</button>
+  </div>
   <p id="playHint" class="small" hidden>Press <span class="key">B</span> to open your Backpack — it starts already packed with the real Scout's 10 Essentials plus a tent, sleeping bag, sleeping pad and rope. Pitch your tent (a real shelter you can walk into) and take a bearing with your compass to earn merit badges right away. Chop a tree for wood and leaves, put down your Camp Workbench, and press E beside it to craft — twist leaves into <b>rope</b>, then set up a <b>campfire</b>, a <b>lantern</b> and your <b>troop flag</b> — each one earns a merit badge too, and badges promote you from Scout all the way to Eagle Scout. Press <span class="key">M</span> to see your sash, <span class="key">K</span> near your tent after dark to sleep through the night, or <span class="key">H</span> any time for the full hotkey list. Rabbits and deer are harmless — the moose fights back if provoked, and the black bear attacks on sight. Progress saves automatically in this browser.</p>
   <p class="credits">Built by Andre Wu (Troop 904, Dublin, California), his dad, and an AI to share
   the adventure of Scouting.</p>

@@ -253,6 +253,10 @@ window.addEventListener('pagehide', savePosition);
 // the way out, and skipped entirely for someone who closes the tab from the front page having never
 // actually played.
 window.addEventListener('beforeunload', e=>{
+  // A reset's own reload gets no send-off: there's no camp left to say goodbye to, and a "Leave
+  // site?" prompt landing on someone who just confirmed "erase everything" reads like the reset
+  // failed.
+  if(wipingSave) return;
   if(!thankYouScreen.hidden) return;
   if(everStartedPlaying) quitGame();
   e.preventDefault();
