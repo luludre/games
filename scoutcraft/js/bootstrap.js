@@ -62,6 +62,10 @@ function init(){
   buildGiantFlag();
   buildTotems();
   buildArcheryRange();
+  // Same idea as the three above, for the camp floor a pre-protection save may have dug holes in —
+  // but ground-only, so it can't swallow anything the player has built in camp. See the note on
+  // repairCookingFloor for why buildCookingArea() itself can't be re-run here.
+  repairCookingFloor();
   buildCampSign();
   buildKayak();
   buildHorse();
