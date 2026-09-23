@@ -2389,6 +2389,10 @@ function buildCookingArea(){
       for(let y=1; y<COOKING_AREA_Y-1; y++) setBlock(x,y,z,STONE);
       setBlock(x,COOKING_AREA_Y-1,z,DIRT);
       setBlock(x,COOKING_AREA_Y,z,DIRT); // a bare, fire-safe clearing, not grass
+      // Camp's floor can't be dug up, so the clearing stays flat and hole-free — the same rule the
+      // archery lane already had (see buildArcheryRange). Protecting the surface is enough to
+      // protect everything under it too, since a dig has to break the surface block to reach down.
+      PROTECTED_CELLS.add(x+','+COOKING_AREA_Y+','+z);
       for(let y=COOKING_AREA_Y+1; y<WORLD_HEIGHT; y++) setBlock(x,y,z,AIR);
     }
   }
@@ -2410,6 +2414,34 @@ function buildCookingArea(){
   }
   protectFire(x0+10, fy, z0+14); // a fifth, plain campfire
   protect(x0+15, fy, z0+14, BEAR_BOX);
+}
+// Fills in any hole already dug out of the camp floor by a save from before it was protected above.
+// Unlike the flag and the totems — which are re-placed wholesale after loadEdits — this can't just
+// call buildCookingArea() again: that clears everything above the floor to AIR, which would delete
+// the tent, workbench and anything else the player has built in camp. So it restores the ground
+// only, exactly as world-gen laid it down, and leaves the airspace alone.
+//
+// The stale entries come out of `edits` as well as being re-filled. Left in, they'd keep replaying
+// on every future load (making this repair permanent work), keep bloating the save, and — since
+// `edits` is what tells belowDigLimit "the player put this here, it's theirs to take back" — quietly
+// re-open the deeper layers the depth limit is supposed to keep shut.
+function repairCookingFloor(){
+  const { x: x0, z: z0 } = COOKING_AREA_ORIGIN;
+  let filled = 0;
+  for(let dx=0; dx<COOKING_AREA_SIZE; dx++){
+    for(let dz=0; dz<COOKING_AREA_SIZE; dz++){
+      const x=x0+dx, z=z0+dz;
+      for(let y=1; y<=COOKING_AREA_Y; y++){
+        const want = y >= COOKING_AREA_Y-1 ? DIRT : STONE;
+        if(getBlock(x,y,z)===want) continue;
+        setBlock(x,y,z,want);
+        edits.delete(x+','+y+','+z);
+        filled++;
+      }
+    }
+  }
+  if(filled) saveEdits();
+  return filled;
 }
 // A giant American flag towering over the cooking area's far corner, clear of every station above —
 // a flagpole (12 stacked segments, topped with the same gold-finial block the little Troop Flag
@@ -8367,6 +8399,7 @@ function breakBlock(){
   if(b===BEDROCK) return;
   if(PROTECTED_CELLS.has(hit.x+','+hit.y+','+hit.z)){
     if(hit.y===ARCHERY_RANGE_Y && inArcheryRange(hit.x,hit.z)) warnCantDig("🏹 The archery lane is kept level — the ground here can't be dug up.");
+    else if(hit.y===COOKING_AREA_Y && inCookingArea(hit.x,hit.z)) warnCantDig("⛺ Camp's ground is kept flat and level — no digging holes around the cooking fires.");
     return;
   }
   if(belowDigLimit(hit.x,hit.y,hit.z,b)){
@@ -10037,6 +10070,10 @@ function init(){
   buildGiantFlag();
   buildTotems();
   buildArcheryRange();
+  // Same idea as the three above, for the camp floor a pre-protection save may have dug holes in —
+  // but ground-only, so it can't swallow anything the player has built in camp. See the note on
+  // repairCookingFloor for why buildCookingArea() itself can't be re-run here.
+  repairCookingFloor();
   buildCampSign();
   buildKayak();
   buildHorse();

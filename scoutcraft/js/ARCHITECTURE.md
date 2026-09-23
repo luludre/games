@@ -45,7 +45,7 @@ split.
 | `badges.js` | Balance constants (HP/hunger/animal stats/real-world scale), merit badges & ranks, Scout progress persistence, badge toasts, `checkBadges`, the `Scout` tracker + HUD + rank badge, compass, fishing, archery-shoot, sash UI. |
 | `crafting.js` | `RECIPES`, inventory helpers, crafting-table/tent lookups, protected cells. |
 | `textures.js` | The procedural texture atlas — every `draw*` pixel-art function, atlas assembly, rank emblem art, US flag master canvas. |
-| `worldgen.js` | Perlin noise, world storage (`getBlock`/`setBlock`), `generateWorld`, the fixed camp landmarks (cooking area, totems, archery range, meditation hill, scout law boxes), tree/bush planting. |
+| `worldgen.js` | Perlin noise, world storage (`getBlock`/`setBlock`), `generateWorld`, the fixed camp landmarks (cooking area, totems, archery range, meditation hill, scout law boxes), tree/bush planting, the dig-depth limit, and `repairCookingFloor` (runs after `loadEdits`, and is the one place that *prunes* `edits`). |
 | `persistence.js` | Core save/load: world edits, inventory, last position. Other subsystems (worms, butterflies, saplings, fires, bear box, backpack) keep their own save/load next to their own logic. Also `resetAllProgress` + the `wipingSave` flag, which *do* reach across all of them — see below. |
 | `rendering.js` | Chunked mesh building, tree species/tint, minimap. |
 | `player-model.js` | Player state/spawn, the blocky avatar model + its textures, the floating name/HP tag, and every animal's 3D model. How things *look*. |

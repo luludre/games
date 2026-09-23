@@ -531,6 +531,7 @@ function breakBlock(){
   if(b===BEDROCK) return;
   if(PROTECTED_CELLS.has(hit.x+','+hit.y+','+hit.z)){
     if(hit.y===ARCHERY_RANGE_Y && inArcheryRange(hit.x,hit.z)) warnCantDig("🏹 The archery lane is kept level — the ground here can't be dug up.");
+    else if(hit.y===COOKING_AREA_Y && inCookingArea(hit.x,hit.z)) warnCantDig("⛺ Camp's ground is kept flat and level — no digging holes around the cooking fires.");
     return;
   }
   if(belowDigLimit(hit.x,hit.y,hit.z,b)){

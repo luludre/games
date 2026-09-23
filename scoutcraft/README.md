@@ -484,8 +484,16 @@ that is solid, and trying to break it just tells you so in camp chat. "The groun
 as the world generated it (the flat camp clearings and the reflection hill count as their own
 surface), so a mound you build up is still diggable all the way down to that line, and a ladder,
 torch or anything else you place comes out of a hole normally — only natural grass, dirt, stone and
-sand are held back. A pit an older save already dug deeper stays as it is; the limit only stops new
-digging.
+sand are held back. Out in the woods, a pit an older save already dug deeper stays as it is — there
+the limit only stops new digging.
+
+Camp itself is the exception. The cooking clearing's ground and the archery lane can't be dug at
+all, so they stay flat and hole-free the way a real campsite is kept — no pit to turn an ankle in
+beside a lit fire. Trying tells you so in camp chat. You can still build freely on top of either
+one, and anything you put down is still yours to take back. On a save from before this existed, any
+hole already dug out of the camp floor is filled back in the next time the game loads, right down to
+the original stone — the ground only, so a tent, workbench or anything else built in camp is left
+untouched.
 
 ## Crawling
 
